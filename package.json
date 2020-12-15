@@ -1,0 +1,18 @@
+{
+  "name": "cloakerbot",
+  "version": "0.1.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/opus": "^0.3.3",
+    "discord.js": "^12.4.1",
+    "ffmpeg-static": "^4.2.7",
+    "set-interval-async": "^1.0.33",
+    "sleep-promise": "^9.0.0"
+  }
+}
