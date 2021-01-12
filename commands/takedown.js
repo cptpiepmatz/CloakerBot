@@ -6,7 +6,7 @@ const replyNoPerms = [
   "Don't tell me what to do!",
   "Shut up you little shit!",
   "You filthy casual. I don't care!"
-]
+];
 
 // Replies if the bot can't find the member
 const replyNoMember = [
