@@ -7,6 +7,7 @@ const randomTakedown = require("./functions/randomTakedown");
 const openDatabase = require("./functions/openDatabase");
 
 const commandTakedown = require("./commands/takedown");
+const commandHelp = require("./commands/help");
 
 const client = new Discord.Client({
   messageCacheLifetime: 3 * 60,
@@ -30,8 +31,16 @@ client.on("message", async message => {
   if (message.author.bot) return;
   if (!message.content.toLowerCase().startsWith("/cloaker")) return;
 
+  let arguments = message.content.trim().split(/\s+/);
+
   try {
-    await commandTakedown(message);
+    switch (arguments[1]) {
+      case "help":
+        await commandHelp(message);
+        break;
+      default:
+        await commandTakedown(message);
+    }
   }
   catch (e) {
     console.error(e);
