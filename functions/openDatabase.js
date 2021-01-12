@@ -2,6 +2,12 @@
 
 const { MongoClient } = require("mongodb");
 
+/**
+ * Opens a mongodb connection.
+ * <p>Applies the connection to global.dbo
+ *
+ * @returns {Promise<void>}
+ */
 async function openDatabase() {
   const uri = "mongodb://localhost:27017";
   const mongoClient = new MongoClient(uri, {
