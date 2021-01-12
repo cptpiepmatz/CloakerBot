@@ -10,11 +10,10 @@ const openDatabase = require("./functions/openDatabase");
 
 const client = new Discord.Client();
 
-let token = fs.readFileSync(path.join(__dirname, ".token"), "utf8");
+// get token
 const args = process.argv.slice(2);
-if (args.includes("test")) {
-  token = fs.readFileSync(path.join(__dirname, "test.token"), "utf8");
-}
+let tokenFile = args.includes("test") ? "test.token" : ".token";
+let token = fs.readFileSync(path.join(__dirname, tokenFile), "utf8");
 
 // startup
 (async function() {
