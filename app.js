@@ -9,7 +9,11 @@ const randomTakedown = require("./functions/randomTakedown");
 
 const client = new Discord.Client();
 
-const token = fs.readFileSync(path.join(__dirname, ".token"), "utf8");
+let token = fs.readFileSync(path.join(__dirname, ".token"), "utf8");
+const args = process.argv.slice(2);
+if (args.includes("test")) {
+  token = fs.readFileSync(path.join(__dirname, "test.token"), "utf8");
+}
 client.login(token)
   .then(() => { console.log("Done.")});
 
