@@ -60,9 +60,6 @@ async function takedownCommand(message) {
 
   // Trying to get the user to take down
   let member = message.mentions.members.first();
-  if (message.content.split(/\s+/)[1].toLowerCase() === "random") {
-    member = message.guild.voiceStates.cache.random().member;
-  }
   if (!member) {
     try {
       await message.channel.send(getRandom(replyNoMember));
