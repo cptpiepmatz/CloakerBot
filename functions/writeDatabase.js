@@ -5,7 +5,7 @@
  *
  * @param {string} collectionName
  * @param {Guild} guild
- * @param {object} data
+ * @param {object} data to insert into the database
  * @returns {Promise<void>}
  */
 async function writeDatabase(collectionName, guild, data) {

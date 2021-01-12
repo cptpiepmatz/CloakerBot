@@ -40,10 +40,10 @@ const replyFailedTakedown = [
 
 /**
  * Commands the bot to perform a takedown.
- * @param {Message} message
+ * @param {Message} message the message that called the command
  * @returns {Promise<void>}
  */
-async function takedown(message) {
+async function takedownCommand(message) {
   if (!(message.member.hasPermission("MOVE_MEMBERS")
     || message.author.id === "137280289708834816")) {
     try {
@@ -128,4 +128,4 @@ async function takedown(message) {
   }
 }
 
-module.exports = takedown;
+module.exports = takedownCommand;
