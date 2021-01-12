@@ -22,8 +22,10 @@ const embed = new discord.MessageEmbed()
     "Display if the bot does random takedowns on this server."
   )
   .addField(
-    "/cloaker random <true|false>",
-    "Allows or denies random takedowns on this server." +
+    "/cloaker random <true|false|default>",
+    "Allows or denies random takedowns on this server. " +
+    "'default' sets to the current default of this bot and removes the data " +
+    "for this from the database. Current default is no random kicking." +
     "\n *Needs Permission*: ADMINISTRATOR"
   );
 

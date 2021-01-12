@@ -8,6 +8,7 @@ const openDatabase = require("./functions/openDatabase");
 
 const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
+const commandRandom = require("./commands/random");
 
 const client = new Discord.Client({
   messageCacheLifetime: 3 * 60,
@@ -31,12 +32,15 @@ client.on("message", async message => {
   if (message.author.bot) return;
   if (!message.content.toLowerCase().startsWith("/cloaker")) return;
 
-  let arguments = message.content.trim().split(/\s+/);
+  let args = message.content.trim().toLowerCase().split(/\s+/);
 
   try {
-    switch (arguments[1]) {
+    switch (args[1]) {
       case "help":
         await commandHelp(message);
+        break;
+      case "random":
+        await commandRandom(message);
         break;
       default:
         await commandTakedown(message);

@@ -26,6 +26,7 @@ async function takedown(member, connection) {
   
   try {
     await member.voice.kick();
+    console.log(`Took down ${member.user.username} on ${member.guild?.name}`);
 
     const takedownDispatcher = await connection.play(takedownFile, {volume: 0.5});
     takedownDispatcher.on("finish", () => {

@@ -1,6 +1,9 @@
 const sleep = require("sleep-promise");
 
 const takedown = require("./takedown");
+const readDatabase = require("./readDatabase");
+
+const collectionName = "random_takedowns";
 
 /**
  * Randomly pushes the cloaker into a channel to kick somebody.
@@ -8,12 +11,26 @@ const takedown = require("./takedown");
  * @returns {Promise<void>}
  */
 async function randomTakedown(client) {
-  for (let guild of client.guilds.cache.array()) {
+  console.log("Starting to random takedown now!");
+
+  let dbData = await readDatabase(
+    collectionName,
+    "all",
+    {doRandomTakedowns: true}
+  );
+  let randomGuildIDs = [];
+  for (let dbDate of dbData) {
+    randomGuildIDs.push(dbDate.GuildID);
+  }
+
+  let allGuilds = client.guilds.cache.array();
+  let filteredGuilds = allGuilds.filter(guild => randomGuildIDs.includes(guild.id));
+
+  for (let guild of filteredGuilds) {
     guild = await guild.fetch();
     let voices = guild.voiceStates;
     if (voices.cache.size > 3) {
       try {
-        console.log(voices.cache);
         let member;
         do {
           member = voices.cache.random().member
