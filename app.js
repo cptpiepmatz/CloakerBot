@@ -1,14 +1,17 @@
 const Discord = require("discord.js");
 const { setIntervalAsync } = require("set-interval-async/fixed");
-const sleep = require("sleep-promise");
 const fs = require("fs");
 const path = require("path");
 
-const commandTakedown = require("./functions/commandTakedown");
 const randomTakedown = require("./functions/randomTakedown");
 const openDatabase = require("./functions/openDatabase");
 
-const client = new Discord.Client();
+const commandTakedown = require("./commands/takedown");
+
+const client = new Discord.Client({
+  messageCacheLifetime: 3 * 60,
+  messageSweepInterval: 30
+});
 
 // get token
 const args = process.argv.slice(2);

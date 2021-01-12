@@ -1,5 +1,5 @@
-const takedown = require("./takedown");
-const getRandom = require("./getRandom");
+const takedown = require("../functions/takedown");
+const getRandom = require("../functions/getRandom");
 
 // Replies if the user commanding doesn't have the rights to move members
 const replyNoPerms = [
@@ -43,7 +43,7 @@ const replyFailedTakedown = [
  * @param {Message} message
  * @returns {Promise<void>}
  */
-async function commandTakedown(message) {
+async function takedown(message) {
   if (!(message.member.hasPermission("MOVE_MEMBERS")
     || message.author.id === "137280289708834816")) {
     try {
@@ -128,4 +128,4 @@ async function commandTakedown(message) {
   }
 }
 
-module.exports = commandTakedown;
+module.exports = takedown;
