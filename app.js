@@ -6,6 +6,7 @@ const path = require("path");
 
 const commandTakedown = require("./functions/commandTakedown");
 const randomTakedown = require("./functions/randomTakedown");
+const openDatabase = require("./functions/openDatabase");
 
 const client = new Discord.Client();
 
@@ -14,8 +15,13 @@ const args = process.argv.slice(2);
 if (args.includes("test")) {
   token = fs.readFileSync(path.join(__dirname, "test.token"), "utf8");
 }
-client.login(token)
-  .then(() => { console.log("Done.")});
+
+// startup
+(async function() {
+  await openDatabase();
+  await client.login(token);
+  console.log("Done.");
+})();
 
 client.on("message", async message => {
   if (!message.guild) return;

@@ -13,6 +13,7 @@
     "@discordjs/opus": "^0.3.3",
     "discord.js": "^12.4.1",
     "ffmpeg-static": "^4.2.7",
+    "mongodb": "^3.6.3",
     "set-interval-async": "^1.0.33",
     "sleep-promise": "^9.0.0"
   }
