@@ -1,3 +1,5 @@
+"use strict";
+
 const sleep = require("sleep-promise");
 
 const takedown = require("./takedown");
