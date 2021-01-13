@@ -10,15 +10,12 @@ const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
 const commandRandom = require("./commands/random");
 
+const token = require("./server/token");
+
 const client = new Discord.Client({
   messageCacheLifetime: 3 * 60,
   messageSweepInterval: 30
 });
-
-// get token
-const args = process.argv.slice(2);
-let tokenFile = args.includes("test") ? "test.token" : ".token";
-let token = fs.readFileSync(path.join(__dirname, tokenFile), "utf8");
 
 // startup
 (async function() {
