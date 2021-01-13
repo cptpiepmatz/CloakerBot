@@ -5,6 +5,7 @@ const path = require("path");
 
 const randomTakedown = require("./functions/randomTakedown");
 const openDatabase = require("./functions/openDatabase");
+const purgeDatabase = require("./functions/purgeDatabase");
 
 const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
@@ -42,6 +43,16 @@ client.on("message", async message => {
       default:
         await commandTakedown(message);
     }
+  }
+  catch (e) {
+    console.error(e);
+  }
+});
+
+// When the bot is kicked from a guild, delete it's data stored in the db
+client.on("guildDelete", async guild => {
+  try {
+    await purgeDatabase(guild);
   }
   catch (e) {
     console.error(e);
