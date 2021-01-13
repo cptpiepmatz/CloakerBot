@@ -28,7 +28,8 @@
   noPerms: [
     "Don't tell me what to do!",
     "Shut up you little shit!",
-    "You filthy casual. I don't care!"
+    "You filthy casual. I don't care!",
+    "Remember what professor oak told you about bikes!"
   ],
 
   // Replies if the bot can't find the member
@@ -58,7 +59,8 @@
   failedTakedown: [
     "Takedown failed! Retreat!",
     "He shot me down!",
-    "I can't!"
+    "I can't!",
+    "Mission failed, we'll get em next time!"
   ]
 }
 
