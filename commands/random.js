@@ -5,30 +5,7 @@ const writeDatabase = require("../functions/writeDatabase");
 const readDatabase = require("../functions/readDatabase");
 const clearDatabase = require("../functions/clearDatabase.js");
 
-// Replies when the bot does do random takedowns
-const replyDoRandom = [
-  "I chokeslam you if you don't see it coming!",
-  "Prepare yourself, I'll come in the night",
-  "Listen here, I've got you! Don't know when."
-];
-
-// Replies when the bot does NOT do random takedowns
-const replyDoNotRandom = [
-  "Your little butt seems safe for now.",
-  "I only come up for calls!",
-  "I've got better to do currently!"
-];
-
-// Replies when the user doesn't input a correct statement
-const replyIncorrect = [
-  "Dude, are you crazy?",
-  "Better get your brain together!"
-];
-
-// Replies when the database has no data for the guild
-const replyUnknown = [
-  "Looks like I've never seen you!"
-]
+const replies = require("../server/replies");
 
 /**
  * Command to gather infos for random takedowns or set the option.
@@ -51,7 +28,7 @@ async function randomCommand(message) {
       );
       await message.channel.send(
         "*CloakerBot will now do random takedowns.*");
-      await message.channel.send(getRandom(replyDoRandom));
+      await message.channel.send(getRandom(replies.doRandom));
       break;
     case "false":
       // disallows random takedowns
@@ -62,7 +39,7 @@ async function randomCommand(message) {
       );
       await message.channel.send(
         "*CloakerBot will now stop doing random takedowns.*");
-      await message.channel.send(getRandom(replyDoNotRandom));
+      await message.channel.send(getRandom(replies.doNotRandom));
       break;
     case "default":
       // removes takedown data from database
@@ -80,18 +57,18 @@ async function randomCommand(message) {
         message.guild
       );
       if (!dbData) {
-        await message.channel.send(getRandom(replyUnknown));
+        await message.channel.send(getRandom(replies.unknownInput));
       }
       else if (dbData.doRandomTakedowns) {
-        await message.channel.send(getRandom(replyDoRandom));
+        await message.channel.send(getRandom(replies.doRandom));
       }
       else {
-        await message.channel.send(getRandom(replyDoNotRandom));
+        await message.channel.send(getRandom(replies.doNotRandom));
       }
       break;
     default:
       // some weird input
-      await message.channel.send(getRandom(replyIncorrect));
+      await message.channel.send(getRandom(replies.incorrectInput));
   }
 }
 

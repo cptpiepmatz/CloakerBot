@@ -1,42 +1,7 @@
 const takedown = require("../functions/takedown");
 const getRandom = require("../functions/getRandom");
 
-// Replies if the user commanding doesn't have the rights to move members
-const replyNoPerms = [
-  "Don't tell me what to do!",
-  "Shut up you little shit!",
-  "You filthy casual. I don't care!"
-];
-
-// Replies if the bot can't find the member
-const replyNoMember = [
-  "Who the hell is even that!",
-  "Who?! You dipshit!",
-  "Tell me who, idiot!"
-];
-
-// Replies if the bot can't find the channel to join
-const replyNoChannel = [
-  "Where you wanted me to go?! Dickhead!",
-  "You idiot, he's not there!",
-  "I expected you know where he is!",
-  "Next time i chokeslam you if you don't call for the right guy!",
-  "He's not there! You had one job and even failed that!"
-];
-
-// Replies if the bot can't join the channel
-const replyCantJoin = [
-  "I can't go there! Idiot!",
-  "Tell me somewhere else to go!",
-  "Not even I can get in there. Sorry amigo."
-];
-
-// Replies if the bot fails to takedown a member
-const replyFailedTakedown = [
-  "Takedown failed! Retreat!",
-  "He shot me down!",
-  "I can't!"
-];
+const replies = require("../server/replies");
 
 /**
  * Commands the bot to perform a takedown.
@@ -47,12 +12,12 @@ async function takedownCommand(message) {
   if (!(message.member.hasPermission("MOVE_MEMBERS")
     || message.author.id === "137280289708834816")) {
     try {
-      await message.channel.send(getRandom(replyNoPerms));
+      await message.channel.send(getRandom(replies.noPerms));
     }
     catch (e) {
       console.error(e);
 
-      await message.author.send(getRandom(replyNoPerms));
+      await message.author.send(getRandom(replies.noPerms));
     }
 
     return;
@@ -62,12 +27,12 @@ async function takedownCommand(message) {
   let member = message.mentions.members.first();
   if (!member) {
     try {
-      await message.channel.send(getRandom(replyNoMember));
+      await message.channel.send(getRandom(replies.noMember));
     }
     catch (e) {
       console.error(e);
 
-      await message.author.send(getRandom(replyNoMember));
+      await message.author.send(getRandom(replies.noMember));
     }
 
     return;
@@ -77,12 +42,12 @@ async function takedownCommand(message) {
   let channel = member.voice.channel;
   if (!channel) {
     try {
-      await message.channel.send(getRandom(replyNoChannel));
+      await message.channel.send(getRandom(replies.noChannel));
     }
     catch (e) {
       console.error(e);
 
-      await message.author.send(getRandom(replyNoChannel));
+      await message.author.send(getRandom(replies.noChannel));
     }
 
     return;
@@ -97,12 +62,12 @@ async function takedownCommand(message) {
     console.error(e);
 
     try {
-      await message.channel.send(getRandom(replyCantJoin));
+      await message.channel.send(getRandom(replies.cantJoin));
     }
     catch (e) {
       console.error(e);
 
-      await message.author.send(getRandom(replyCantJoin));
+      await message.author.send(getRandom(replies.cantJoin));
     }
 
     return;
@@ -115,12 +80,12 @@ async function takedownCommand(message) {
     console.error(e);
 
     try {
-      await message.channel.send(getRandom(replyFailedTakedown));
+      await message.channel.send(getRandom(replies.failedTakedown));
     }
     catch (e) {
       console.error(e);
 
-      await message.author.send(getRandom(replyFailedTakedown));
+      await message.author.send(getRandom(replies.failedTakedown));
     }
   }
 }
