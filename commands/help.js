@@ -27,7 +27,10 @@ const embed = new discord.MessageEmbed()
     "'default' sets to the current default of this bot and removes the data " +
     "for this from the database. Current default is no random kicking." +
     "\n *Needs Permission*: ADMINISTRATOR"
-  );
+  )
+  .addField("​",
+    "If you need any more help, join the " +
+    "[discord server](https://discord.gg/37Xrzj8VGb).");
 
 /**
  * Posts a help message for the author of the message
