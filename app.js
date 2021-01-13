@@ -1,7 +1,5 @@
 const Discord = require("discord.js");
 const { setIntervalAsync } = require("set-interval-async/fixed");
-const fs = require("fs");
-const path = require("path");
 
 const randomTakedown = require("./functions/randomTakedown");
 const openDatabase = require("./functions/openDatabase");
