@@ -30,7 +30,7 @@ const embed = new discord.MessageEmbed()
   )
   .addField("​",
     "If you need any more help, join the " +
-    "[discord server](https://discord.gg/37Xrzj8VGb)."
+    "[discord server](https://discord.gg/XMsdwM5NXf)."
   );
 
 /**
