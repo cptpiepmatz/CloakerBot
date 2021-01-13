@@ -21,6 +21,7 @@ async function randomCommand(message) {
   switch (args[2]) {
     case "true":
       // allow random takedowns
+      if (!await permTest(message)) return;
       await writeDatabase(
         collectionName,
         message.guild,
@@ -32,6 +33,7 @@ async function randomCommand(message) {
       break;
     case "false":
       // disallows random takedowns
+      if (!await permTest(message)) return;
       await writeDatabase(
         collectionName,
         message.guild,
@@ -43,6 +45,7 @@ async function randomCommand(message) {
       break;
     case "default":
       // removes takedown data from database
+      if (!await permTest(message)) return;
       await clearDatabase(
         collectionName,
         message.guild
@@ -70,6 +73,19 @@ async function randomCommand(message) {
       // some weird input
       await message.channel.send(getRandom(replies.incorrectInput));
   }
+}
+
+/**
+ * Tests if the member has the needed perms and if not calls out for it
+ *
+ * @param {Message} message
+ * @returns {Promise<boolean>}
+ */
+async function permTest(message) {
+  let hasPerms = message.member.hasPermission("ADMINISTRATOR");
+  if (hasPerms) return true;
+  await message.channel.send(getRandom(replies.noPerms));
+  return false;
 }
 
 module.exports = randomCommand;
