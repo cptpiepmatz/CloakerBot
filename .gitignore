@@ -1,4 +1,5 @@
 .token
 test.token
+.ownerID
 .idea
 node_modules

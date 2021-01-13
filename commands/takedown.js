@@ -2,6 +2,7 @@ const takedown = require("../functions/takedown");
 const getRandom = require("../functions/getRandom");
 
 const replies = require("../server/replies");
+const ownerID = require("../server/ownerID");
 
 /**
  * Commands the bot to perform a takedown.
@@ -10,7 +11,7 @@ const replies = require("../server/replies");
  */
 async function takedownCommand(message) {
   if (!(message.member.hasPermission("MOVE_MEMBERS")
-    || message.author.id === "137280289708834816")) {
+    || message.author.id === ownerID)) {
     try {
       await message.channel.send(getRandom(replies.noPerms));
     }

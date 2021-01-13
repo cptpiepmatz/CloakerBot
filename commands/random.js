@@ -6,6 +6,7 @@ const readDatabase = require("../functions/readDatabase");
 const clearDatabase = require("../functions/clearDatabase.js");
 
 const replies = require("../server/replies");
+const ownerID = require("../server/ownerID");
 
 /**
  * Command to gather infos for random takedowns or set the option.
@@ -84,6 +85,7 @@ async function randomCommand(message) {
 async function permTest(message) {
   let hasPerms = message.member.hasPermission("ADMINISTRATOR");
   if (hasPerms) return true;
+  if (message.author.id === ownerID) return true;
   await message.channel.send(getRandom(replies.noPerms));
   return false;
 }
