@@ -1,11 +1,10 @@
 "use strict";
 
-const dayjs = require("dayjs");
-
 const getRandom = require("../functions/getRandom");
 const writeDatabase = require("../functions/writeDatabase");
 const readDatabase = require("../functions/readDatabase");
 const clearDatabase = require("../functions/clearDatabase.js");
+const updateTakedownDate = require("../functions/updateTakedownDate");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");
@@ -30,6 +29,7 @@ async function randomCommand(message) {
         message.guild,
         {doRandomTakedowns: true}
       );
+      await updateTakedownDate(message.guild);
       await message.channel.send(
         "*CloakerBot will now do random takedowns.*");
       await message.channel.send(getRandom(replies.doRandom));
@@ -71,6 +71,7 @@ async function randomCommand(message) {
           doRandomTakedowns: true,
           randomTakedownMin: minNumber}
       );
+      await updateTakedownDate(message.guild);
       await message.channel.send(
         "*The minimum time between random takedown checks was set to "
         + minNumber
@@ -92,6 +93,7 @@ async function randomCommand(message) {
           doRandomTakedowns: true,
           randomTakedownMax: maxNumber}
       );
+      await updateTakedownDate(message.guild);
       await message.channel.send(
         "*The maximum time between random takedown checks was set to "
         + maxNumber

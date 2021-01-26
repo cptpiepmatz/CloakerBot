@@ -1,18 +1,24 @@
 "use strict";
 
+const Discord = require("discord.js");
+
 /**
  * Writes data to the database
  *
  * @param {string} collectionName
- * @param {Guild} guild
+ * @param {Guild|Snowflake} guild
  * @param {object} data to insert into the database
  * @returns {Promise<void>}
  */
 async function writeDatabase(collectionName, guild, data) {
   const collection = dbo.collection(collectionName);
 
+  if (guild instanceof Discord.Guild) {
+    guild = guild.id;
+  }
+
   let filter = {
-    GuildID: guild.id
+    GuildID: guild
   }
 
   let insertData = {
