@@ -10,6 +10,7 @@ const ownerID = require("../server/ownerID");
  * @returns {Promise<void>}
  */
 async function takedownCommand(message) {
+  console.log(process._getActiveHandles().length , " in command");
   if (!(message.member.hasPermission("MOVE_MEMBERS")
     || message.author.id === ownerID)) {
     try {
@@ -24,6 +25,7 @@ async function takedownCommand(message) {
     return;
   }
 
+  console.log(process._getActiveHandles().length , " command: after perm check");
   // Trying to get the user to take down
   let member = message.mentions.members.first();
   if (!member) {
@@ -39,6 +41,7 @@ async function takedownCommand(message) {
     return;
   }
 
+  console.log(process._getActiveHandles().length , " command: after user check");
   // Trying to get the voice channel
   let channel = member.voice.channel;
   if (!channel) {
@@ -54,6 +57,7 @@ async function takedownCommand(message) {
     return;
   }
 
+  console.log(process._getActiveHandles().length , " command: after channel check");
   // Trying to connect
   let connection;
   try {
@@ -74,6 +78,7 @@ async function takedownCommand(message) {
     return;
   }
 
+  console.log(process._getActiveHandles().length , " before takedown");
   try {
     await takedown(member, connection);
   }

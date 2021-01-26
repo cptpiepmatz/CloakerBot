@@ -16,7 +16,9 @@ async function readDatabase(collectionName, guild, query) {
   }
 
   let cursor = collection.find(query);
-  return await cursor.toArray();
+  let returnData = await cursor.toArray();
+  cursor.close();
+  return returnData;
 }
 
 module.exports = readDatabase;

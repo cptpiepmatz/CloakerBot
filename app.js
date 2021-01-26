@@ -1,3 +1,7 @@
+const wtf = require("wtfnode");
+const util = require("util");
+const Socket = require("net").Socket;
+
 const Discord = require("discord.js");
 const { setIntervalAsync } = require("set-interval-async/fixed");
 
@@ -24,6 +28,10 @@ const client = new Discord.Client({
 })();
 
 client.on("message", async message => {
+  if (message.content === "wtf-dump") {
+    wtf.dump();
+  }
+
   if (!message.guild) return;
   if (message.author.bot) return;
   if (!message.content.toLowerCase().startsWith("/cloaker")) return;
@@ -39,6 +47,8 @@ client.on("message", async message => {
         await commandRandom(message);
         break;
       default:
+        console.log("-------");
+        console.log(process._getActiveHandles().length, " before command");
         await commandTakedown(message);
     }
   }
