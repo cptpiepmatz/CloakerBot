@@ -13,6 +13,7 @@ const tidyDatabase = require("./functions/tidyDatabase");
 const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
 const commandRandom = require("./commands/random");
+const commandFetchGuildNames = require("./commands/fetchGuildNames");
 
 const token = require("./server/token");
 
@@ -48,6 +49,9 @@ client.on("message", async message => {
         break;
       case "random":
         await commandRandom(message);
+        break;
+      case "fetchguildnames":
+        await commandFetchGuildNames(message);
         break;
       default:
         console.log("-------");
