@@ -13,19 +13,18 @@ const Discord = require("discord.js");
 async function writeDatabase(collectionName, guild, data) {
   const collection = dbo.collection(collectionName);
 
+  let insertData = {
+    $set: {}
+  };
+
   if (guild instanceof Discord.Guild) {
+    insertData.$set.GuildName = guild.name;
     guild = guild.id;
   }
 
   let filter = {
     GuildID: guild
   }
-
-  let insertData = {
-    $set: {
-      GuildName: guild.name
-    }
-  };
 
   for (let dataKey in data) {
     if (data.hasOwnProperty(dataKey)) {
