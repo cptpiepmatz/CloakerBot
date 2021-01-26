@@ -26,7 +26,7 @@ function randomTakedown(client) {
         if (!guild) return;
         console.log("Random Takedown: " + guild.name);
         let voices = guild.voiceStates;
-        if (voices.cache.size >= 1) {
+        if (voices.cache.size >= 3) {
           try {
             let member;
             do {
