@@ -11,19 +11,25 @@
 async function writeDatabase(collectionName, guild, data) {
   const collection = dbo.collection(collectionName);
 
+  let filter = {
+    GuildID: guild.id
+  }
+
   let insertData = {
-    GuildID: guild.id,
-    GuildName: guild.name
+    $set: {
+      GuildName: guild.name
+    }
   };
+
   for (let dataKey in data) {
     if (data.hasOwnProperty(dataKey)) {
-      insertData[dataKey] = data[dataKey];
+      insertData.$set[dataKey] = data[dataKey];
     }
   }
 
-  // uses the replaceOne to replace if the data is already in the db
+  // uses the updateOne to update if the data is already in the db
   // adds the data if not existing
-  await collection.replaceOne({GuildID: guild.id}, insertData, {upsert: true});
+  await collection.updateOne(filter, insertData, {upsert: true});
 }
 
 module.exports = writeDatabase;

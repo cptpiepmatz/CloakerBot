@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.3.3",
+    "dayjs": "^1.10.4",
     "discord.js": "^12.5.1",
     "ffmpeg-static": "^4.2.7",
     "graceful-fs": "^4.2.4",
