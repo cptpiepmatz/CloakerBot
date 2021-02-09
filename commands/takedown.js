@@ -29,16 +29,20 @@ async function takedownCommand(message) {
   // Trying to get the user to take down
   let member = message.mentions.members.first();
   if (!member) {
-    try {
-      await message.channel.send(getRandom(replies.noMember));
-    }
-    catch (e) {
-      console.error(e);
+    let maybeID = message.content.replace("/cloaker", "").trim();
+    member = message.guild.members.cache.get(maybeID);
+    if (!member) {
+      try {
+        await message.channel.send(getRandom(replies.noMember));
+      }
+      catch (e) {
+        console.error(e);
 
-      await message.author.send(getRandom(replies.noMember));
-    }
+        await message.author.send(getRandom(replies.noMember));
+      }
 
-    return;
+      return;
+    }
   }
 
   console.log(process._getActiveHandles().length , " command: after user check");
