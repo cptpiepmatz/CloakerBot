@@ -7,7 +7,7 @@ const embed = new discord.MessageEmbed()
   .setTitle("CloakerBot Help Page")
   .setDescription('"Not so clever, are we?!"')
   .addField(
-    "/cloaker @mention",
+    "/cloaker <@mention|userID>",
     "Takes down the user mentioned. " +
     "The bot does need permissions to read the message, " +
     "join the channel and kick the user from the voice channel." +
