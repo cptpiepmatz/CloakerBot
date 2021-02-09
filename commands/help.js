@@ -32,7 +32,8 @@ const embed = new discord.MessageEmbed()
   )
   .addField("​",
     "If you need any more help, join the " +
-    "[discord server](https://discord.gg/XMsdwM5NXf)."
+    "[discord server](https://discord.gg/XMsdwM5NXf). " +
+    "Also updates about the bot will be posted there."
   );
 
 /**
