@@ -1,10 +1,12 @@
 "use strict";
 
+const Discord = require("discord.js");
+
 /**
  * Reads data from the db for a specific guild
  *
  * @param {string} collectionName
- * @param {Guild|"all"} guild
+ * @param {Guild|Snowflake|"all"} guild
  * @param {object} [query]
  * @returns {Promise<object>|Promise<object[]>}
  */
@@ -12,7 +14,10 @@ async function readDatabase(collectionName, guild, query) {
   const collection = dbo.collection(collectionName);
 
   if (guild !== "all") {
-    return await collection.findOne({GuildID: guild.id});
+    if (guild instanceof Discord.Guild) {
+      guild = guild.id;
+    }
+    return await collection.findOne({GuildID: guild});
   }
 
   let cursor = collection.find(query);

@@ -4,6 +4,7 @@ const getRandom = require("../functions/getRandom");
 const writeDatabase = require("../functions/writeDatabase");
 const readDatabase = require("../functions/readDatabase");
 const clearDatabase = require("../functions/clearDatabase.js");
+const updateTakedownDate = require("../functions/updateTakedownDate");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");
@@ -28,6 +29,7 @@ async function randomCommand(message) {
         message.guild,
         {doRandomTakedowns: true}
       );
+      await updateTakedownDate(message.guild);
       await message.channel.send(
         "*CloakerBot will now do random takedowns.*");
       await message.channel.send(getRandom(replies.doRandom));
@@ -54,6 +56,50 @@ async function randomCommand(message) {
       await message.channel.send(
         "*CloakerBot has now removed this guild from it's database.*");
       break;
+    case "min":
+      // set the minimum time for random takedown checks
+      let minNumber = Number.parseFloat(args[3]);
+      if (Number.isNaN(minNumber)) {
+        await message.channel.send(getRandom(replies.noNumber));
+        break;
+      }
+      if (!await permTest(message)) return;
+      await writeDatabase(
+        collectionName,
+        message.guild,
+        {
+          doRandomTakedowns: true,
+          randomTakedownMin: minNumber}
+      );
+      await updateTakedownDate(message.guild);
+      await message.channel.send(
+        "*The minimum time between random takedown checks was set to "
+        + minNumber
+        + " hours.*");
+      await message.channel.send(getRandom(replies.doRandom));
+      break;
+    case "max":
+      // set the maximum time for random takedown checks
+      let maxNumber = Number.parseFloat(args[3]);
+      if (Number.isNaN(maxNumber)) {
+        await message.channel.send(getRandom(replies.noNumber));
+        break;
+      }
+      if (!await permTest(message)) return;
+      await writeDatabase(
+        collectionName,
+        message.guild,
+        {
+          doRandomTakedowns: true,
+          randomTakedownMax: maxNumber}
+      );
+      await updateTakedownDate(message.guild);
+      await message.channel.send(
+        "*The maximum time between random takedown checks was set to "
+        + maxNumber
+        + " hours.*");
+      await message.channel.send(getRandom(replies.doRandom));
+      break;
     case undefined:
       // replies with the current state
       let dbData = await readDatabase(
@@ -64,6 +110,20 @@ async function randomCommand(message) {
         await message.channel.send(getRandom(replies.unknownInput));
       }
       else if (dbData.doRandomTakedowns) {
+        let minNumber = dbData.randomTakedownMin;
+        let maxNumber = dbData.randomTakedownMax;
+        if (typeof minNumber !== "number") {
+          minNumber = "4 (default)";
+        }
+        if (typeof maxNumber !== "number") {
+          maxNumber = "24 (default)";
+        }
+        await message.channel.send(
+          "*Currently the random takedown checks takes between "
+          + minNumber
+          + " and "
+          + maxNumber
+          + " hours.*");
         await message.channel.send(getRandom(replies.doRandom));
       }
       else {

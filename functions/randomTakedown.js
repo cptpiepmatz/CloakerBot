@@ -1,53 +1,62 @@
 "use strict";
 
-const sleep = require("sleep-promise");
+const queue = require("queue");
 
 const takedown = require("./takedown");
 const readDatabase = require("./readDatabase");
+const updateTakedownDate = require("./updateTakedownDate");
 
 const collectionName = "random_takedowns";
 
 /**
  * Randomly pushes the cloaker into a channel to kick somebody.
+ * <p> This function is just a starter for the interval.
  * @param {Client} client
- * @returns {Promise<void>}
  */
-async function randomTakedown(client) {
-  console.log("Starting to random takedown now!");
+function randomTakedown(client) {
+  console.log("Initialize random takedowns");
 
-  let dbData = await readDatabase(
-    collectionName,
-    "all",
-    {doRandomTakedowns: true}
-  );
-  let randomGuildIDs = [];
-  for (let dbDate of dbData) {
-    randomGuildIDs.push(dbDate.GuildID);
-  }
+  let kickQueue = queue({autostart: true});
 
-  let allGuilds = client.guilds.cache.array();
-  let filteredGuilds = allGuilds.filter(guild => randomGuildIDs.includes(guild.id));
-
-  for (let guild of filteredGuilds) {
-    guild = await guild.fetch();
-    let voices = guild.voiceStates;
-    if (voices.cache.size > 3) {
-      try {
-        let member;
-        do {
-          member = voices.cache.random().member
+  setInterval(async () => {
+    let guildData = await getGuildsToTakedown();
+    for (let guildDate of guildData) {
+      kickQueue.push(async () => {
+        let guild = await client.guilds.cache.get(guildDate.GuildID);
+        if (!guild) return;
+        console.log("Random Takedown: " + guild.name);
+        let voices = guild.voiceStates;
+        if (voices.cache.size >= 3) {
+          try {
+            let member;
+            do {
+              member = voices.cache.random().member
+            }
+            while (member.id === client.user.id);
+            await takedown(member);
+          }
+          catch (e) {
+            console.error(e);
+          }
         }
-        while (member.id === client.user.id);
-        await takedown(member);
-      }
-      catch (e) {
-        console.error(e);
-      }
-    }
-  }
 
-  // Have some rest. Wait up to 20 hours.
-  await sleep(Math.floor(Math.random() * 72000000));
+        await updateTakedownDate(guild, guildDate);
+      });
+    }
+  }, 120000);
+
+  async function getGuildsToTakedown() {
+    return await readDatabase(
+      collectionName,
+      "all",
+      {
+        doRandomTakedowns: true,
+        takedownDate: {
+          $lte: new Date()
+        }
+      }
+    );
+  }
 }
 
 module.exports = randomTakedown;

@@ -26,4 +26,5 @@ module.exports = repliesObject;
  * @property {string[]} noChannel
  * @property {string[]} cantJoin
  * @property {string[]} failedTakedown
+ * @property {string[]} noNumber
  **/

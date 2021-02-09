@@ -61,6 +61,17 @@
     "He shot me down!",
     "I can't!",
     "Mission failed, we'll get em next time!"
+  ],
+
+  // Replies if the user inputs not a number for takedown chances
+  noNumber: [
+    "You dipshit, give me a number!",
+    "That's no number! Idiot!",
+    "You absolute clown, give me a number",
+    "Jesus, I'm not here to do algebra. Give me a number, asshole!",
+    "I'm gonna give you to the count of now to give me a number, before I kick your ass!",
+    "Numbers aren't that hard!",
+    "I can’t read your mind, give me a damn number!"
   ]
 }
 

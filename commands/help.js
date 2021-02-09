@@ -19,13 +19,15 @@ const embed = new discord.MessageEmbed()
   )
   .addField(
     "/cloaker random",
-    "Display if the bot does random takedowns on this server."
+    "Display if the bot does random takedowns on this server. " +
+    "This also show the timings for random takedown checks."
   )
   .addField(
-    "/cloaker random <true|false|default>",
+    "/cloaker random <true|false|min|max|default> <number>",
     "Allows or denies random takedowns on this server. " +
     "'default' sets to the current default of this bot and removes the data " +
-    "for this from the database. Current default is no random kicking." +
+    "for this from the database. Current default is no random kicking. " +
+    "\nYou can set how frequently the bot appears by setting the min and max values." +
     "\n *Needs Permission*: ADMINISTRATOR"
   )
   .addField("​",

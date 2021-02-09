@@ -8,10 +8,12 @@ const { setIntervalAsync } = require("set-interval-async/fixed");
 const randomTakedown = require("./functions/randomTakedown");
 const openDatabase = require("./functions/openDatabase");
 const purgeDatabase = require("./functions/purgeDatabase");
+const tidyDatabase = require("./functions/tidyDatabase");
 
 const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
 const commandRandom = require("./commands/random");
+const commandFetchGuildNames = require("./commands/fetchGuildNames");
 
 const token = require("./server/token");
 
@@ -24,6 +26,8 @@ const client = new Discord.Client({
 (async function() {
   await openDatabase();
   await client.login(token);
+  await tidyDatabase();
+  randomTakedown(client);
   console.log("Done.");
 })();
 
@@ -46,6 +50,9 @@ client.on("message", async message => {
       case "random":
         await commandRandom(message);
         break;
+      case "fetchguildnames":
+        await commandFetchGuildNames(message);
+        break;
       default:
         console.log("-------");
         console.log(process._getActiveHandles().length, " before command");
@@ -66,11 +73,3 @@ client.on("guildDelete", async guild => {
     console.error(e);
   }
 });
-
-// Min Cooldown for about 4 hours
-const loop = setIntervalAsync(
-  async () => {
-    await randomTakedown(client);
-  },
-  14400000
-);
