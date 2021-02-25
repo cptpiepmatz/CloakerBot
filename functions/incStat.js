@@ -43,6 +43,60 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     }
   }
 
+  let guildData = {
+    $set: {
+      GuildID: guild.id,
+      GuildName: guild.name
+    },
+    $inc: undefined
+  }
+
+  let commanderData = {
+    $set: {
+      UserID: commander.user.id,
+      UserName: commander.user.username,
+      UserDiscriminator: commander.user.discriminator
+    }
+  }
+
+  let targetData = {
+    $set: {
+      UserID: target.user.id,
+      UserName: target.user.username,
+      UserDiscriminator: target.user.discriminator
+    }
+  }
+  
+  function updateStatGuild(stat) {
+    if (statsToInc.includes(stat)) {
+      guildData.$inc[stat] = 1;
+    }
+  }
+  updateStatGuild(STATS.BOTS_TAKEN_DOWN);
+  updateStatGuild(STATS.COMMANDED_TAKEDOWNS);
+  updateStatGuild(STATS.DENIED_TAKEDOWNS);
+  updateStatGuild(STATS.FAILED_TAKEDOWNS);
+  updateStatGuild(STATS.RANDOM_TAKEDOWNS);
+  updateStatGuild(STATS.TAKEDOWNS_FAILED);
+  updateStatGuild(STATS.TAKEDOWNS_SUCCESS);
+
+  function updateStatCommander(stat, guild) {
+    if (statsToInc.includes(stat)) {
+      commanderData.$inc[stat + "." + guild] = 1;
+    }
+  }
+  updateStatCommander(STATS.TIMES_COMMANDED_TAKEDOWN, guild);
+  updateStatCommander(STATS.TIMES_DENIED_COMMAND_TAKEDOWN, guild);
+  updateStatCommander(STATS.TIMES_INCORRECT_COMMAND, guild);
+
+  function updateStatTarget(stat, guild) {
+    if (statsToInc.includes(stat)) {
+      commanderData.$inc[stat + "." + guild] = 1;
+    }
+  }
+  updateStatTarget(STATS.TIMES_TAKEN_DOWN, guild);
+}
+
 const STATS = {
   // How often a bot was taken down on a guild
   BOTS_TAKEN_DOWN: "botsTakenDown",
