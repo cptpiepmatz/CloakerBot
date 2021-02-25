@@ -26,7 +26,7 @@ const STATS = {
   DENIED_TAKEDOWNS: "deniedTakedowns",
 
   // How often a takedown failed on a guild
-  FAILED_TAKEDOWN: "failedTakedowns",
+  FAILED_TAKEDOWNS: "failedTakedowns",
 
   // How often someone was randomly taken down on a guild
   RANDOM_TAKEDOWNS: "randomTakedowns",
