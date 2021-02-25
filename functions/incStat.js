@@ -48,7 +48,17 @@ const STATS = {
 
   // How often a user was taken down per guild
   TIMES_TAKEN_DOWN: "timesTakenDown"
-}
+};
+
+const STATS_NEED_COMMANDER = [
+  STATS.TIMES_COMMANDED_TAKEDOWN,
+  STATS.TIMES_DENIED_COMMAND_TAKEDOWN,
+  STATS.TIMES_INCORRECT_COMMAND
+];
+
+const STATS_NEED_TARGET = [
+  STATS.TIMES_TAKEN_DOWN
+];
 
 incStat.STATS = STATS;
 
