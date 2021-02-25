@@ -1,8 +1,5 @@
 "use strict";
 
-const guildCollection = "stats_guilds";
-const userCollection = "stats_users";
-
 /**
  * Function to increase stats
  *
@@ -13,6 +10,9 @@ const userCollection = "stats_users";
  * @returns {Promise<void>}
  */
 async function incStat(statsToInc, guild, commander = null, target = null) {
+  const guildCollection = dbo.collection("stats_guilds");
+  const userCollection = dbo.collection("stats_users");
+
   if (!Array.isArray(statsToInc)) statsToInc = Array.of(statsToInc);
   if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
 
