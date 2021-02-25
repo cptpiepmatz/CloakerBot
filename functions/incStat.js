@@ -16,6 +16,32 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   if (!Array.isArray(statsToInc)) statsToInc = Array.of(statsToInc);
   if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
 
+  // queries for the database
+  const guildQuery = {
+    GuildID: guild.id
+  }
+
+  if (!commander) {
+    let intersectNeedsCommander =
+      STATS_NEED_COMMANDER.filter(x => statsToInc.includes(x));
+    if (intersectNeedsCommander.length !== 0) {
+      throw new Error(intersectNeedsCommander.join(", ") + "needs a commander.");
+    }
+    const commanderQuery = {
+      UserID: commander.id
+    }
+  }
+
+  if (!target) {
+    let intersectNeedsTarget =
+      STATS_NEED_TARGET.filter(x => statsToInc.includes(x));
+    if (intersectNeedsTarget.length !== 0) {
+      throw new Error(intersectNeedsTarget.join(", ") + "needs a target.");
+    }
+    const targetQuery = {
+      UserID: target.id
+    }
+  }
 
 const STATS = {
   // How often a bot was taken down on a guild
