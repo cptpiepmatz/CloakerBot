@@ -17,7 +17,7 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   let updateTarget = false;
 
   if (!Array.isArray(statsToInc)) statsToInc = Array.of(statsToInc);
-  if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
+  if (!statsToInc.every(stat => Object.values(incStat.STATS).includes(stat))) return;
 
   // queries for the database
   let guildQuery = {
@@ -30,8 +30,10 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     let intersectNeedsCommander =
       STATS_NEED_COMMANDER.filter(x => statsToInc.includes(x));
     if (intersectNeedsCommander.length !== 0) {
-      throw new Error(intersectNeedsCommander.join(", ") + "needs a commander.");
+      throw new Error(intersectNeedsCommander.join(", ") + " needs a commander.");
     }
+  }
+  else {
     commanderQuery = {
       UserID: commander.id
     }
@@ -42,8 +44,10 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     let intersectNeedsTarget =
       STATS_NEED_TARGET.filter(x => statsToInc.includes(x));
     if (intersectNeedsTarget.length !== 0) {
-      throw new Error(intersectNeedsTarget.join(", ") + "needs a target.");
+      throw new Error(intersectNeedsTarget.join(", ") + " needs a target.");
     }
+  }
+  else {
     targetQuery = {
       UserID: target.id
     }
@@ -55,7 +59,7 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       GuildID: guild.id,
       GuildName: guild.name
     },
-    $inc: undefined
+    $inc: {}
   }
 
   let commanderData = {
@@ -63,7 +67,8 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       UserID: commander.user.id,
       UserName: commander.user.username,
       UserDiscriminator: commander.user.discriminator
-    }
+    },
+    $inc: {}
   }
 
   let targetData = {
@@ -71,7 +76,8 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       UserID: target.user.id,
       UserName: target.user.username,
       UserDiscriminator: target.user.discriminator
-    }
+    },
+    $inc: {}
   }
 
   function updateStatGuild(stat) {
