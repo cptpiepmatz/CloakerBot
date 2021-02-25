@@ -13,6 +13,9 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   const guildCollection = dbo.collection("stats_guilds");
   const userCollection = dbo.collection("stats_users");
 
+  let updateCommander = false;
+  let updateTarget = false;
+
   if (!Array.isArray(statsToInc)) statsToInc = Array.of(statsToInc);
   if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
 
@@ -95,6 +98,16 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     }
   }
   updateStatTarget(STATS.TIMES_TAKEN_DOWN, guild);
+
+  await guildCollection.updateOne(guildQuery, guildData, {upsert: true});
+  if (updateCommander) {
+    await userCollection
+      .updateOne(commanderQuery, commanderData, {upsert: true});
+  }
+  if (updateTarget) {
+    await userCollection
+      .updateOne(targetQuery, targetData, {upsert: true});
+  }
 }
 
 const STATS = {
