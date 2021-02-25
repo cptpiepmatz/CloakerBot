@@ -20,9 +20,11 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
 
   // queries for the database
-  const guildQuery = {
+  let guildQuery = {
     GuildID: guild.id
   }
+  let commanderQuery = {};
+  let targetQuery = {};
 
   if (!commander) {
     let intersectNeedsCommander =
@@ -30,9 +32,10 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     if (intersectNeedsCommander.length !== 0) {
       throw new Error(intersectNeedsCommander.join(", ") + "needs a commander.");
     }
-    const commanderQuery = {
+    commanderQuery = {
       UserID: commander.id
     }
+    updateCommander = true;
   }
 
   if (!target) {
@@ -41,9 +44,10 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
     if (intersectNeedsTarget.length !== 0) {
       throw new Error(intersectNeedsTarget.join(", ") + "needs a target.");
     }
-    const targetQuery = {
+    targetQuery = {
       UserID: target.id
     }
+    updateTarget = true;
   }
 
   let guildData = {
@@ -69,7 +73,7 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       UserDiscriminator: target.user.discriminator
     }
   }
-  
+
   function updateStatGuild(stat) {
     if (statsToInc.includes(stat)) {
       guildData.$inc[stat] = 1;
