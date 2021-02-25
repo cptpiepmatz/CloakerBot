@@ -13,6 +13,8 @@ const userCollection = "stats_users";
  * @returns {Promise<void>}
  */
 async function incStat(statsToInc, guild, commander = null, target = null) {
+  if (!Array.isArray(statsToInc)) statsToInc = Array.of(statsToInc);
+  if (!statsToInc.every(stat => Object.values(incStat.STATS).contains(stat))) return;
 
 
 const STATS = {
