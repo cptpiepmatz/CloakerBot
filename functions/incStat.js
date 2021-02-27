@@ -114,6 +114,10 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   if (Object.keys(guildData.$inc).length === 0) {
     delete guildData.$inc;
   }
+
+  guildCollection.createIndex({GuildID: 1}, {unique: true});
+  userCollection.createIndex({UserID: 1}, {unique: true});
+
   await guildCollection.updateOne(guildQuery, guildData, {upsert: true});
   if (updateCommander) {
     await userCollection
