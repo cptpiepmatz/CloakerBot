@@ -5,6 +5,7 @@ const writeDatabase = require("../functions/writeDatabase");
 const readDatabase = require("../functions/readDatabase");
 const clearDatabase = require("../functions/clearDatabase.js");
 const updateTakedownDate = require("../functions/updateTakedownDate");
+const incStat = require("../functions/incStat");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");
@@ -133,6 +134,8 @@ async function randomCommand(message) {
     default:
       // some weird input
       await message.channel.send(getRandom(replies.incorrectInput));
+      incStat(incStat.STATS.TIMES_INCORRECT_COMMAND, message.guild, message.member)
+        .catch(console.error);
   }
 }
 
