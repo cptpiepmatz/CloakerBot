@@ -26,6 +26,25 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   let commanderQuery = {};
   let targetQuery = {};
 
+  let guildData = {
+    $set: {
+      GuildID: guild.id,
+      GuildName: guild.name
+    },
+    $inc: {}
+  }
+
+  let commanderData = {
+    $set: {},
+    $inc: {}
+  }
+
+  let targetData = {
+    $set: {},
+    $inc: {}
+  }
+
+
   if (!commander) {
     let intersectNeedsCommander =
       STATS_NEED_COMMANDER.filter(x => statsToInc.includes(x));
@@ -38,6 +57,11 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       UserID: commander.id
     }
     updateCommander = true;
+    commanderData.$set = {
+      UserID: commander.user.id,
+      UserName: commander.user.username,
+      UserDiscriminator: commander.user.discriminator
+    }
   }
 
   if (!target) {
@@ -52,32 +76,11 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
       UserID: target.id
     }
     updateTarget = true;
-  }
-
-  let guildData = {
-    $set: {
-      GuildID: guild.id,
-      GuildName: guild.name
-    },
-    $inc: {}
-  }
-
-  let commanderData = {
-    $set: {
-      UserID: commander.user.id,
-      UserName: commander.user.username,
-      UserDiscriminator: commander.user.discriminator
-    },
-    $inc: {}
-  }
-
-  let targetData = {
-    $set: {
+    targetData.$set = {
       UserID: target.user.id,
       UserName: target.user.username,
       UserDiscriminator: target.user.discriminator
-    },
-    $inc: {}
+    }
   }
 
   function updateStatGuild(stat) {
@@ -88,7 +91,6 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   updateStatGuild(STATS.BOTS_TAKEN_DOWN);
   updateStatGuild(STATS.COMMANDED_TAKEDOWNS);
   updateStatGuild(STATS.DENIED_TAKEDOWNS);
-  updateStatGuild(STATS.FAILED_TAKEDOWNS);
   updateStatGuild(STATS.RANDOM_TAKEDOWNS);
   updateStatGuild(STATS.TAKEDOWNS_FAILED);
   updateStatGuild(STATS.TAKEDOWNS_SUCCESS);
@@ -104,7 +106,7 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
 
   function updateStatTarget(stat, guild) {
     if (statsToInc.includes(stat)) {
-      commanderData.$inc[stat + "." + guild] = 1;
+      targetData.$inc[stat + "." + guild] = 1;
     }
   }
   updateStatTarget(STATS.TIMES_TAKEN_DOWN, guild);
@@ -129,9 +131,6 @@ const STATS = {
 
   // How often commanded takedown was denied on a guild
   DENIED_TAKEDOWNS: "deniedTakedowns",
-
-  // How often a takedown failed on a guild
-  FAILED_TAKEDOWNS: "failedTakedowns",
 
   // How often someone was randomly taken down on a guild
   RANDOM_TAKEDOWNS: "randomTakedowns",
