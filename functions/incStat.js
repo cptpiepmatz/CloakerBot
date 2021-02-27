@@ -111,6 +111,9 @@ async function incStat(statsToInc, guild, commander = null, target = null) {
   }
   updateStatTarget(STATS.TIMES_TAKEN_DOWN, guild);
 
+  if (Object.keys(guildData.$inc).length === 0) {
+    delete guildData.$inc;
+  }
   await guildCollection.updateOne(guildQuery, guildData, {upsert: true});
   if (updateCommander) {
     await userCollection
