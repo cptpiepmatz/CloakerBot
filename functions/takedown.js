@@ -5,6 +5,7 @@ const sleep = require("sleep-promise");
 const path = require("path");
 
 const getRandom = require("./getRandom");
+const incStat = require("./incStat");
 
 const takedownFiles = fs.readdirSync(path.join(__dirname, "../sounds/takedowns/"));
 const failFiles = fs.readdirSync(path.join(__dirname, "../sounds/fails/"));
@@ -16,6 +17,7 @@ const failFiles = fs.readdirSync(path.join(__dirname, "../sounds/fails/"));
  * @returns {Promise<void>}
  */
 async function takedown(member, connection) {
+  let takedownSuccessful = false;
   console.log(process._getActiveHandles().length, " begin takedown");
 
   let takedownFile = path.join(__dirname, "../sounds/takedowns/", getRandom(takedownFiles));
@@ -43,6 +45,13 @@ async function takedown(member, connection) {
     try {
       await member.voice.kick();
       console.log(`Took down ${member.user.username} on ${member.guild?.name}`);
+      takedownSuccessful = true;
+
+      // increment the stats to a takedown
+      let incStats = [incStat.STATS.TAKEDOWNS_SUCCESS, incStat.STATS.TIMES_TAKEN_DOWN];
+      if (member.user.bot) incStats.push(incStat.STATS.BOTS_TAKEN_DOWN);
+      incStat(incStats, member.guild, null, member)
+        .catch(console.error);
 
       takedownDispatcher = await connection.play(takedownFile, {volume: 0.5, bitrate: "auto"});
       console.log(process._getActiveHandles().length, " takedown sound online");
@@ -59,6 +68,8 @@ async function takedown(member, connection) {
     }
     catch (e) {
       console.error(e);
+      incStat(incStat.STATS.TAKEDOWNS_FAILED, member.guild)
+        .catch(console.error);
 
       const failDispatcher = await connection.play(failFile, {volume: 0.5});
       console.log("opened failDispatcher");
@@ -74,6 +85,7 @@ async function takedown(member, connection) {
       })
     }
   });
+  return takedownSuccessful;
 }
 
 // Try to destroy a dispatcher, if it has the destroy method
