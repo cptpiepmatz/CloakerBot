@@ -5,6 +5,7 @@ const queue = require("queue");
 const takedown = require("./takedown");
 const readDatabase = require("./readDatabase");
 const updateTakedownDate = require("./updateTakedownDate");
+const incStat = require("./incStat");
 
 const collectionName = "random_takedowns";
 
@@ -33,7 +34,10 @@ function randomTakedown(client) {
               member = voices.cache.random().member
             }
             while (member.id === client.user.id);
-            await takedown(member);
+            if (await takedown(member)) {
+              incStat(incStat.STATS.RANDOM_TAKEDOWNS, guild)
+                .catch(console.error);
+            }
           }
           catch (e) {
             console.error(e);
