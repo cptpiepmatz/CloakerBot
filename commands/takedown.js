@@ -1,5 +1,6 @@
 const takedown = require("../functions/takedown");
 const getRandom = require("../functions/getRandom");
+const incStat = require("../functions/incStat.js");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");
@@ -11,57 +12,51 @@ const ownerID = require("../server/ownerID");
  */
 async function takedownCommand(message) {
   console.log(process._getActiveHandles().length , " in command");
-  if (!(message.member.hasPermission("MOVE_MEMBERS")
-    || message.author.id === ownerID)) {
-    try {
-      await message.channel.send(getRandom(replies.noPerms));
-    }
-    catch (e) {
-      console.error(e);
 
-      await message.author.send(getRandom(replies.noPerms));
-    }
-
-    return;
-  }
-
-  console.log(process._getActiveHandles().length , " command: after perm check");
-  // Trying to get the user to take down
-  let member = message.mentions.members.first();
-  if (!member) {
-    let maybeID = message.content.replace("/cloaker", "").trim();
-    member = message.guild.members.cache.get(maybeID);
-    if (!member) {
+  /**
+   * Subroutine to check if command is executable
+   *
+   * @param {boolean|object} check
+   * @param {string[]} replyArray
+   * @returns {Promise<boolean>}
+   */
+  async function checkReply(check, replyArray) {
+    if (!check) {
       try {
-        await message.channel.send(getRandom(replies.noMember));
+        await message.channel.send(getRandom(replyArray));
       }
       catch (e) {
         console.error(e);
 
-        await message.author.send(getRandom(replies.noMember));
+        await message.author.send(getRandom(replyArray));
       }
 
-      return;
+      incStat(
+        incStat.STATS.TIMES_DENIED_COMMAND_TAKEDOWN,
+        message.guild,
+        message.member
+      ).catch(console.error);
+
+      return false;
     }
+    return true;
   }
 
+  if (!await checkReply((message.member.hasPermission("MOVE_MEMBERS")
+    || message.author.id === ownerID), replies.noPerms)) return;
+  console.log(process._getActiveHandles().length , " command: after perm check");
+
+
+  // Trying to get the user to take down
+  let member = message.mentions.members.first();
+  if (!await checkReply(member, replies.noMember)) return;
   console.log(process._getActiveHandles().length , " command: after user check");
+
   // Trying to get the voice channel
   let channel = member.voice.channel;
-  if (!channel) {
-    try {
-      await message.channel.send(getRandom(replies.noChannel));
-    }
-    catch (e) {
-      console.error(e);
-
-      await message.author.send(getRandom(replies.noChannel));
-    }
-
-    return;
-  }
-
+  if (!await checkReply(channel, replies.noChannel)) return;
   console.log(process._getActiveHandles().length , " command: after channel check");
+
   // Trying to connect
   let connection;
   try {
@@ -79,12 +74,21 @@ async function takedownCommand(message) {
       await message.author.send(getRandom(replies.cantJoin));
     }
 
+    incStat(incStat.STATS.TAKEDOWNS_FAILED, message.guild)
+      .catch(console.error);
+
     return;
   }
 
   console.log(process._getActiveHandles().length , " before takedown");
   try {
-    await takedown(member, connection);
+    if (await takedown(member, connection)) {
+      incStat(
+        incStat.STATS.TIMES_COMMANDED_TAKEDOWN,
+        message.guild,
+        message.member
+      ).catch(console.error)
+    }
   }
   catch (e) {
     console.error(e);
