@@ -49,6 +49,10 @@ async function takedownCommand(message) {
 
   // Trying to get the user to take down
   let member = message.mentions.members.first();
+  if (!member) {
+    let maybeID = message.content.replace("/cloaker", "").trim();
+    member = message.guild.members.cache.get(maybeID);
+  }
   if (!await checkReply(member, replies.noMember)) return;
   console.log(process._getActiveHandles().length , " command: after user check");
 
