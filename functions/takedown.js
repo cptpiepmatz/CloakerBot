@@ -8,8 +8,8 @@ const pEvent = require("p-event");
 const getRandom = require("./getRandom");
 const incStat = require("./incStat");
 
-const takedownFiles = fs.readdirSync(path.join(__dirname, "../sounds/takedowns/"));
-const failFiles = fs.readdirSync(path.join(__dirname, "../sounds/fails/"));
+const takedownFiles = fs.readdirSync(path.join(__dirname, "../assets/sounds/takedowns/"));
+const failFiles = fs.readdirSync(path.join(__dirname, "../assets/sounds/fails/"));
 
 /**
  * Kicks a user from a voice channel.
@@ -21,8 +21,8 @@ async function takedown(member, connection) {
   let takedownSuccessful = false;
   console.log(process._getActiveHandles().length, " begin takedown");
 
-  let takedownFile = path.join(__dirname, "../sounds/takedowns/", getRandom(takedownFiles));
-  let failFile = path.join(__dirname, "../sounds/fails/", getRandom(failFiles));
+  let takedownFile = path.join(__dirname, "../assets/sounds/takedowns/", getRandom(takedownFiles));
+  let failFile = path.join(__dirname, "../assets/sounds/fails/", getRandom(failFiles));
 
   if (!connection) connection = await member.voice.channel.join();
 
@@ -32,7 +32,7 @@ async function takedown(member, connection) {
   // diff 170000
   let wululuTime = 60000 + Math.floor(Math.random() * 170000);
   let wululuStream = fs.createReadStream(
-    path.join(__dirname, "../sounds/WULULULULU_reduced_volume.wav"),
+    path.join(__dirname, "../assets/sounds/WULULULULU_reduced_volume.wav"),
     {end: wululuTime}
   );
   const wululuDispatcher = await connection.play(wululuStream);
