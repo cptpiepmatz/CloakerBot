@@ -21,7 +21,8 @@
 
   // Replies when the database has no data for the guild
   unknownInput: [
-    "Looks like I've never seen you!"
+    "Looks like I've never seen you!",
+    "What did you mean? Idiot!"
   ],
 
   // Replies if the user commanding doesn't have the rights to move members
