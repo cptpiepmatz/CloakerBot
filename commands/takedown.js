@@ -21,18 +21,6 @@ async function takedownCommand(message) {
   let allowedRoleId = dbRoleData?.takedownRole;
   let inRole = await message.member.roles.cache.get(allowedRoleId);
 
-  if (!(message.member.hasPermission("MOVE_MEMBERS")
-    || message.author.id === ownerID
-    || inRole)) {
-    try {
-      await message.channel.send(getRandom(replies.noPerms));
-    }
-    catch (e) {
-      console.error(e);
-
-      await message.author.send(getRandom(replies.noPerms));
-    }
-
   /**
    * Subroutine to check if command is executable
    *
@@ -63,7 +51,8 @@ async function takedownCommand(message) {
   }
 
   if (!await checkReply((message.member.hasPermission("MOVE_MEMBERS")
-    || message.author.id === ownerID), replies.noPerms)) return;
+    || message.author.id === ownerID
+    || inRole), replies.noPerms)) return;
   console.log(process._getActiveHandles().length , " command: after perm check");
 
 
