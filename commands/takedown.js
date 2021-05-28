@@ -1,6 +1,9 @@
+"use strict";
+
 const takedown = require("../functions/takedown");
 const getRandom = require("../functions/getRandom");
 const incStat = require("../functions/incStat.js");
+const readDatabase = require("../functions/readDatabase");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");
@@ -12,6 +15,23 @@ const ownerID = require("../server/ownerID");
  */
 async function takedownCommand(message) {
   console.log(process._getActiveHandles().length , " in command");
+
+  // Check if the user has the role to take down people
+  let dbRoleData = await readDatabase("roles", message.guild, {});
+  let allowedRoleId = dbRoleData?.takedownRole;
+  let inRole = await message.member.roles.cache.get(allowedRoleId);
+
+  if (!(message.member.hasPermission("MOVE_MEMBERS")
+    || message.author.id === ownerID
+    || inRole)) {
+    try {
+      await message.channel.send(getRandom(replies.noPerms));
+    }
+    catch (e) {
+      console.error(e);
+
+      await message.author.send(getRandom(replies.noPerms));
+    }
 
   /**
    * Subroutine to check if command is executable

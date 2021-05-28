@@ -14,6 +14,7 @@ const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");
 const commandRandom = require("./commands/random");
 const commandFetchGuildNames = require("./commands/fetchGuildNames");
+const commandSetRole = require("./commands/setRole");
 
 const token = require("./server/token");
 
@@ -52,6 +53,9 @@ client.on("message", async message => {
         break;
       case "fetchguildnames":
         await commandFetchGuildNames(message);
+        break;
+      case "setrole":
+        await commandSetRole(message);
         break;
       default:
         console.log("-------");

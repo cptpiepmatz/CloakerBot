@@ -12,14 +12,14 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.5.0",
-    "canvas": "^2.7.0",
-    "dayjs": "^1.10.4",
+    "canvas": "^2.8.0",
+    "dayjs": "^1.10.5",
     "discord.js": "^12.5.3",
     "ffmpeg-static": "^4.3.0",
     "graceful-fs": "^4.2.6",
     "json5": "^2.2.0",
-    "mongodb": "^3.6.6",
     "p-event": "^4.2.0",
+    "mongodb": "^3.6.9",
     "queue": "^6.0.2",
     "set-interval-async": "^2.0.3",
     "sleep-promise": "^9.1.0"

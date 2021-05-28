@@ -30,6 +30,13 @@ const embed = new discord.MessageEmbed()
     "\nYou can set how frequently the bot appears by setting the min and max values." +
     "\n *Needs Permission*: ADMINISTRATOR"
   )
+  .addField(
+    "/cloaker setRole <role>",
+    "Defines a role that is allowed to take down people." +
+    "\nThis will overwrite the other roles. Only one role is can fulfill this " +
+    "feature." +
+    "\n *Needs Permission*: ADMINISTRATOR"
+  )
   .addField("​",
     "If you need any more help, join the " +
     "[discord server](https://discord.gg/XMsdwM5NXf). " +
