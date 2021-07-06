@@ -1,0 +1,368 @@
+// aggregation pipeline to retrieve ranks for kicking and getting kicked
+// reviver placeholders :
+//   - %guild% the guild id
+//   - %member% the member id
+[
+  {
+    // project the specific values from the specified guild into the documents
+    // if no value is available, it just sets 0 to the counts
+    $project: {
+      UserID: "$UserID",
+      UserName: "$UserName",
+      timesTakenDownHere: {
+        $ifNull: [
+          "$timesTakenDown.%guild%",
+          0
+        ]
+      },
+      timesTakenDown: {
+        $objectToArray: "$timesTakenDown"
+      },
+      timesCommandedTakedownHere: {
+        $ifNull: [
+          "$timesCommandedTakedown.%guild%",
+          0
+        ]
+      },
+      timesCommandedTakedown: {
+        $objectToArray: "$timesCommandedTakedown"
+      }
+    }
+  },
+  {
+    // unwinds the timesTakenDown attribute
+    $unwind: {
+      path: "$timesTakenDown",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    // unwinds the timesCommandedTakedown attribute
+    $unwind: {
+      path: "$timesCommandedTakedown",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    // groups the unwounded values via addition back together for total values
+    $group: {
+      _id: "$UserID",
+      UserID: {
+        $first: "$UserID"
+      },
+      UserName: {
+        $first: "$UserName"
+      },
+      timesTakenDownHere: {
+        $first: "$timesTakenDownHere"
+      },
+      timesCommandedTakedownHere: {
+        $first: "$timesCommandedTakedownHere"
+      },
+      timesTakenDownTotal: {
+        $sum: "$timesTakenDown.v"
+      },
+      timesCommandedTakedownTotal: {
+        $sum: "$timesCommandedTakedown.v"
+      }
+    }
+  },
+  {
+    // runs for every rank a stand alone pipeline but in parallel
+    $facet: {
+      // groups all the users with their current values
+      Users: [
+        {
+          $sort: {
+            UserID: 1
+          }
+        }
+      ],
+
+      // every pipeline starting here will use the same steps but with different
+      // values and is therefore only documented in the first pipeline
+
+      // retrieves for every user the punisher rank for the specific guild
+      punisherRankHere: [
+        {
+          // groups every user by the amount of takedowns they made here
+          // the result is a list of documents with the user sharing the time
+          // takedown amount
+          $group: {
+            _id: "$timesCommandedTakedownHere",
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          // sort by the takedown amount, this sorts them by their rank
+          // initially
+          $sort: {
+            _id: 1
+          }
+        },
+        {
+          // group again all elements together, by this we can use the unwind
+          // to get index values, that are used for the ranks
+          $group: {
+            _id: null,
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          // unwinds the compacted document and adds the rank starting from 0
+          $unwind: {
+            path: "$UserID",
+            includeArrayIndex: "punisherRankHere",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // unwinds again to have standalone users again
+          $unwind: {
+            path: "$UserID",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          // project the final user for cleanup and having the rank start at 1
+          $project: {
+            UserID: "$UserID",
+            punisherRankHere: {
+              $add: [
+                "$punisherRankHere",
+                1
+              ]
+            }
+          }
+        },
+        {
+          // finally sort by the user id to merge them together later
+          $sort: {
+            UserID: 1
+          }
+        }
+      ],
+
+      // retrieves for every user their punisher rank for all guilds
+      punisherRankTotal: [
+        {
+          $group: {
+            _id: "$timesCommandedTakedownTotal",
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $sort: {
+            _id: 1
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            includeArrayIndex: "punisherRankTotal",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            UserID: "$UserID",
+            punisherRankTotal: {
+              $add: [
+                "$punisherRankTotal",
+                1
+              ]
+            }
+          }
+        },
+        {
+          $sort: {
+            UserID: 1
+          }
+        }
+      ],
+
+      // retrieves for every user the victim rank for the specific guild
+      victimRankHere: [
+        {
+          $group: {
+            _id: "$timesTakenDownHere",
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $sort: {
+            _id: 1
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            includeArrayIndex: "victimRankHere",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            UserID: "$UserID",
+            victimRankHere: {
+              $add: [
+                "$victimRankHere",
+                1
+              ]
+            }
+          }
+        },
+        {
+          $sort: {
+            UserID: 1
+          }
+        }
+      ],
+
+      // retrieves for every user their victim rank for all guilds
+      victimRankTotal: [
+        {
+          $group: {
+            _id: "$timesTakenDownTotal",
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $sort: {
+            _id: 1
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            UserID: {
+              $addToSet: "$UserID"
+            }
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            includeArrayIndex: "victimRankTotal",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: "$UserID",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            UserID: "$UserID",
+            victimRankTotal: {
+              $add: [
+                "$victimRankTotal",
+                1
+              ]
+            }
+          }
+        },
+        {
+          $sort: {
+            UserID: 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    // project all the values together, by using the zip operator it merges them
+    // neatly together
+    $project: {
+      Users: {
+        $zip: {
+          inputs: [
+            "$Users",
+            "$punisherRankHere",
+            "$punisherRankTotal",
+            "$victimRankHere",
+            "$victimRankTotal"
+          ]
+        }
+      }
+    }
+  },
+  {
+    // unwinds the packed users into standalone documents
+    $unwind: {
+      path: "$Users",
+      preserveNullAndEmptyArrays: false
+    }
+  },
+  {
+    // merges the objects inside the documents together to result in a singular
+    // object per document
+    $project: {
+      User: {
+        $mergeObjects: "$Users"
+      }
+    }
+  },
+  {
+    // projects the merged object in a more easy to use output
+    $project: {
+      _id: "$User.UserID",
+      UserID: "$User.UserID",
+      UserName: "$User.UserName",
+      victimRankHere: "$User.victimRankHere",
+      victimRankTotal: "$User.victimRankTotal",
+      punisherRankHere: "$User.punisherRankHere",
+      punisherRankTotal: "$User.punisherRankTotal",
+      timesSmackedHere: "$User.timesTakenDownHere",
+      timesSmackedTotal: "$User.timesTakenDownTotal",
+      timesCalledHere: "$User.timesCommandedTakedownHere",
+      timesCalledTotal: "$User.timesCommandedTakedownTotal"
+    }
+  },
+  {
+    // returns the singular interesting user
+    $match: {
+      UserID: "%member%"
+    }
+  }
+]
