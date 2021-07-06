@@ -12,7 +12,7 @@ const writeDatabase = require("../functions/database/writeDatabase");
 async function fetchGuildNames(message) {
   if (message.author.id !== "137280289708834816") {
     await message.channel.send(
-      "I'm proud you found that command, but you have perms for it.");
+      "I'm proud you found that command, but you don't have the perms for it.");
     return;
   }
   let client = message.client;
