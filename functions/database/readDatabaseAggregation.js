@@ -8,7 +8,7 @@ const Discord = require("discord.js");
  * @param {string} collectionName The name of the collection
  * @param {array} pipeline Array containing all the aggregation framework
  *                         commands for the execution
- * @param {object} options Optional settings
+ * @param {object} [options] Optional settings
  * @returns {Promise<object[]>}
  */
 async function readDatabaseAggregation(collectionName, pipeline, options) {
