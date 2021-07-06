@@ -37,6 +37,11 @@ const embed = new discord.MessageEmbed()
     "feature." +
     "\n *Needs Permission*: ADMINISTRATOR"
   )
+  .addField(
+    "/cloaker ranks <user>",
+    "Generates a rank card based on tracked takedown stats." +
+    "\n *Needs Permission*: ATTACH_FILES"
+  )
   .addField("​",
     "If you need any more help, join the " +
     "[discord server](https://discord.gg/XMsdwM5NXf). " +
