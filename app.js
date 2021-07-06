@@ -6,9 +6,9 @@ const Discord = require("discord.js");
 const { setIntervalAsync } = require("set-interval-async/fixed");
 
 const randomTakedown = require("./functions/randomTakedown");
-const openDatabase = require("./functions/openDatabase");
-const purgeDatabase = require("./functions/purgeDatabase");
-const tidyDatabase = require("./functions/tidyDatabase");
+const openDatabase = require("./functions/database/openDatabase");
+const purgeDatabase = require("./functions/database/purgeDatabase");
+const tidyDatabase = require("./functions/database/tidyDatabase");
 
 const commandTakedown = require("./commands/takedown");
 const commandHelp = require("./commands/help");

@@ -3,7 +3,7 @@
 const queue = require("queue");
 
 const takedown = require("./takedown");
-const readDatabase = require("./readDatabase");
+const readDatabase = require("./database/readDatabase");
 const updateTakedownDate = require("./updateTakedownDate");
 const incStat = require("./incStat");
 

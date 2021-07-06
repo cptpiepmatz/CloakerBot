@@ -2,8 +2,8 @@
 
 const dayjs = require("dayjs");
 
-const readDatabase = require("./readDatabase");
-const writeDatabase = require("./writeDatabase");
+const readDatabase = require("./database/readDatabase");
+const writeDatabase = require("./database/writeDatabase");
 
 const collectionName = "random_takedowns";
 

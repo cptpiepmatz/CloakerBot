@@ -1,7 +1,7 @@
 "use strict";
 
-const readDatabase = require("../functions/readDatabase");
-const writeDatabase = require("../functions/writeDatabase");
+const readDatabase = require("../functions/database/readDatabase");
+const writeDatabase = require("../functions/database/writeDatabase");
 
 /**
  * Updates all guild names in the db

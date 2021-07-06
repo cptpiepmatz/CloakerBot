@@ -1,6 +1,6 @@
 "use strict";
 
-const writeDatabase = require("../functions/writeDatabase");
+const writeDatabase = require("../functions/database/writeDatabase");
 const getRandom = require("../functions/getRandom");
 
 const replies = require("../server/replies");

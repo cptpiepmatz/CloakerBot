@@ -3,7 +3,7 @@
 const takedown = require("../functions/takedown");
 const getRandom = require("../functions/getRandom");
 const incStat = require("../functions/incStat.js");
-const readDatabase = require("../functions/readDatabase");
+const readDatabase = require("../functions/database/readDatabase");
 
 const replies = require("../server/replies");
 const ownerID = require("../server/ownerID");

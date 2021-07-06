@@ -3,7 +3,7 @@
 const Discord = require("discord.js");
 
 /**
- * Reads data from the db for a specific guild
+ * Reads data from the db for a specific guild.
  *
  * @param {string} collectionName
  * @param {Guild|Snowflake|"all"} guild

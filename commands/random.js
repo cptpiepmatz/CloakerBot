@@ -1,9 +1,9 @@
 "use strict";
 
 const getRandom = require("../functions/getRandom");
-const writeDatabase = require("../functions/writeDatabase");
-const readDatabase = require("../functions/readDatabase");
-const clearDatabase = require("../functions/clearDatabase.js");
+const writeDatabase = require("../functions/database/writeDatabase");
+const readDatabase = require("../functions/database/readDatabase");
+const clearDatabase = require("../functions/database/clearDatabase.js");
 const updateTakedownDate = require("../functions/updateTakedownDate");
 const incStat = require("../functions/incStat");
 

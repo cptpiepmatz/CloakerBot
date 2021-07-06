@@ -1,7 +1,7 @@
 "use strict";
 
 const readDatabase = require("./readDatabase");
-const updateTakedownDate = require("./updateTakedownDate");
+const updateTakedownDate = require("../updateTakedownDate");
 
 /**
  * Tidies the database, good if old database needs some updates
