@@ -37,14 +37,7 @@
     }
   },
   {
-    // unwinds the timesCommandedTakedown attribute
-    $unwind: {
-      path: "$timesCommandedTakedown",
-      preserveNullAndEmptyArrays: true
-    }
-  },
-  {
-    // groups the unwounded values via addition back together for total values
+    // groups timesTakenDown together
     $group: {
       _id: "$UserID",
       UserID: {
@@ -61,6 +54,37 @@
       },
       timesTakenDownTotal: {
         $sum: "$timesTakenDown.v"
+      },
+      timesCommandedTakedown: {
+        $first: "$timesCommandedTakedown"
+      }
+    }
+  },
+  {
+    // unwinds the timesCommandedTakedown attribute
+    $unwind: {
+      path: "$timesCommandedTakedown",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    // groups times commanded takedown together
+    $group: {
+      _id: "$UserID",
+      UserID: {
+        $first: "$UserID"
+      },
+      UserName: {
+        $first: "$UserName"
+      },
+      timesTakenDownHere: {
+        $first: "$timesTakenDownHere"
+      },
+      timesCommandedTakedownHere: {
+        $first: "$timesCommandedTakedownHere"
+      },
+      timesTakenDownTotal: {
+        $first: "$timesTakenDownTotal"
       },
       timesCommandedTakedownTotal: {
         $sum: "$timesCommandedTakedown.v"
