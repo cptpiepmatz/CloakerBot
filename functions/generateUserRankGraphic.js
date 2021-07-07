@@ -7,7 +7,8 @@ const templatePath = path.join(__dirname, "../assets/graphics/user_rank.png");
 let templateImage;
 
 // Register the free to use font Roboto
-const fontFamily = '"Roboto", "Cambria Math", sans-serif';
+const fontFamily = '"Roboto", "Cambria Math", "Segoe UI", sans-serif';
+
 const robotoPath = path.join(__dirname, "../assets/fonts/Roboto/");
 Canvas.registerFont(robotoPath + "Roboto-Regular.ttf", {
   family: "Roboto",
@@ -15,6 +16,16 @@ Canvas.registerFont(robotoPath + "Roboto-Regular.ttf", {
 });
 Canvas.registerFont(robotoPath + "Roboto-Bold.ttf", {
   family: "Roboto",
+  weight: "700"
+});
+
+const segoePath = path.join(__dirname, "../assets/fonts/Segoe/");
+Canvas.registerFont(segoePath + "segoeui.ttf", {
+  family: "Segoe UI",
+  weight: "400"
+});
+Canvas.registerFont(segoePath + "segoeuib.ttf", {
+  family: "Segoe UI",
   weight: "700"
 });
 
