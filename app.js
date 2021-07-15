@@ -18,10 +18,17 @@ const commandSetRole = require("./commands/setRole");
 const commandRanks = require("./commands/ranks");
 
 const token = require("./server/token");
+const Intents = Discord.Intents.FLAGS;
 
 const client = new Discord.Client({
   messageCacheLifetime: 3 * 60,
-  messageSweepInterval: 30
+  messageSweepInterval: 30,
+  intents: [
+    Intents.GUILDS,
+    Intents.GUILD_VOICE_STATES,
+    Intents.GUILD_MESSAGES,
+    Intents.GUILD_INTEGRATIONS
+  ]
 });
 
 // startup
