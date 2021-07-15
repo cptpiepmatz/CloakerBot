@@ -12,9 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.5.3",
+    "@discordjs/voice": "^0.5.4",
     "canvas": "^2.8.0",
     "dayjs": "^1.10.6",
-    "discord.js": "^12.5.3",
+    "discord.js": "^13.0.0-dev.4206e35.1626350625",
     "ffmpeg-static": "^4.4.0",
     "graceful-fs": "^4.2.6",
     "json5": "^2.2.0",
@@ -22,7 +23,8 @@
     "p-event": "^4.2.0",
     "queue": "^6.0.2",
     "set-interval-async": "^2.0.3",
-    "sleep-promise": "^9.1.0"
+    "sleep-promise": "^9.1.0",
+    "sodium": "^3.0.2"
   },
   "devDependencies": {
     "wtfnode": "^0.9.1"
