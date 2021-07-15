@@ -16,7 +16,7 @@ async function setRole(message) {
   const collectionName = "roles";
 
   // Check if the member has the perms needed
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!message.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
     await message.channel.send(getRandom(replies.noPerms));
     return;
   }

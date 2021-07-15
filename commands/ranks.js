@@ -15,7 +15,7 @@ const replies = require("../server/replies");
  * @returns {Promise<void>}
  */
 async function ranks(message) {
-  if (!message.member.hasPermission("ATTACH_FILES")) {
+  if (!message.member.permissions.has(Permissions.FLAGS.ATTACH_FILES)) {
     message.channel.send(getRandom(replies.noPerms)).catch(console.error);
     return;
   }

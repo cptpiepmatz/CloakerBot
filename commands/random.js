@@ -146,7 +146,7 @@ async function randomCommand(message) {
  * @returns {Promise<boolean>}
  */
 async function permTest(message) {
-  let hasPerms = message.member.hasPermission("ADMINISTRATOR");
+  let hasPerms = message.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR);
   if (hasPerms) return true;
   if (message.author.id === ownerId) return true;
   await message.channel.send(getRandom(replies.noPerms));

@@ -50,7 +50,7 @@ async function takedownCommand(message) {
     return true;
   }
 
-  if (!await checkReply((message.member.hasPermission("MOVE_MEMBERS")
+  if (!await checkReply((message.member.permissions.has(Permissions.FLAGS.MOVE_MEMBERS)
     || message.author.id === ownerId
     || inRole), replies.noPerms)) return;
   console.log(process._getActiveHandles().length , " command: after perm check");
