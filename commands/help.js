@@ -55,7 +55,7 @@ const embed = new discord.MessageEmbed()
  * @returns {Promise<void>}
  */
 async function helpCommand(message) {
-  await message.channel.send({embed: embed});
+  await message.channel.send({embeds: [embed]});
 }
 
 module.exports = helpCommand;

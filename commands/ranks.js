@@ -64,7 +64,7 @@ async function ranks(message) {
     imageBuffer,
     `Rank ${fetchedRankedMember.UserName} ${new Date()}.png`
   );
-  message.channel.send("", attachment).catch(console.error);
+  message.channel.send({files: [attachment]}).catch(console.error);
 }
 
 module.exports = ranks;
