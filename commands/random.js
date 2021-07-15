@@ -8,7 +8,7 @@ const updateTakedownDate = require("../functions/updateTakedownDate");
 const incStat = require("../functions/incStat");
 
 const replies = require("../server/replies");
-const ownerID = require("../server/ownerID");
+const ownerId = require("../server/ownerId");
 
 /**
  * Command to gather infos for random takedowns or set the option.
@@ -148,7 +148,7 @@ async function randomCommand(message) {
 async function permTest(message) {
   let hasPerms = message.member.hasPermission("ADMINISTRATOR");
   if (hasPerms) return true;
-  if (message.author.id === ownerID) return true;
+  if (message.author.id === ownerId) return true;
   await message.channel.send(getRandom(replies.noPerms));
   return false;
 }

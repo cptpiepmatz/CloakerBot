@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 
-let ownerIDFile = ".ownerID";
+let ownerIDFile = ".ownerId";
 let ownerID = fs.readFileSync(
   path.join(__dirname, "..", ownerIDFile), "utf8");
 

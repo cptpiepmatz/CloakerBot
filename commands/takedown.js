@@ -6,7 +6,7 @@ const incStat = require("../functions/incStat.js");
 const readDatabase = require("../functions/database/readDatabase");
 
 const replies = require("../server/replies");
-const ownerID = require("../server/ownerID");
+const ownerId = require("../server/ownerId");
 
 /**
  * Commands the bot to perform a takedown.
@@ -51,7 +51,7 @@ async function takedownCommand(message) {
   }
 
   if (!await checkReply((message.member.hasPermission("MOVE_MEMBERS")
-    || message.author.id === ownerID
+    || message.author.id === ownerId
     || inRole), replies.noPerms)) return;
   console.log(process._getActiveHandles().length , " command: after perm check");
 
@@ -59,8 +59,8 @@ async function takedownCommand(message) {
   // Trying to get the user to take down
   let member = message.mentions.members.first();
   if (!member) {
-    let maybeID = message.content.replace("/cloaker", "").trim();
-    member = message.guild.members.cache.get(maybeID);
+    let maybeId = message.content.replace("/cloaker", "").trim();
+    member = message.guild.members.cache.get(maybeId);
   }
   if (!await checkReply(member, replies.noMember)) return;
   console.log(process._getActiveHandles().length , " command: after user check");

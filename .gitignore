@@ -1,6 +1,6 @@
 .token
 test.token
-.ownerID
+.ownerId
 .idea
 node_modules
 Thumbs.db
