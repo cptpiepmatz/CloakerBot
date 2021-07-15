@@ -40,7 +40,7 @@ const client = new Discord.Client({
   console.log("Done.");
 })();
 
-client.on("message", async message => {
+client.on("messageCreate", async message => {
   if (message.content === "wtf-dump") {
     wtf.dump();
   }
