@@ -7,8 +7,8 @@ const clearDatabase = require("../functions/database/clearDatabase.js");
 const updateTakedownDate = require("../functions/updateTakedownDate");
 const incStat = require("../functions/incStat");
 
-const replies = require("../server/replies");
-const ownerId = require("../server/ownerId");
+const replies = require("../provider/replies");
+const ownerId = require("../provider/ownerId");
 
 /**
  * Command to gather infos for random takedowns or set the option.

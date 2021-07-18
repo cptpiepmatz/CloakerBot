@@ -3,7 +3,7 @@
 const writeDatabase = require("../functions/database/writeDatabase");
 const getRandom = require("../functions/getRandom");
 
-const replies = require("../server/replies");
+const replies = require("../provider/replies");
 
 /**
  * Command to set a role for takedowns.

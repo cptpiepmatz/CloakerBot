@@ -5,8 +5,8 @@ const getRandom = require("../functions/getRandom");
 const incStat = require("../functions/incStat.js");
 const readDatabase = require("../functions/database/readDatabase");
 
-const replies = require("../server/replies");
-const ownerId = require("../server/ownerId");
+const replies = require("../provider/replies");
+const ownerId = require("../provider/ownerId");
 
 /**
  * Commands the bot to perform a takedown.
