@@ -16,7 +16,7 @@ const commandFetchGuildNames = require("./commands/fetchGuildNames");
 const commandSetRole = require("./commands/setRole");
 const commandRanks = require("./commands/ranks");
 
-const token = require("./server/token");
+const token = require("./provider/token");
 const Intents = Discord.Intents.FLAGS;
 
 const client = new Discord.Client({
