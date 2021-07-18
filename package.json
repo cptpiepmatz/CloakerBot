@@ -28,7 +28,6 @@
     "typescript": "^4.3.5"
   },
   "devDependencies": {
-    "wtfnode": "^0.9.1"
     "ts-node": "^10.1.0"
   }
 }
