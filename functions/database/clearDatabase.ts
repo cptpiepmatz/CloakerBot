@@ -1,0 +1,16 @@
+import {DataResolver, GuildResolvable} from "discord.js";
+import DatabaseTables from "../../enums/DatabaseTables";
+
+/**
+ * Clears data from the database for a specific guild.
+ * Only the specified collection will be cleared.
+ * @param collectionName Collection to clear of
+ * @param guild Guild to clear for
+ */
+async function clearDatabase(collectionName: DatabaseTables, guild: GuildResolvable) {
+  const collection = globalThis.dbo.collection(collectionName);
+  let guildId = globalThis.client.guilds.resolve(guild).id;
+  await collection.deleteOne({GuildID: guildId});
+}
+
+export default clearDatabase;
