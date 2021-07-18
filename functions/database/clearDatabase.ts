@@ -1,4 +1,4 @@
-import {DataResolver, GuildResolvable} from "discord.js";
+import {GuildResolvable} from "discord.js";
 import DatabaseTables from "../../enums/DatabaseTables";
 
 /**
