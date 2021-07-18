@@ -24,9 +24,11 @@
     "queue": "^6.0.2",
     "set-interval-async": "^2.0.3",
     "sleep-promise": "^9.1.0",
-    "sodium": "^3.0.2"
+    "sodium": "^3.0.2",
+    "typescript": "^4.3.5"
   },
   "devDependencies": {
     "wtfnode": "^0.9.1"
+    "ts-node": "^10.1.0"
   }
 }
