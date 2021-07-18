@@ -1,12 +1,10 @@
-import {Snowflake} from "discord.js";
+import BaseGuildDBData from "./base/BaseGuildDBData";
 
 /**
  * Interface for the database type for random takedowns.
  */
-export default interface RandomTakedownsDBData {
+export default interface RandomTakedownsDBData extends BaseGuildDBData {
   doRandomTakedowns: boolean;
-  GuildID: Snowflake;
-  GuildName: String;
   randomTakedownMin?: number;
   randomTakedownMax?: number;
   takedownDate?: Date | null;
