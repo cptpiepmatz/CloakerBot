@@ -7,6 +7,7 @@ import {GuildResolvable} from "discord.js";
 async function purgeDatabase(guild: GuildResolvable): Promise<void> {
   let collections = await globalThis.dbo.collections();
   let resolvedGuild = globalThis.client.guilds.resolve(guild);
+  if (!resolvedGuild) throw new Error("Couldn't resolve guild.");
   for (let collection of collections) {
     await collection.deleteOne({GuildID: resolvedGuild.id});
   }

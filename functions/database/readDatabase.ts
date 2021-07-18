@@ -17,9 +17,12 @@ async function readDatabase(
 
   if (guild !== "all") {
     let guildId = globalThis.client.guilds.resolve(guild);
-    return await collection.findOne({GuildID: guildId})?.toArray();
+    return await collection.findOne({GuildID: guildId});
   }
 
+  if (!query) throw new Error(
+    "Query needs to be set if data should be read for every guild"
+  );
   let cursor = collection.find(query);
   let returnData = await cursor.toArray();
   cursor.close();

@@ -9,7 +9,9 @@ import DatabaseTables from "../../enums/DatabaseTables";
  */
 async function clearDatabase(collectionName: DatabaseTables, guild: GuildResolvable) {
   const collection = globalThis.dbo.collection(collectionName);
-  let guildId = globalThis.client.guilds.resolve(guild).id;
+  let resolvedGuild = globalThis.client.guilds.resolve(guild);
+  if (!resolvedGuild) throw new Error("Couldn't fetch guild.");
+  let guildId = resolvedGuild.id;
   await collection.deleteOne({GuildID: guildId});
 }
 
