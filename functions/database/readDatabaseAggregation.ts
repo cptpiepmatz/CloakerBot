@@ -13,7 +13,7 @@ async function readDatabaseAggregation(
     pipeline: Document[],
     options?: AggregateOptions
 ): Promise<Array<object>> {
-  const collection = globalThis.dbo.collection(collectionName);
+  const collection = dbo.collection(collectionName);
   let cursor = collection.aggregate(pipeline, options);
   return await cursor.toArray();
 }

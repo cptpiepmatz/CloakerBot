@@ -13,10 +13,10 @@ async function readDatabase(
     guild: GuildResolvable | "all",
     query?: Document
 ): Promise<object | Array<object> | undefined> {
-  const collection = globalThis.dbo.collection(collectionName);
+  const collection = dbo.collection(collectionName);
 
   if (guild !== "all") {
-    let guildId = globalThis.client.guilds.resolve(guild);
+    let guildId = client.guilds.resolve(guild);
     return await collection.findOne({GuildID: guildId});
   }
 

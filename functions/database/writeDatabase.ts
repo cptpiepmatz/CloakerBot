@@ -12,8 +12,9 @@ async function writeDatabase(
     guild: GuildResolvable,
     data: object
 ): Promise<void> {
-  const collection = globalThis.dbo.collection(collectionName);
-  const resolvedGuild = globalThis.client.guilds.resolve(guild);
+  const collection = dbo.collection(collectionName);
+  const resolvedGuild = client.guilds.resolve(guild);
+  if (!resolvedGuild) throw new ResolvedNullError(guild, client.guilds);
 
   let insertData = {
     $set: {
