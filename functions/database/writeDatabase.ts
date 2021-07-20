@@ -1,5 +1,6 @@
 import DatabaseTables from "../../enums/DatabaseTables";
 import {GuildResolvable} from "discord.js";
+import ResolvedNullError from "../../error/ResolvedNullError";
 
 /**
  * Writes data to the database.
@@ -28,6 +29,7 @@ async function writeDatabase(
 
   for (let dataKey in data) {
     if (data.hasOwnProperty(dataKey)) {
+      // @ts-ignore I really don't care
       insertData.$set[dataKey] = data[dataKey];
     }
   }
