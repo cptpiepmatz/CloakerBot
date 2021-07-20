@@ -15,7 +15,7 @@
     "@discordjs/voice": "^0.5.4",
     "canvas": "^2.8.0",
     "dayjs": "^1.10.6",
-    "discord.js": "^13.0.0-dev.4206e35.1626350625",
+    "discord.js": "^13.0.0-dev.02f55f0.1626782659",
     "ffmpeg-static": "^4.4.0",
     "graceful-fs": "^4.2.6",
     "json5": "^2.2.0",
