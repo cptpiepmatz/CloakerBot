@@ -5,7 +5,7 @@ const sleep = require("sleep-promise");
 const path = require("path");
 const pEvent = require("p-event");
 
-const getRandom = require("./getRandom");
+const getRandom = require("./util/getRandom");
 const incStat = require("./incStat");
 
 const takedownFiles = fs.readdirSync(path.join(__dirname, "../assets/sounds/takedowns/"));

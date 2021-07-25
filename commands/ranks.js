@@ -4,7 +4,7 @@ const Discord = require("discord.js");
 
 const fetchMemberRanks = require("../functions/fetchMemberRanks");
 const generateUserRankGraphic = require("../functions/generateUserRankGraphic");
-const getRandom = require("../functions/getRandom");
+const getRandom = require("../functions/util/getRandom");
 
 const replies = require("../server/replies");
 
