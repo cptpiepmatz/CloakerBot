@@ -1,4 +1,3 @@
-const wtf = require("wtfnode");
 const util = require("util");
 const Socket = require("net").Socket;
 
@@ -17,7 +16,7 @@ const commandFetchGuildNames = require("./commands/fetchGuildNames");
 const commandSetRole = require("./commands/setRole");
 const commandRanks = require("./commands/ranks");
 
-const token = require("./server/token");
+const token = require("./provider/token");
 const Intents = Discord.Intents.FLAGS;
 
 const client = new Discord.Client({
@@ -41,10 +40,6 @@ const client = new Discord.Client({
 })();
 
 client.on("messageCreate", async message => {
-  if (message.content === "wtf-dump") {
-    wtf.dump();
-  }
-
   if (!message.guild) return;
   if (message.author.bot) return;
   if (!message.content.toLowerCase().startsWith("/cloaker")) return;
