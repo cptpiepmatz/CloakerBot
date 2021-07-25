@@ -6,7 +6,7 @@ const fetchMemberRanks = require("../functions/fetchMemberRanks");
 const generateUserRankGraphic = require("../functions/generateUserRankGraphic");
 const getRandom = require("../functions/getRandom");
 
-const replies = require("../server/replies");
+const replies = require("../provider/replies");
 
 /**
  * Generates a rank card and posts it in the channel.

@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const token = require("./server/token");
+const token = require("./provider/token");
 
 const client = new Discord.Client();
 
