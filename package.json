@@ -6,7 +6,6 @@
   "scripts": {
     "run": "node app.js",
     "test": "node app.js test",
-    "wtf-test": "npx wtfnode app.js test",
     "wav2ogg": "npx ts-node wav2ogg.ts"
   },
   "author": "",
