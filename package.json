@@ -4,18 +4,19 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "run": "node app.js",
-    "test": "node app.js test",
+    "run": "ts-node --files app.ts",
+    "test": "ts-node --files app.ts test",
     "wav2ogg": "npx ts-node wav2ogg.ts"
   },
-  "author": "",
+  "author": "Tim 'Piepmatz' Hesse",
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.5.3",
     "@discordjs/voice": "^0.5.5",
+    "await-lock": "^2.1.0",
     "canvas": "^2.8.0",
     "dayjs": "^1.10.6",
-    "discord.js": "^13.0.0-dev.02f55f0.1626782659",
+    "discord.js": "^13.0.0-dev.4886ae2.1627300977",
     "ffmpeg-static": "^4.4.0",
     "graceful-fs": "^4.2.6",
     "json5": "^2.2.0",
