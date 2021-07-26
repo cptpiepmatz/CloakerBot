@@ -68,18 +68,22 @@ function convertFile(
     rootFiles.length + failFiles.length + takedownFiles.length, 0);
 
   try {
-    // TODO: check for volume values
     for (let rootFile of rootFiles) {
       await convertFile(
         join(soundsDir, rootFile),
-        join(outputDir, rootFile).replace(/.wav$/, ".ogg"));
+        join(outputDir, rootFile).replace(/.wav$/, ".ogg"),
+        "0.1"
+      );
       progressBar.increment(1);
     }
+
+    const voiceVolume = "0.1";
 
     for (let failFile of failFiles) {
       await convertFile(
         join(failsDir, failFile),
-        join(outputFailsDir, failFile).replace(/.wav$/, ".ogg")
+        join(outputFailsDir, failFile).replace(/.wav$/, ".ogg"),
+        voiceVolume
       );
       progressBar.increment(1);
     }
@@ -87,7 +91,8 @@ function convertFile(
     for (let takedownFile of takedownFiles) {
       await convertFile(
         join(takedownsDir, takedownFile),
-        join(outputTakedownsDir, takedownFile).replace(/.wav$/, ".ogg")
+        join(outputTakedownsDir, takedownFile).replace(/.wav$/, ".ogg"),
+        voiceVolume
       );
       progressBar.increment(1);
     }
