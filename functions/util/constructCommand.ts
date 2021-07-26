@@ -1,4 +1,4 @@
-import {ApplicationCommandData, Interaction} from "discord.js";
+import {ApplicationCommandData, CommandInteraction, Interaction} from "discord.js";
 import CommandFunction from "../../types/CommandFunction";
 
 /**
@@ -8,7 +8,7 @@ import CommandFunction from "../../types/CommandFunction";
  * @param commandData The command data being passed to the application manager
  */
 export default function constructCommand(
-  rawCommandFunction: (interaction: Interaction) => Promise<void>,
+  rawCommandFunction: (interaction: CommandInteraction) => Promise<void>,
   commandData: ApplicationCommandData
 ): CommandFunction {
  return Object.assign(rawCommandFunction, {commandData: commandData});
