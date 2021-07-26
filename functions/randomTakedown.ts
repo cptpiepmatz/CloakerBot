@@ -6,6 +6,7 @@ import Stats from "../enums/Stats";
 import incStat from "./incStat";
 import readDatabase from "./database/readDatabase";
 import updateTakedownDate from "./updateTakedownDate";
+import takedown from "./takedown";
 
 const collectionName = DatabaseTables.RANDOM_TAKEDOWNS;
 
@@ -29,7 +30,7 @@ function randomTakedown(): void {
               member = voices.cache.random().member
             }
             while (member?.id === client?.user?.id);
-            if (await takedown(member)) {
+            if (member && await takedown(member)) {
               incStat(Stats.RANDOM_TAKEDOWNS, guild)
                 .catch(console.error);
             }
