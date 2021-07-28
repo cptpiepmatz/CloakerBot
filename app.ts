@@ -1,3 +1,4 @@
+/// <reference types="./types/global" />
 import {Client, Intents, Interaction} from "discord.js";
 
 import {default as takedownCommand} from "./commands/takedown";

@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "run": "ts-node --files app.ts",
-    "test": "ts-node --files app.ts test",
+    "run": "ts-node app.ts",
+    "test": "ts-node app.ts test",
     "wav2ogg": "npx ts-node wav2ogg.ts"
   },
   "author": "Tim 'Piepmatz' Hesse",
