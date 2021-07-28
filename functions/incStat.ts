@@ -22,8 +22,8 @@ const statsNeedTarget = [
 export default async function incStat(
   statsToInc: Stats | Stats[],
   guild: GuildResolvable,
-  commander?: GuildMemberResolvable,
-  target?: GuildMemberResolvable
+  commander?: GuildMemberResolvable | null,
+  target?: GuildMemberResolvable | null
 ): Promise<void> {
   let resolvedGuild = client.guilds.resolve(guild);
   if (!resolvedGuild) {

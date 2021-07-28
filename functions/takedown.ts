@@ -16,6 +16,8 @@ import getRandom from "./util/getRandom";
 import audioBuffers from "../provider/audioBuffers";
 import TakedownResult from "../types/TakedownResult";
 import replies from "../provider/replies";
+import Stats from "../enums/Stats";
+import incStat from "./incStat";
 
 /**
  * Creates an random audio stream for the takedown and fail sounds.
@@ -87,11 +89,17 @@ async function takedown(member: GuildMember): Promise<TakedownResult> {
     takedownSuccess = true;
     await sleep(500);
     player.play(takedownResource);
+    let incStats = [Stats.TAKEDOWNS_SUCCESS, Stats.TIMES_TAKEN_DOWN];
+    if (member.user.bot) incStats.push(Stats.BOTS_TAKEN_DOWN);
+    incStat(incStats, member.guild, null, member)
+      .catch(console.error);
   }
   catch (error) {
     takedownSuccess = false;
     await sleep(500);
     player.play(failResource);
+    incStat(Stats.TAKEDOWNS_FAILED, member.guild)
+      .catch(console.error);
   }
 
   // wait until the bot is done with playing the resource and destroy everything
