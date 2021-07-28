@@ -19,6 +19,16 @@
     "Better get your brain together!"
   ],
 
+  // Replies when the takedown was successful
+  takedownSuccessful: [
+    "Ladies and Gentlemen, we got him!",
+    "Got what he deserved!",
+    "Another day at the office.",
+    "He won't leave his safehouse anymore.",
+    "Haha, got him.",
+    "I think I'll have a protein drink and hit the shower."
+  ],
+
   // Replies when the database has no data for the guild
   unknownInput: [
     "Looks like I've never seen you!",
@@ -56,7 +66,7 @@
     "Not even I can get in there. Sorry amigo."
   ],
 
-  // Replies if the bot fails to takedown a member
+  // Replies if the bot fails to take down a member
   failedTakedown: [
     "Takedown failed! Retreat!",
     "He shot me down!",

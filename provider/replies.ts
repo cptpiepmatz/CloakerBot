@@ -10,16 +10,17 @@ const repliesObject = parse(repliesFile);
  * Reply interface containing all reply strings.
  */
 interface Replies {
-  doRandom: String[];
-  doNotRandom: String[];
-  incorrectInput: String[];
-  unknownInput: String[];
-  noPerms: String[];
-  noMember: String[];
-  noChannel: String[];
-  cantJoin: String[];
-  failedTakedown: String[];
-  noNumber: String[];
+  doRandom: string[];
+  doNotRandom: string[];
+  incorrectInput: string[];
+  takedownSuccessful: string[];
+  unknownInput: string[];
+  noPerms: string[];
+  noMember: string[];
+  noChannel: string[];
+  cantJoin: string[];
+  failedTakedown: string[];
+  noNumber: string[];
 }
 
 export default repliesObject as Replies;
