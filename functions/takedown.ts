@@ -1,6 +1,4 @@
 import {GuildMember} from "discord.js";
-import {readdirSync} from "fs";
-import {join} from "path";
 import {
   AudioPlayerStatus,
   AudioResource,
@@ -16,11 +14,8 @@ import {Readable} from "stream";
 
 import getRandom from "./util/getRandom";
 import audioBuffers from "../provider/audioBuffers";
-
-const takedownFiles =
-  readdirSync(join(__dirname, "../assets/sounds/generated/takedowns"));
-const failFiles =
-  readdirSync(join(__dirname, "../assets/sounds/generated/fails"));
+import TakedownResult from "../types/TakedownResult";
+import replies from "../provider/replies";
 
 /**
  * Creates an random audio stream for the takedown and fail sounds.
@@ -35,8 +30,17 @@ function createRandomAudioResource(
   });
 }
 
-async function takedown(member: GuildMember): Promise<boolean> {
-  let takedownSuccessful = false;
+/**
+ * Executes the actual takedown.
+ * Joins a voice channel of the given member, wulululus, kicks the member,
+ * chooses a voice line and leaves.
+ *
+ * Currently making use of pre converted .ogg files and buffered pre buffered
+ * audio to increase performance drastically.
+ * @param member Member to take down
+ * @return A boolean presenting if the takedown did work
+ */
+async function takedown(member: GuildMember): Promise<TakedownResult> {
   const guildId = member.guild.id;
   const takedownResource = createRandomAudioResource("takedowns");
   const failResource = createRandomAudioResource("fails");
@@ -45,16 +49,25 @@ async function takedown(member: GuildMember): Promise<boolean> {
     {inputType: StreamType.OggOpus}
   );
 
+  // update takedown lock if necessary and sync for every guild
   if (!takedownLocks[guildId]) takedownLocks[guildId] = new AwaitLock();
   const lock = takedownLocks[guildId];
   await lock.acquireAsync();
 
-  if (!member.voice.channel) throw new Error("lol, kein Voice");
+  if (!member.voice.channel) {
+    return {
+      target: member,
+      success: false,
+      message: getRandom(replies.noChannel)
+    };
+  }
 
   const connection = joinVoiceChannel({
     channelId: member.voice.channel.id,
     guildId: guildId,
-    adapterCreator: member.guild.voiceAdapterCreator
+    adapterCreator: member.guild.voiceAdapterCreator,
+    selfDeaf: false,
+    selfMute: false
   });
 
   const player = createAudioPlayer();
@@ -62,21 +75,34 @@ async function takedown(member: GuildMember): Promise<boolean> {
   player.play(wululuResource);
 
   // Calculate time of the wululu
-  // min   60000
-  // max  230000
-  // diff 170000
-  const wululuTime = 1000 + Math.floor(Math.random() * 4000);
+  const wululuTime = 2000 + Math.floor(Math.random() * 3000);
   await sleep(wululuTime);
 
-  await member.voice.kick();
-  takedownSuccessful = true;
-  player.play(takedownResource);
+  // pause the player, kick the target and wait a little bit for the takedown
+  // line
+  player.pause();
+  let takedownSuccess: boolean;
+  try {
+    await member.voice.kick();
+    takedownSuccess = true;
+    await sleep(500);
+    player.play(takedownResource);
+  }
+  catch (error) {
+    takedownSuccess = false;
+    await sleep(500);
+    player.play(failResource);
+  }
 
+  // wait until the bot is done with playing the resource and destroy everything
   await pEvent(player, AudioPlayerStatus.Idle);
   player.stop();
   connection.destroy();
+  wululuResource.playStream.destroy();
+  takedownResource.playStream.destroy();
+  failResource.playStream.destroy();
   lock.release();
-  return takedownSuccessful;
+  return {target: member, success: takedownSuccess}
 }
 
 export default takedown;
