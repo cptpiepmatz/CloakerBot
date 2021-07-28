@@ -24,17 +24,11 @@ async function updateTakedownDate(
   }
 
   // get min time for new takedown
-  let times = [];
-  times[0] = guildDBData.randomTakedownMin;
-  if (typeof times[0] !== "number") {
-    times[0] = 4;
-  }
+  let times = [NaN, NaN];
+  times[0] = guildDBData.randomTakedownMin ?? 24;
 
   // get max time for new takedown
-  times[1] = guildDBData.randomTakedownMax;
-  if (typeof times[1] !== "number") {
-    times[1] = 24;
-  }
+  times[1] = guildDBData.randomTakedownMax ?? 24;
 
   let minTime = Math.min(...times);
   let maxTime = Math.max(...times);

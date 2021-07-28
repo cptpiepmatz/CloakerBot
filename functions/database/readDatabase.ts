@@ -1,6 +1,7 @@
 import {GuildResolvable} from "discord.js";
 import {Document} from "mongodb";
 import DatabaseTables from "../../enums/DatabaseTables";
+import ResolvedNullError from "../../error/ResolvedNullError";
 
 /**
  * Reads data from the database for a specific or all guilds.
@@ -16,8 +17,9 @@ async function readDatabase(
   const collection = dbo.collection(collectionName);
 
   if (guild !== "all") {
-    let guildId = client.guilds.resolve(guild);
-    return await collection.findOne({GuildID: guildId});
+    let resolvedGuild = client.guilds.resolve(guild);
+    if (!resolvedGuild) throw new ResolvedNullError(guild, client.guilds);
+    return await collection.findOne({GuildID: resolvedGuild.id});
   }
 
   if (!query) throw new Error(
