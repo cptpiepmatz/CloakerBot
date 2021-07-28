@@ -2,7 +2,7 @@ import {readFileSync} from "fs";
 import {join} from "path";
 import {parse} from "json5";
 
-const repliesPath = join(__dirname, "..", "replies.json5");
+const repliesPath = join(__dirname, "../assets/replies.json5");
 const repliesFile = readFileSync(repliesPath, "utf8");
 const repliesObject = parse(repliesFile);
 
