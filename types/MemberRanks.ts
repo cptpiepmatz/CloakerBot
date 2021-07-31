@@ -8,7 +8,7 @@ export default interface MemberRanks {
   UserID: Snowflake;
   UserName: string;
   victimRankHere: number;
-  victimTotalRankHere: number;
+  victimRankTotal: number;
   punisherRankHere: number;
   punisherRankTotal: number;
   timesSmackedHere: number;

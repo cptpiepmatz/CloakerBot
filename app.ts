@@ -8,6 +8,7 @@ import openDatabase from "./functions/database/openDatabase";
 import takedownCommand from "./commands/takedown";
 import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
+import ranksCommand from "./commands/ranks";
 
 globalThis.client = new Client({
   messageCacheLifetime: 3 * 60,
@@ -32,7 +33,8 @@ client.once("ready", async () => {
   await guild.commands.set([
     takedownCommand.commandData,
     randomCommand.commandData,
-    setRoleCommand.commandData
+    setRoleCommand.commandData,
+    ranksCommand.commandData
   ]);
   console.log("Registered the commands");
   console.log("Everything done, let's go!");
@@ -50,6 +52,9 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       break;
     case "takedownrole":
       await setRoleCommand(interaction);
+      break;
+    case "ranks":
+      await ranksCommand(interaction);
       break;
   }
 });
