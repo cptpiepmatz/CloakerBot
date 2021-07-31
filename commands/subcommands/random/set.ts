@@ -16,9 +16,9 @@ export default async function setHandler(
   interaction: GuildCommandInteraction,
   dbData: RandomTakedownsDBData
 ): Promise<void> {
-  const enable = interaction.options.get("enable");
-  const max = runOrNull(parseFloat, interaction.options.get("max"));
-  const min = runOrNull(parseFloat, interaction.options.get("min"));
+  const enable = interaction.options.get("enable")?.value;
+  const max = runOrNull(parseFloat, interaction.options.get("max")?.value);
+  const min = runOrNull(parseFloat, interaction.options.get("min")?.value);
 
   if (!(enable || max || min)) {
     await interaction.editReply("*Enter at least one parameter.*");
@@ -26,7 +26,7 @@ export default async function setHandler(
   }
 
   let writeObject: Partial<RandomTakedownsDBData> = {};
-  if (enable) writeObject.doRandomTakedowns = enable.value === "enable";
+  if (enable) writeObject.doRandomTakedowns = enable === "enable";
   if (max) writeObject.randomTakedownMax = max;
   if (min) writeObject.randomTakedownMin = min;
 
@@ -36,10 +36,11 @@ export default async function setHandler(
     writeObject
   );
 
-  let replyMessage = "**You set the following:**";
+  let replyMessage = "***You set the following:**";
   if (enable) replyMessage += "\nDo random takedowns: " + enable;
-  if (max) replyMessage += "\nMax time until takedown: " + max;
-  if (min) replyMessage += "\nMin time until takedown: " + min;
+  if (max) replyMessage += `\nMax time until takedown: ${max} hours`;
+  if (min) replyMessage += `\nMin time until takedown: ${min} hours`;
+  replyMessage += "*";
   await interaction.editReply(replyMessage);
 
   await createUndoButton(interaction, dbData);
