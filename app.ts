@@ -1,11 +1,13 @@
 /// <reference types="./types/global" />
 import {Client, Intents, Interaction} from "discord.js";
 
-import {default as takedownCommand} from "./commands/takedown";
-import random, {default as randomCommand} from "./commands/random";
 import token from "./provider/token";
 import ResolvedNullError from "./error/ResolvedNullError";
 import openDatabase from "./functions/database/openDatabase";
+
+import takedownCommand from "./commands/takedown";
+import randomCommand from "./commands/random";
+import setRoleCommand from "./commands/takedownRole";
 
 globalThis.client = new Client({
   messageCacheLifetime: 3 * 60,
@@ -29,7 +31,8 @@ client.once("ready", async () => {
   if (!guild) throw new ResolvedNullError(client.guilds, testGuildId);
   await guild.commands.set([
     takedownCommand.commandData,
-    randomCommand.commandData
+    randomCommand.commandData,
+    setRoleCommand.commandData
   ]);
   console.log("Registered the commands");
   console.log("Everything done, let's go!");
@@ -44,6 +47,9 @@ client.on("interactionCreate", async (interaction: Interaction) => {
       break;
     case "random":
       await randomCommand(interaction);
+      break;
+    case "takedownrole":
+      await setRoleCommand(interaction);
       break;
   }
 });
