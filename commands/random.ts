@@ -6,11 +6,8 @@ import readDatabase from "../functions/database/readDatabase";
 import RandomTakedownsDBData from "../types/database/RandomTakedownsDBData";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
 import infoHandler from "./subcommands/random/info";
-import enableHandler from "./subcommands/random/enable";
-import disableHandler from "./subcommands/random/disable";
-import maxHandler from "./subcommands/random/max";
-import minHandler from "./subcommands/random/min";
 import defaultHandler from "./subcommands/random/default";
+import setHandler from "./subcommands/random/set";
 
 /**
  * Command handling everything about random takedowns.
@@ -29,11 +26,8 @@ async function randomCommand(interaction: CommandInteraction): Promise<void> {
   await interaction.defer();
   switch (subCommand) {
     case "info": return await infoHandler(guildInteraction, dbData);
-    case "enable": return await enableHandler(guildInteraction, dbData);
-    case "disable": return await disableHandler(guildInteraction, dbData);
-    case "max": return await maxHandler(guildInteraction, dbData);
-    case "min": return await minHandler(guildInteraction, dbData);
     case "default": return await defaultHandler(guildInteraction, dbData);
+    case "set": return await setHandler(guildInteraction, dbData);
   }
 }
 
@@ -48,47 +42,43 @@ const commandData: ApplicationCommandData = {
     },
     {
       name: "set",
-      type: "SUB_COMMAND_GROUP",
+      type: "SUB_COMMAND",
       description: "Set values for the random takedowns",
       options: [
         {
           name: "enable",
-          type: "SUB_COMMAND",
-          description: "Enables random takedowns on this server"
-        },
-        {
-          name: "disable",
-          type: "SUB_COMMAND",
-          description: "Disables random takedowns on this server"
+          type: "STRING",
+          choices: [
+            {
+              name: "enable",
+              value: "enable"
+            },
+            {
+              name: "disable",
+              value: "disable"
+            }
+          ],
+          description:
+            "Set if you want to enable or disable the random takedowns",
         },
         {
           name: "max",
-          type: "SUB_COMMAND",
-          description: "Set the UPPER end of the frequency for random takedowns",
-          options: [{
-            name: "hours",
-            type: "STRING",
-            required: true,
-            description: "Set the time in hours. (Example: *0.25*)"
-          }]
+          type: "STRING",
+          description:
+            "Set the UPPER end of the frequency in hours (Example: 0.25)",
         },
         {
           name: "min",
-          type: "SUB_COMMAND",
-          description: "Set the LOWER end of the frequency for random takedowns",
-          options: [{
-            name: "hours",
-            type: "STRING",
-            required: true,
-            description: "Set the time in hours. (Example: *0.25*)"
-          }]
-        },
-        {
-          name: "default",
-          type: "SUB_COMMAND",
-          description: "Reset the random settings for this server"
+          type: "STRING",
+          description:
+            "Set the LOWER end of the frequency in hours (Example: 0.25)",
         }
       ]
+    },
+    {
+      name: "default",
+      type: "SUB_COMMAND",
+      description: "Reset the random settings for this server"
     }
   ]
 }

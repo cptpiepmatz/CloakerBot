@@ -6,6 +6,7 @@ import createUndoButton from "../../util/random/createUndoButton";
 
 /**
  * Handler function for the subcommand: "default".
+ *
  * This resets the database entry for this guild and therefore effectively sets
  * the default value.
  * @param interaction Interaction of the command

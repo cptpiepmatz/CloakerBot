@@ -5,6 +5,7 @@ import GuildCommandInteraction from "../../../types/GuildCommandInteraction";
 
 /**
  * Handler for the subcommand: "info".
+ *
  * This will display the current state for random takedowns on this guild.
  * @param interaction Interaction of the command
  * @param dbData Old data from the database
