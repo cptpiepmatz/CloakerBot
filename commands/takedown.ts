@@ -1,15 +1,16 @@
-import {ApplicationCommandData, CommandInteraction, GuildMember} from "discord.js";
+import {ApplicationCommandData, GuildMember} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import takedown from "../functions/takedown";
 import replies from "../provider/replies";
 import getRandom from "../functions/util/getRandom";
+import GuildCommandInteraction from "../types/GuildCommandInteraction";
 
 /**
  * Command for taking down users.
  * @param interaction
  */
-async function takedownCommand(interaction: CommandInteraction) {
+async function takedownCommand(interaction: GuildCommandInteraction) {
   let member = interaction.options.get("user")?.member;
   if (member instanceof GuildMember) {
     await interaction.defer({ephemeral: true});

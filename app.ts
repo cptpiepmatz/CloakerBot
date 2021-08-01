@@ -9,6 +9,7 @@ import takedownCommand from "./commands/takedown";
 import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
+import GuildCommandInteraction from "./types/GuildCommandInteraction";
 
 globalThis.client = new Client({
   messageCacheLifetime: 3 * 60,
@@ -42,19 +43,20 @@ client.once("ready", async () => {
 
 client.on("interactionCreate", async (interaction: Interaction) => {
   if (!interaction.isCommand() || !interaction.inGuild()) return;
+  const guildInteraction = interaction as GuildCommandInteraction;
 
   switch (interaction.commandName) {
     case "cloaker":
-      await takedownCommand(interaction);
+      await takedownCommand(guildInteraction);
       break;
     case "random":
-      await randomCommand(interaction);
+      await randomCommand(guildInteraction);
       break;
     case "takedownrole":
-      await setRoleCommand(interaction);
+      await setRoleCommand(guildInteraction);
       break;
     case "ranks":
-      await ranksCommand(interaction);
+      await ranksCommand(guildInteraction);
       break;
   }
 });

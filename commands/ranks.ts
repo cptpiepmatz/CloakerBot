@@ -1,20 +1,20 @@
-import {ApplicationCommandData, CommandInteraction, Guild, GuildMember, MessageAttachment} from "discord.js";
+import {ApplicationCommandData, GuildMember, MessageAttachment} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import fetchMemberRanks from "../functions/fetchMemberRanks";
 import getRandom from "../functions/util/getRandom";
 import replies from "../provider/replies";
 import generateUserRankGraphic from "../functions/generateUserRankGraphic";
+import GuildCommandInteraction from "../types/GuildCommandInteraction";
 
 /** Ranks command to display a badge of your stats. */
-async function ranksCommand(interaction: CommandInteraction) {
+async function ranksCommand(interaction: GuildCommandInteraction) {
   const member = (interaction.options.getMember("user")
     ?? interaction.member) as GuildMember;
-  const guild = interaction.guild as Guild;
 
   await interaction.defer();
 
-  let fetchedRankedMember = await fetchMemberRanks(member, guild);
+  let fetchedRankedMember = await fetchMemberRanks(member, interaction.guild);
   if (!fetchedRankedMember) {
     interaction.editReply(getRandom(replies.noMember)).catch(console.error);
     return;

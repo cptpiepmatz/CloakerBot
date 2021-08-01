@@ -1,16 +1,16 @@
-import {ApplicationCommandData, CommandInteraction, Snowflake} from "discord.js";
+import {ApplicationCommandData, Snowflake} from "discord.js";
 
 import writeDatabase from "../functions/database/writeDatabase";
 import DatabaseTables from "../enums/DatabaseTables";
 import constructCommand from "../functions/util/constructCommand";
 import readDatabase from "../functions/database/readDatabase";
 import RolesDBData from "../types/database/RolesDBData";
+import GuildCommandInteraction from "../types/GuildCommandInteraction";
 
 const collectionName = DatabaseTables.ROLES;
 
 /** Command for setting a role that is allowed to do takedowns. */
-async function setRoleCommand(interaction: CommandInteraction): Promise<void> {
-  if (!interaction.guild) return;
+async function setRoleCommand(interaction: GuildCommandInteraction): Promise<void> {
   await interaction.defer();
 
   const role = interaction.options.getRole("role");

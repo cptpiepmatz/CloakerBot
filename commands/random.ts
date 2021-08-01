@@ -1,4 +1,4 @@
-import {ApplicationCommandData, CommandInteraction, Guild} from "discord.js";
+import {ApplicationCommandData} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import DatabaseTables from "../enums/DatabaseTables";
@@ -13,9 +13,7 @@ import setHandler from "./subcommands/random/set";
  * Command handling everything about random takedowns.
  * @param interaction
  */
-async function randomCommand(interaction: CommandInteraction): Promise<void> {
-  if (!(interaction.guild instanceof Guild)) return;
-  let guildInteraction = interaction as GuildCommandInteraction;
+async function randomCommand(interaction: GuildCommandInteraction): Promise<void> {
 
   let subCommand = interaction.options.getSubCommand(true);
   let dbData = (await readDatabase(
@@ -25,9 +23,9 @@ async function randomCommand(interaction: CommandInteraction): Promise<void> {
 
   await interaction.defer();
   switch (subCommand) {
-    case "info": return await infoHandler(guildInteraction, dbData);
-    case "default": return await defaultHandler(guildInteraction, dbData);
-    case "set": return await setHandler(guildInteraction, dbData);
+    case "info": return await infoHandler(interaction, dbData);
+    case "default": return await defaultHandler(interaction, dbData);
+    case "set": return await setHandler(interaction, dbData);
   }
 }
 
