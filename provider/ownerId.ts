@@ -1,7 +1,8 @@
-import {readFileSync} from "fs";
 import {join} from "path";
 
-let ownerIdFile = ".ownerId";
-let ownerId = readFileSync(join(__dirname, "..", ownerIdFile), "utf8");
+import FileProviderUtil from "./FileProviderUtil";
 
-export default ownerId;
+const ownerIdFile = ".ownerId";
+const ownerIdFilePath = join(__dirname, "..", ownerIdFile);
+
+export default FileProviderUtil.provideString(ownerIdFilePath);

@@ -1,10 +1,8 @@
-import {readFileSync} from "fs";
 import {join} from "path";
-import {parse} from "json5";
+
+import FileProviderUtil from "./FileProviderUtil";
 
 const repliesPath = join(__dirname, "../assets/replies.json5");
-const repliesFile = readFileSync(repliesPath, "utf8");
-const repliesObject = parse(repliesFile);
 
 /**
  * Reply interface containing all reply strings.
@@ -23,4 +21,4 @@ interface Replies {
   noNumber: string[];
 }
 
-export default repliesObject as Replies;
+export default FileProviderUtil.provideObject<Replies>(repliesPath);

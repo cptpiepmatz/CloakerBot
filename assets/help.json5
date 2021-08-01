@@ -1,0 +1,29 @@
+{
+  title: "CloakerBot Help Page",
+  description: '"Not so clever, are we?!"',
+  fields: [
+    {
+      title: "Commands",
+      description: 'You should see all commands simply by entering \"/\"'
+    },
+    {
+      title: "Permissions",
+      description: "\
+        Some commands require certain permissions. \
+        Commands that set settings for the bot need the ADMIN permissions. \
+        And taking down needs the permission to move member or have the takedown \
+        role.\
+      "
+    },
+    {
+      title: "Further Help and Discord",
+      description: "\
+        A lot of server owners who run the bot are on the [server of the bot]\
+        (https://discord.gg/XMsdwM5NXf). \
+        Consider joining it, if you need any help or don't understand the \
+        commands. \
+        Also updates about the bot will be posted there. \
+      "
+    }
+  ]
+}
