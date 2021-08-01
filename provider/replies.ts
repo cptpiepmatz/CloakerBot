@@ -7,7 +7,7 @@ const repliesPath = join(__dirname, "../assets/replies.json5");
 /**
  * Reply interface containing all reply strings.
  */
-interface Replies {
+export interface Replies {
   doRandom: string[];
   doNotRandom: string[];
   incorrectInput: string[];

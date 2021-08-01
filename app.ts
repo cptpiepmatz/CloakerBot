@@ -4,12 +4,14 @@ import {Client, Intents, Interaction} from "discord.js";
 import token from "./provider/token";
 import ResolvedNullError from "./error/ResolvedNullError";
 import openDatabase from "./functions/database/openDatabase";
+import GuildCommandInteraction from "./types/GuildCommandInteraction";
 
 import takedownCommand from "./commands/takedown";
 import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
-import GuildCommandInteraction from "./types/GuildCommandInteraction";
+import helpCommand from "./commands/help";
+
 
 globalThis.client = new Client({
   messageCacheLifetime: 3 * 60,
@@ -35,7 +37,8 @@ client.once("ready", async () => {
     takedownCommand.commandData,
     randomCommand.commandData,
     setRoleCommand.commandData,
-    ranksCommand.commandData
+    ranksCommand.commandData,
+    helpCommand.commandData
   ]);
   console.log("Registered the commands");
   console.log("Everything done, let's go!");
@@ -46,18 +49,11 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   const guildInteraction = interaction as GuildCommandInteraction;
 
   switch (interaction.commandName) {
-    case "cloaker":
-      await takedownCommand(guildInteraction);
-      break;
-    case "random":
-      await randomCommand(guildInteraction);
-      break;
-    case "takedownrole":
-      await setRoleCommand(guildInteraction);
-      break;
-    case "ranks":
-      await ranksCommand(guildInteraction);
-      break;
+    case "cloaker": return await takedownCommand(guildInteraction);
+    case "random": return await randomCommand(guildInteraction);
+    case "takedownrole": return await setRoleCommand(guildInteraction);
+    case "ranks": return await ranksCommand(guildInteraction);
+    case "help": return await helpCommand(guildInteraction);
   }
 });
 
