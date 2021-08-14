@@ -5,7 +5,6 @@ import takedown from "../functions/takedown";
 import replies from "../provider/replies";
 import getRandom from "../functions/util/getRandom";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
-import incStat from "../functions/incStat";
 
 /**
  * Command for taking down users.
