@@ -15,13 +15,13 @@ import setHandler from "./subcommands/random/set";
  */
 async function randomCommand(interaction: GuildCommandInteraction): Promise<void> {
 
-  let subCommand = interaction.options.getSubCommand(true);
+  let subCommand = interaction.options.getSubcommand(true);
   let dbData = (await readDatabase(
     DatabaseTables.RANDOM_TAKEDOWNS,
     interaction.guild
   ) ?? {doRandomTakedowns: false}) as RandomTakedownsDBData;
 
-  await interaction.defer();
+  await interaction.deferReply();
   switch (subCommand) {
     case "info": return await infoHandler(interaction, dbData);
     case "default": return await defaultHandler(interaction, dbData);

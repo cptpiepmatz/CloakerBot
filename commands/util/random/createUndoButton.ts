@@ -46,7 +46,7 @@ export default async function createUndoButton(
       });
       return false;
     }
-    await interactionToFilter.defer();
+    await interactionToFilter.deferReply();
     return interactionToFilter.customId === customId;
   }
 

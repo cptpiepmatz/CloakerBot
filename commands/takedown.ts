@@ -13,7 +13,7 @@ import GuildCommandInteraction from "../types/GuildCommandInteraction";
 async function takedownCommand(interaction: GuildCommandInteraction) {
   let member = interaction.options.get("user")?.member;
   if (member instanceof GuildMember) {
-    await interaction.defer({ephemeral: true});
+    await interaction.deferReply({ephemeral: true});
     let result = await takedown(member);
     if (result.success) {
       await interaction.editReply(getRandom(replies.takedownSuccessful));

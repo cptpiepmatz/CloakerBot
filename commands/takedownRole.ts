@@ -11,7 +11,7 @@ const collectionName = DatabaseTables.ROLES;
 
 /** Command for setting a role that is allowed to do takedowns. */
 async function setRoleCommand(interaction: GuildCommandInteraction): Promise<void> {
-  await interaction.defer();
+  await interaction.deferReply();
 
   const role = interaction.options.getRole("role");
   if (role) {

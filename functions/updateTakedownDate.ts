@@ -1,10 +1,10 @@
 import {GuildResolvable} from "discord.js";
-import dayjs = require("dayjs");
 
 import DatabaseTables from "../enums/DatabaseTables";
 import RandomTakedownsDBData from "../types/database/RandomTakedownsDBData";
 import readDatabase from "./database/readDatabase";
 import writeDatabase from "./database/writeDatabase";
+import dayjs = require("dayjs");
 
 const collectionName = DatabaseTables.RANDOM_TAKEDOWNS;
 

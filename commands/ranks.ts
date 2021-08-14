@@ -14,7 +14,7 @@ async function ranksCommand(interaction: GuildCommandInteraction) {
 
   const font = interaction.options.getString("font") ? "Nezuko" : undefined;
 
-  await interaction.defer();
+  await interaction.deferReply();
 
   let fetchedRankedMember = await fetchMemberRanks(member, interaction.guild);
   if (!fetchedRankedMember) {

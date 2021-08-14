@@ -1,5 +1,5 @@
 /// <reference types="./types/global" />
-import {Client, Intents, Interaction} from "discord.js";
+import {Client, Intents, Interaction, Options} from "discord.js";
 
 import token from "./provider/token";
 import ResolvedNullError from "./error/ResolvedNullError";
@@ -14,8 +14,13 @@ import helpCommand from "./commands/help";
 
 
 globalThis.client = new Client({
-  messageCacheLifetime: 3 * 60,
-  messageSweepInterval: 30,
+  makeCache: Options.cacheWithLimits({
+    MessageManager: {
+      sweepInterval: 60 * 3,
+      maxSize: 50
+    },
+    ThreadManager: 50
+  }),
   intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_VOICE_STATES,

@@ -5,10 +5,10 @@
  * @param passFunc Function to execute with the given parameters
  * @param passParams Parameters to test for null or execute
  */
-function runOrNull<T>(
+const runOrNull = <T>(
   passFunc: (...internalParams: any) => T,
   ...passParams: any
-): T | null {
+): T | null  => {
   if (passParams.includes(null)) return null;
   return passFunc(...passParams);
 }

@@ -85,7 +85,7 @@ async function takedown(member: GuildMember): Promise<TakedownResult> {
   player.pause();
   let takedownSuccess: boolean;
   try {
-    await member.voice.kick();
+    await member.voice.disconnect();
     takedownSuccess = true;
     await sleep(500);
     player.play(takedownResource);

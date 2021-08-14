@@ -1,10 +1,9 @@
-import {GuildMemberResolvable, GuildResolvable, GuildMember, Guild} from "discord.js";
+import {Guild, GuildMemberResolvable, GuildResolvable} from "discord.js";
 
 import DatabaseTables from "../enums/DatabaseTables";
 import Stats, {GuildStats} from "../enums/Stats";
 import runOrNull from "./util/runOrNull";
 import ResolvedNullError from "../error/ResolvedNullError";
-import BaseGuildDBData from "../types/database/base/BaseGuildDBData";
 import StatsGuildsDBData from "../types/database/StatsGuildsDBData";
 import StatsUsersDBData from "../types/database/StatsUsersDBData";
 import {UserDiscriminator} from "../types/database/base/BaseUserDBData";
@@ -30,8 +29,15 @@ export default async function incStat(
     throw new ResolvedNullError(guild, client.guilds);
   }
 
-  let resolvedCommander = runOrNull(resolvedGuild.members.resolve, commander);
-  let resolvedTarget = runOrNull(resolvedGuild.members.resolve, target);
+  let resolvedCommander = null;
+  if (commander) {
+    resolvedCommander = resolvedGuild.members.resolve(commander);
+  }
+
+  let resolvedTarget = null;
+  if (target) {
+    resolvedTarget = resolvedGuild.members.resolve(target);
+  }
 
   const guildCollection = dbo.collection(DatabaseTables.STATS_GUILDS);
   const userCollection = dbo.collection(DatabaseTables.STATS_USERS);
