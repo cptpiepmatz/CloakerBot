@@ -1,6 +1,5 @@
 import GuildCommandInteraction from "../../../types/GuildCommandInteraction";
 import RandomTakedownsDBData from "../../../types/database/RandomTakedownsDBData";
-import runOrNull from "../../../functions/util/runOrNull";
 import writeDatabase from "../../../functions/database/writeDatabase";
 import DatabaseTables from "../../../enums/DatabaseTables";
 import createUndoButton from "../../util/random/createUndoButton";
@@ -17,8 +16,8 @@ export default async function setHandler(
   dbData: RandomTakedownsDBData
 ): Promise<void> {
   const enable = interaction.options.get("enable")?.value;
-  const max = runOrNull(parseFloat, interaction.options.get("max")?.value);
-  const min = runOrNull(parseFloat, interaction.options.get("min")?.value);
+  const max = parseFloat(interaction.options.getString("max") ?? "") || null;
+  const min = parseFloat(interaction.options.getString("min") ?? "") || null;
 
   if (!(enable || max || min)) {
     await interaction.editReply("*Enter at least one parameter.*");

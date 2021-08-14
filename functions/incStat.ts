@@ -2,7 +2,6 @@ import {Guild, GuildMemberResolvable, GuildResolvable} from "discord.js";
 
 import DatabaseTables from "../enums/DatabaseTables";
 import Stats, {GuildStats} from "../enums/Stats";
-import runOrNull from "./util/runOrNull";
 import ResolvedNullError from "../error/ResolvedNullError";
 import StatsGuildsDBData from "../types/database/StatsGuildsDBData";
 import StatsUsersDBData from "../types/database/StatsUsersDBData";
@@ -152,7 +151,7 @@ export default async function incStat(
   }
   updateStatTarget(Stats.TIMES_TAKEN_DOWN, resolvedGuild);
 
-  if (runOrNull(Object.keys, guildData.$inc)?.length === 0) {
+  if (Object.keys(guildData.$inc ?? {})?.length === 0) {
     delete guildData.$inc;
   }
 
