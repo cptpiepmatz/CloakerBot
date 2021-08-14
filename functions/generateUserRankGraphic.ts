@@ -6,7 +6,7 @@ const templatePath = join(__dirname, "../assets/graphics/user_rank.png");
 let templateImage: Image;
 
 // Register the free to use font Roboto and some others
-const fontFamily = '"Robot", "Cambria Math", "Segoe UI", sans-serif';
+const fontFamily = '"Roboto", "Cambria Math", "Segoe UI", sans-serif';
 
 const robotoPath = join(__dirname, "../assets/fonts/Roboto/");
 registerFont(robotoPath + "Roboto-Regular.ttf", {
