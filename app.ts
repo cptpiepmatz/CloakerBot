@@ -11,7 +11,7 @@ import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
 import helpCommand from "./commands/help";
-
+import RandomTakedownManager from "./structures/RandomTakedownManager";
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
@@ -46,6 +46,7 @@ client.once("ready", async () => {
     helpCommand.commandData
   ]);
   console.log("Registered the commands");
+  new RandomTakedownManager(120000).startInterval();
   console.log("Everything done, let's go!");
 });
 
