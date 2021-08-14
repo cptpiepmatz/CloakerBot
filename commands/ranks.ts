@@ -12,6 +12,8 @@ async function ranksCommand(interaction: GuildCommandInteraction) {
   const member = (interaction.options.getMember("user")
     ?? interaction.member) as GuildMember;
 
+  const font = interaction.options.getString("font") ? "Nezuko" : undefined;
+
   await interaction.defer();
 
   let fetchedRankedMember = await fetchMemberRanks(member, interaction.guild);
@@ -37,7 +39,8 @@ async function ranksCommand(interaction: GuildCommandInteraction) {
     [
       fetchedRankedMember.timesCalledHere,
       fetchedRankedMember.timesCalledTotal
-    ]
+    ],
+    font
   );
 
   let attachment = new MessageAttachment(

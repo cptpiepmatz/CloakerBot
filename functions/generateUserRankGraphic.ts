@@ -28,6 +28,12 @@ registerFont(segoePath + "segoeuib.ttf", {
   weight: "700"
 });
 
+const nezukoPath = join(__dirname, "../assets/fonts/Nezuko/");
+registerFont(nezukoPath + "Nezuko.otf", {
+  family: "Nezuko",
+  weight: "400"
+});
+
 /**
  * Generates the graphic for the user rank badge.
  * <p>All the pairs represent first the guild value and second the total value.
@@ -38,14 +44,19 @@ registerFont(segoePath + "segoeuib.ttf", {
  * @param punisherRank Pair of punisher rank
  * @param timesSmacked Pair of times smacked
  * @param timesCalled Pair of times called
+ * @param selectedFont A selected font to use
  */
 async function generateUserRankGraphic(
   member: GuildMember,
   victimRank: [number, number],
   punisherRank: [number, number],
   timesSmacked: [number, number],
-  timesCalled: [number, number]
+  timesCalled: [number, number],
+  selectedFont?: "Nezuko" | null
 ): Promise<Buffer> {
+  let usingFontFamily = fontFamily;
+  if (selectedFont === "Nezuko") usingFontFamily = '"Nezuko", ' + fontFamily;
+
   templateImage = templateImage || await loadImage(templatePath);
   let canvas = createCanvas(600, 150);
   let ctx = canvas.getContext("2d");
@@ -63,16 +74,16 @@ async function generateUserRankGraphic(
   ctx.drawImage(templateImage, 0, 0);
 
   // draw the username
-  ctx.font = "bold 21.1px " + fontFamily;
+  ctx.font = "bold 21.1px " + usingFontFamily;
   ctx.textAlign = "left";
   ctx.fillText(member.displayName, 150, 25, 240);
 
   // draw the user discriminator
-  ctx.font = "13.4px " + fontFamily;
+  ctx.font = "13.4px " + usingFontFamily;
   ctx.fillText("#" + member.user.discriminator, 150, 42);
 
   // draw the stats
-  ctx.font = "bold 16.7px " + fontFamily;
+  ctx.font = "bold 16.7px " + usingFontFamily;
   ctx.textAlign = "center";
   ctx.fillText("#" + victimRank[0], 304, 65);
   ctx.fillText("#" + victimRank[1], 364, 65);
