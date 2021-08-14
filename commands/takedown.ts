@@ -5,16 +5,18 @@ import takedown from "../functions/takedown";
 import replies from "../provider/replies";
 import getRandom from "../functions/util/getRandom";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
+import incStat from "../functions/incStat";
 
 /**
  * Command for taking down users.
  * @param interaction
  */
 async function takedownCommand(interaction: GuildCommandInteraction) {
+  let commander = interaction.member;
   let member = interaction.options.get("user")?.member;
   if (member instanceof GuildMember) {
     await interaction.deferReply({ephemeral: true});
-    let result = await takedown(member);
+    let result = await takedown(member, commander as GuildMember | null);
     if (result.success) {
       await interaction.editReply(getRandom(replies.takedownSuccessful));
     }

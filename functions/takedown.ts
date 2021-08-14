@@ -40,9 +40,13 @@ function createRandomAudioResource(
  * Currently making use of pre converted .ogg files and buffered pre buffered
  * audio to increase performance drastically.
  * @param member Member to take down
+ * @param commander If given, this will increase the commander stat
  * @return A boolean presenting if the takedown did work
  */
-async function takedown(member: GuildMember): Promise<TakedownResult> {
+async function takedown(
+  member: GuildMember,
+  commander: GuildMember | null = null
+): Promise<TakedownResult> {
   const guildId = member.guild.id;
   const takedownResource = createRandomAudioResource("takedowns");
   const failResource = createRandomAudioResource("fails");
@@ -91,7 +95,7 @@ async function takedown(member: GuildMember): Promise<TakedownResult> {
     player.play(takedownResource);
     let incStats = [Stats.TAKEDOWNS_SUCCESS, Stats.TIMES_TAKEN_DOWN];
     if (member.user.bot) incStats.push(Stats.BOTS_TAKEN_DOWN);
-    incStat(incStats, member.guild, null, member)
+    incStat(incStats, member.guild, commander, member)
       .catch(console.error);
   }
   catch (error) {
