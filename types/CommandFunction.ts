@@ -1,10 +1,10 @@
-import {ApplicationCommandData} from "discord.js";
+import {ApplicationCommandData, ChatInputApplicationCommandData} from "discord.js";
 
 import GuildCommandInteraction from "./GuildCommandInteraction";
 
 /** Type for functions to execute commands. */
 type CommandFunction = {
-  commandData: ApplicationCommandData;
+  commandData: ChatInputApplicationCommandData;
   (interaction: GuildCommandInteraction): Promise<void>
 }
 

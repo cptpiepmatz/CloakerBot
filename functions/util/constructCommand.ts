@@ -1,4 +1,4 @@
-import {ApplicationCommandData} from "discord.js";
+import {ApplicationCommandData, ChatInputApplicationCommandData} from "discord.js";
 import CommandFunction from "../../types/CommandFunction";
 import GuildCommandInteraction from "../../types/GuildCommandInteraction";
 
@@ -10,7 +10,7 @@ import GuildCommandInteraction from "../../types/GuildCommandInteraction";
  */
 export default function constructCommand(
   rawCommandFunction: (interaction: GuildCommandInteraction) => Promise<void>,
-  commandData: ApplicationCommandData
+  commandData: ChatInputApplicationCommandData
 ): CommandFunction {
  return Object.assign(rawCommandFunction, {commandData: commandData});
 }
