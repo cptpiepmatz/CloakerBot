@@ -35,6 +35,7 @@ async function randomCommand(interaction: GuildCommandInteraction): Promise<void
 const commandData: ApplicationCommandData = {
   name: "random",
   description: "Check or set the random takedowns for this guild",
+  defaultPermission: false,
   options: [
     {
       name: "info",

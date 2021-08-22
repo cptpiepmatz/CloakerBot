@@ -38,6 +38,7 @@ async function takedownCommand(interaction: GuildCommandInteraction) {
 const commandData: ApplicationCommandData = {
   name: "cloaker",
   description: "Take down your friends",
+  defaultPermission: false,
   options: [{
     name: "user",
     type: "USER",

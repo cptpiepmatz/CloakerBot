@@ -47,6 +47,7 @@ async function setRoleCommand(interaction: GuildCommandInteraction): Promise<voi
 const commandData: ApplicationCommandData = {
   name: "takedownrole",
   description: "Shows the currently used role as takedown role",
+  defaultPermission: false,
   options: [
     {
       name: "role",
