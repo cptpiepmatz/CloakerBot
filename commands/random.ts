@@ -1,4 +1,4 @@
-import {ApplicationCommandData} from "discord.js";
+import {ApplicationCommandData, ApplicationCommandPermissionData, Guild} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import DatabaseTables from "../enums/DatabaseTables";
@@ -8,6 +8,9 @@ import GuildCommandInteraction from "../types/GuildCommandInteraction";
 import infoHandler from "./subcommands/random/info";
 import defaultHandler from "./subcommands/random/default";
 import setHandler from "./subcommands/random/set";
+import allowAdmins from "./permissions/allowAdmins";
+import allowBotOwner from "./permissions/allowBotOwner";
+import allowGuildOwner from "./permissions/allowGuildOwner";
 
 /**
  * Command handling everything about random takedowns.
@@ -81,4 +84,14 @@ const commandData: ApplicationCommandData = {
   ]
 }
 
-export default constructCommand(randomCommand, commandData);
+async function getPermissions(
+  guild: Guild
+): Promise<ApplicationCommandPermissionData[]> {
+  return [
+    allowGuildOwner(guild),
+    allowAdmins(guild),
+    allowBotOwner(guild)
+  ].flat();
+}
+
+export default constructCommand(randomCommand, commandData, getPermissions);

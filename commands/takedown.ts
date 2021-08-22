@@ -1,10 +1,13 @@
-import {ApplicationCommandData, GuildMember} from "discord.js";
+import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, GuildMember} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import takedown from "../functions/takedown";
 import replies from "../provider/replies";
 import getRandom from "../functions/util/getRandom";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
+import allowGuildOwner from "./permissions/allowGuildOwner";
+import allowAdmins from "./permissions/allowAdmins";
+import allowBotOwner from "./permissions/allowBotOwner";
 
 /**
  * Command for taking down users.
@@ -42,5 +45,15 @@ const commandData: ApplicationCommandData = {
     required: true
   }]
 };
+
+async function getPermissions(
+  guild: Guild
+): Promise<ApplicationCommandPermissionData[]> {
+  return [
+    allowGuildOwner(guild),
+    allowAdmins(guild),
+    allowBotOwner(guild)
+  ].flat();
+}
 
 export default constructCommand(takedownCommand, commandData);

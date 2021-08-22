@@ -1,5 +1,5 @@
 /// <reference types="./types/global" />
-import {Client, Intents, Interaction, Options} from "discord.js";
+import {ApplicationCommandData, Client, Intents, Interaction, Options} from "discord.js";
 
 import token from "./provider/token";
 import ResolvedNullError from "./error/ResolvedNullError";
@@ -12,6 +12,7 @@ import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
 import helpCommand from "./commands/help";
 import RandomTakedownManager from "./structures/RandomTakedownManager";
+import CommandManager from "./structures/CommandManager";
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
@@ -31,21 +32,16 @@ globalThis.client = new Client({
 
 globalThis.takedownLocks = {};
 
-client.once("ready", async () => {
+client.once("ready", async client => {
   console.log("Started up the bot");
   await openDatabase();
   console.log("Opened the database");
-  const testGuildId = "581884294495207444";
-  let guild = await client.guilds.fetch(testGuildId);
-  if (!guild) throw new ResolvedNullError(client.guilds, testGuildId);
-  await guild.commands.set([
-    takedownCommand.commandData,
-    randomCommand.commandData,
-    setRoleCommand.commandData,
-    ranksCommand.commandData,
-    helpCommand.commandData
-  ]);
-  console.log("Registered the commands");
+
+  const commandManager = new CommandManager();
+  await commandManager.fetchCommands();
+
+  process.exit(0);
+
   new RandomTakedownManager(120000).startInterval();
   console.log("Everything done, let's go!");
 });

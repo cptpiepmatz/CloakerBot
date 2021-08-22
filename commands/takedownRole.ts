@@ -1,4 +1,4 @@
-import {ApplicationCommandData, Snowflake} from "discord.js";
+import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, Snowflake} from "discord.js";
 
 import writeDatabase from "../functions/database/writeDatabase";
 import DatabaseTables from "../enums/DatabaseTables";
@@ -6,6 +6,9 @@ import constructCommand from "../functions/util/constructCommand";
 import readDatabase from "../functions/database/readDatabase";
 import RolesDBData from "../types/database/RolesDBData";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
+import allowGuildOwner from "./permissions/allowGuildOwner";
+import allowAdmins from "./permissions/allowAdmins";
+import allowBotOwner from "./permissions/allowBotOwner";
 
 const collectionName = DatabaseTables.ROLES;
 
@@ -53,4 +56,14 @@ const commandData: ApplicationCommandData = {
   ]
 }
 
-export default constructCommand(setRoleCommand, commandData);
+async function getPermissions(
+  guild: Guild
+): Promise<ApplicationCommandPermissionData[]> {
+  return [
+    allowGuildOwner(guild),
+    allowAdmins(guild),
+    allowBotOwner(guild)
+  ].flat();
+}
+
+export default constructCommand(setRoleCommand, commandData, getPermissions);
