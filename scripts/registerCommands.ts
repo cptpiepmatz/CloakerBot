@@ -28,4 +28,6 @@ const spinner = ora();
     helpCommand.commandData
   ]);
   spinner.succeed("Registered commands");
+
+  client.destroy();
 })();
