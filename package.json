@@ -6,7 +6,7 @@
   "scripts": {
     "run": "ts-node app.ts",
     "dev:run": "node --require ts-node/register . dev",
-    "wav2ogg": "node --require ts-node/register wav2ogg.ts"
+    "wav2ogg": "node --require ts-node/register scripts/wav2ogg.ts"
   },
   "author": "Tim 'Piepmatz' Hesse",
   "license": "ISC",

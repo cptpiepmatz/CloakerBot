@@ -4,7 +4,7 @@ import {Presets, SingleBar} from "cli-progress";
 import {exec} from "child_process";
 import {join} from "path";
 
-const soundsDir = join(__dirname, "assets/sounds");
+const soundsDir = join(__dirname, "../assets/sounds");
 const failsDir = join(soundsDir, "fails");
 const takedownsDir = join(soundsDir, "takedowns");
 const outputDir = join(soundsDir, "generated");
