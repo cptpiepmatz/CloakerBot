@@ -1,6 +1,7 @@
 import {ApplicationCommandData, Client} from "discord.js";
 import {Db} from "mongodb";
 import AwaitLock from "await-lock";
+import CommandManager from "../structures/CommandManager";
 
 declare global {
   namespace globalThis {
@@ -12,10 +13,11 @@ declare global {
       setRole: ApplicationCommandData,
       ranks: ApplicationCommandData,
       help: ApplicationCommandData
-    }
+    };
     var takedownLocks: {
       [key: string]: AwaitLock
-    }
+    };
+    var commandManager: CommandManager;
   }
 }
 

@@ -21,6 +21,7 @@ async function setRoleCommand(interaction: GuildCommandInteraction): Promise<voi
     await writeDatabase(collectionName, interaction.guild, {
       takedownRole: role.id
     });
+    await commandManager.updatePermissions(interaction.guild);
     await interaction.editReply(
       `*You set the role ${role} to takedown people.*\n` +
       "Well, you somehow did it."

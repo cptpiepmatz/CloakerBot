@@ -32,7 +32,7 @@ globalThis.client = new Client({
 
 globalThis.takedownLocks = {};
 
-const commandManager = new CommandManager();
+globalThis.commandManager = new CommandManager();
 
 client.once("ready", async client => {
   console.log("Started up the bot");
