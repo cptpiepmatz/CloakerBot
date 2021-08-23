@@ -8,6 +8,8 @@ import GuildCommandInteraction from "../types/GuildCommandInteraction";
 import allowGuildOwner from "./permissions/allowGuildOwner";
 import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";
+import allowRolesWithPermission from "./permissions/allowRolesWithPermission";
+import allowCloakerRole from "./permissions/allowCloakerRole";
 
 /**
  * Command for taking down users.
@@ -50,11 +52,15 @@ const commandData: ApplicationCommandData = {
 async function getPermissions(
   guild: Guild
 ): Promise<ApplicationCommandPermissionData[]> {
-  return [
+  const permissionData: ApplicationCommandPermissionData[] = [
     allowGuildOwner(guild),
     allowAdmins(guild),
-    allowBotOwner(guild)
+    allowBotOwner(guild),
+    allowRolesWithPermission(guild, "MOVE_MEMBERS")
   ].flat();
+  const cloakerRolePermissions = await allowCloakerRole(guild);
+  if (cloakerRolePermissions) permissionData.push(cloakerRolePermissions);
+  return permissionData;
 }
 
-export default constructCommand(takedownCommand, commandData);
+export default constructCommand(takedownCommand, commandData, getPermissions);
