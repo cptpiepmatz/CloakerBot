@@ -24,23 +24,27 @@ globalThis.client = new Client({
   }),
   intents: [
     Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MEMBERS,
     Intents.FLAGS.GUILD_VOICE_STATES,
     Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_INTEGRATIONS
+    Intents.FLAGS.GUILD_INTEGRATIONS,
+    Intents.FLAGS.DIRECT_MESSAGES
   ]
 });
 
 globalThis.takedownLocks = {};
+
+const commandManager = new CommandManager();
 
 client.once("ready", async client => {
   console.log("Started up the bot");
   await openDatabase();
   console.log("Opened the database");
 
-  const commandManager = new CommandManager();
   await commandManager.fetchCommands();
-
-  process.exit(0);
+  for (let guild of client.guilds.cache.values()) {
+    await commandManager.updatePermissions(guild);
+  }
 
   new RandomTakedownManager(120000).startInterval();
   console.log("Everything done, let's go!");
@@ -58,5 +62,15 @@ client.on("interactionCreate", async (interaction: Interaction) => {
     case "help": return await helpCommand(guildInteraction);
   }
 });
+
+client.on("guildCreate", guild => commandManager.updatePermissions(guild));
+client.on("guildIntegrationsUpdate", guild => commandManager.updatePermissions(guild));
+client.on("guildMemberAdd", member => commandManager.updatePermissions(member.guild));
+client.on("guildMembersChunk", (members, guild) => commandManager.updatePermissions(guild));
+client.on("guildMemberUpdate", (oldMember, newMember) => commandManager.updatePermissions(newMember.guild));
+client.on("guildUpdate", (oldGuild, newGuild) => commandManager.updatePermissions(newGuild));
+client.on("roleCreate", role => commandManager.updatePermissions(role.guild));
+client.on("roleDelete", role => commandManager.updatePermissions(role.guild));
+client.on("roleUpdate", role => commandManager.updatePermissions(role.guild));
 
 client.login(token);
