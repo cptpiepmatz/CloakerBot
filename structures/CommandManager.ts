@@ -3,17 +3,8 @@ import randomCommand from "../commands/random";
 import ranksCommand from "../commands/ranks";
 import takedownCommand from "../commands/takedown";
 import takedownRoleCommand from "../commands/takedownRole";
-import {
-  ApplicationCommand,
-  ApplicationCommandData,
-  Client,
-  Collection,
-  Guild,
-  GuildApplicationCommandPermissionData,
-  Snowflake
-} from "discord.js";
+import {ApplicationCommand, Guild, GuildApplicationCommandPermissionData} from "discord.js";
 import CommandFunction from "../types/CommandFunction";
-import * as Util from "util";
 
 export default class CommandManager {
 

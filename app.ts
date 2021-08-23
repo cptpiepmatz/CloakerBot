@@ -1,18 +1,17 @@
 /// <reference types="./types/global" />
-import {ApplicationCommandData, Client, Intents, Interaction, Options} from "discord.js";
+import {Client, Intents, Interaction, Options} from "discord.js";
 
 import token from "./provider/token";
-import ResolvedNullError from "./error/ResolvedNullError";
 import openDatabase from "./functions/database/openDatabase";
 import GuildCommandInteraction from "./types/GuildCommandInteraction";
+import RandomTakedownManager from "./structures/RandomTakedownManager";
+import CommandManager from "./structures/CommandManager";
 
 import takedownCommand from "./commands/takedown";
 import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
 import helpCommand from "./commands/help";
-import RandomTakedownManager from "./structures/RandomTakedownManager";
-import CommandManager from "./structures/CommandManager";
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
