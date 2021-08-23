@@ -23,7 +23,6 @@ globalThis.client = new Client({
   }),
   intents: [
     Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MEMBERS,
     Intents.FLAGS.GUILD_VOICE_STATES,
     Intents.FLAGS.GUILD_MESSAGES,
     Intents.FLAGS.GUILD_INTEGRATIONS,
@@ -64,9 +63,6 @@ client.on("interactionCreate", async (interaction: Interaction) => {
 
 client.on("guildCreate", guild => commandManager.updatePermissions(guild));
 client.on("guildIntegrationsUpdate", guild => commandManager.updatePermissions(guild));
-client.on("guildMemberAdd", member => commandManager.updatePermissions(member.guild));
-client.on("guildMembersChunk", (members, guild) => commandManager.updatePermissions(guild));
-client.on("guildMemberUpdate", (oldMember, newMember) => commandManager.updatePermissions(newMember.guild));
 client.on("guildUpdate", (oldGuild, newGuild) => commandManager.updatePermissions(newGuild));
 client.on("roleCreate", role => commandManager.updatePermissions(role.guild));
 client.on("roleDelete", role => commandManager.updatePermissions(role.guild));
