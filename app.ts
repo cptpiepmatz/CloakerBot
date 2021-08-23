@@ -61,11 +61,13 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   }
 });
 
-client.on("guildCreate", guild => commandManager.updatePermissions(guild));
-client.on("guildIntegrationsUpdate", guild => commandManager.updatePermissions(guild));
-client.on("guildUpdate", (oldGuild, newGuild) => commandManager.updatePermissions(newGuild));
-client.on("roleCreate", role => commandManager.updatePermissions(role.guild));
-client.on("roleDelete", role => commandManager.updatePermissions(role.guild));
-client.on("roleUpdate", role => commandManager.updatePermissions(role.guild));
+client.on("message", commandManager.initPermissions);
+
+client.on("guildCreate", commandManager.updatePermissions);
+client.on("guildIntegrationsUpdate", commandManager.updatePermissions);
+client.on("guildUpdate", commandManager.updatePermissions);
+client.on("roleCreate", commandManager.updatePermissions);
+client.on("roleDelete", commandManager.updatePermissions);
+client.on("roleUpdate", commandManager.updatePermissions);
 
 client.login(token);
