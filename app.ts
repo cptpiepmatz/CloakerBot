@@ -12,6 +12,8 @@ import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
 import helpCommand from "./commands/help";
+import OwnerNotifier from "./structures/OwnerNotifier";
+import update200 from "./owner_messages/Update 2.0.0";
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
@@ -40,9 +42,11 @@ client.once("ready", async client => {
   console.log("Opened the database");
 
   await commandManager.fetchCommands();
-  for (let guild of client.guilds.cache.values()) {
-    await commandManager.updatePermissions(guild);
-  }
+
+  const ownerNotifier = await OwnerNotifier.create();
+  client.on("messageCreate", ownerNotifier.messageOwner.bind(ownerNotifier));
+  client.on("interactionCreate", ownerNotifier.unsubscribe.bind(ownerNotifier));
+  client.on("interactionCreate", ownerNotifier.subscribe.bind(ownerNotifier));
 
   new RandomTakedownManager(120000).startInterval();
   console.log("Everything done, let's go!");
@@ -61,13 +65,13 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   }
 });
 
-client.on("message", commandManager.initPermissions);
+//client.on("message", commandManager.initPermissions.bind(commandManager));
 
-client.on("guildCreate", commandManager.updatePermissions);
-client.on("guildIntegrationsUpdate", commandManager.updatePermissions);
-client.on("guildUpdate", commandManager.updatePermissions);
-client.on("roleCreate", commandManager.updatePermissions);
-client.on("roleDelete", commandManager.updatePermissions);
-client.on("roleUpdate", commandManager.updatePermissions);
+client.on("guildCreate", commandManager.updatePermissions.bind(commandManager));
+client.on("guildIntegrationsUpdate", commandManager.updatePermissions.bind(commandManager));
+client.on("guildUpdate", commandManager.updatePermissions.bind(commandManager));
+client.on("roleCreate", commandManager.updatePermissions.bind(commandManager));
+client.on("roleDelete", commandManager.updatePermissions.bind(commandManager));
+client.on("roleUpdate", commandManager.updatePermissions.bind(commandManager));
 
 client.login(token);
