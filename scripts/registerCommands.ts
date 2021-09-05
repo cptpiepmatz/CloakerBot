@@ -6,6 +6,7 @@ import randomCommand from "../commands/random";
 import setRoleCommand from "../commands/takedownRole";
 import ranksCommand from "../commands/ranks";
 import helpCommand from "../commands/help";
+import dangerZoneCommand from "../commands/dangerZone";
 import ora from "ora";
 
 const spinner = ora();
@@ -25,7 +26,8 @@ const spinner = ora();
     randomCommand.commandData,
     setRoleCommand.commandData,
     ranksCommand.commandData,
-    helpCommand.commandData
+    helpCommand.commandData,
+    dangerZoneCommand.commandData
   ]);
   spinner.succeed("Registered commands");
 

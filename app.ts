@@ -6,14 +6,16 @@ import openDatabase from "./functions/database/openDatabase";
 import GuildCommandInteraction from "./types/GuildCommandInteraction";
 import RandomTakedownManager from "./structures/RandomTakedownManager";
 import CommandManager from "./structures/CommandManager";
+import OwnerNotifier from "./structures/OwnerNotifier";
+import update200 from "./owner_messages/Update 2.0.0";
+import DangerZoneManager from "./structures/DangerZoneManager";
 
 import takedownCommand from "./commands/takedown";
 import randomCommand from "./commands/random";
 import setRoleCommand from "./commands/takedownRole";
 import ranksCommand from "./commands/ranks";
 import helpCommand from "./commands/help";
-import OwnerNotifier from "./structures/OwnerNotifier";
-import update200 from "./owner_messages/Update 2.0.0";
+import dangerZoneCommand from "./commands/dangerZone";
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
@@ -48,6 +50,9 @@ client.once("ready", async client => {
   client.on("interactionCreate", ownerNotifier.unsubscribe.bind(ownerNotifier));
   client.on("interactionCreate", ownerNotifier.subscribe.bind(ownerNotifier));
 
+  globalThis.dangerZoneManager = await DangerZoneManager.create();
+  client.on("voiceStateUpdate", dangerZoneManager.controlZone.bind(dangerZoneManager));
+
   new RandomTakedownManager(120000).startInterval();
   console.log("Everything done, let's go!");
 });
@@ -57,15 +62,16 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   const guildInteraction = interaction as GuildCommandInteraction;
 
   switch (interaction.commandName) {
-    case "cloaker": return await takedownCommand(guildInteraction);
-    case "random": return await randomCommand(guildInteraction);
-    case "takedownrole": return await setRoleCommand(guildInteraction);
-    case "ranks": return await ranksCommand(guildInteraction);
-    case "help": return await helpCommand(guildInteraction);
+    case takedownCommand.commandData.name: return await takedownCommand(guildInteraction);
+    case randomCommand.commandData.name: return await randomCommand(guildInteraction);
+    case setRoleCommand.commandData.name: return await setRoleCommand(guildInteraction);
+    case ranksCommand.commandData.name: return await ranksCommand(guildInteraction);
+    case helpCommand.commandData.name: return await helpCommand(guildInteraction);
+    case dangerZoneCommand.commandData.name: return await dangerZoneCommand(guildInteraction);
   }
 });
 
-//client.on("message", commandManager.initPermissions.bind(commandManager));
+client.on("messageCreate", commandManager.initPermissions.bind(commandManager));
 
 client.on("guildCreate", commandManager.updatePermissions.bind(commandManager));
 client.on("guildIntegrationsUpdate", commandManager.updatePermissions.bind(commandManager));

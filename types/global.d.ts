@@ -2,6 +2,7 @@ import {ApplicationCommandData, Client} from "discord.js";
 import {Db} from "mongodb";
 import AwaitLock from "await-lock";
 import CommandManager from "../structures/CommandManager";
+import DangerZoneManager from "../structures/DangerZoneManager";
 
 declare global {
   namespace globalThis {
@@ -18,6 +19,7 @@ declare global {
       [key: string]: AwaitLock
     };
     var commandManager: CommandManager;
+    var dangerZoneManager: DangerZoneManager;
   }
 }
 
