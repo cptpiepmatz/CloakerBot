@@ -1,8 +1,4 @@
-import {
-  ChatInputApplicationCommandData,
-  Guild,
-  ApplicationCommandPermissionData
-} from "discord.js";
+import {ApplicationCommandPermissionData, ChatInputApplicationCommandData, Guild} from "discord.js";
 
 import GuildCommandInteraction from "./GuildCommandInteraction";
 

@@ -1,8 +1,4 @@
-import {
-  ApplicationCommandPermissionData,
-  Guild,
-  PermissionResolvable
-} from "discord.js";
+import {ApplicationCommandPermissionData, Guild, PermissionResolvable} from "discord.js";
 
 export default function allowRolesWithPermission(
   guild: Guild, permission: PermissionResolvable

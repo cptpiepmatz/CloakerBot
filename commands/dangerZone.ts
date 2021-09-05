@@ -1,5 +1,5 @@
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
-import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, GuildChannel, VoiceChannel} from "discord.js";
+import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, VoiceChannel} from "discord.js";
 import allowGuildOwner from "./permissions/allowGuildOwner";
 import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";

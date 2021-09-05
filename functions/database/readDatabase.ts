@@ -1,4 +1,4 @@
-import {Guild, GuildResolvable} from "discord.js";
+import {GuildResolvable} from "discord.js";
 import {Document} from "mongodb";
 import DatabaseTables from "../../enums/DatabaseTables";
 import ResolvedNullError from "../../error/ResolvedNullError";

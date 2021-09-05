@@ -7,7 +7,6 @@ import GuildCommandInteraction from "./types/GuildCommandInteraction";
 import RandomTakedownManager from "./structures/RandomTakedownManager";
 import CommandManager from "./structures/CommandManager";
 import OwnerNotifier from "./structures/OwnerNotifier";
-import update200 from "./owner_messages/Update 2.0.0";
 import DangerZoneManager from "./structures/DangerZoneManager";
 
 import takedownCommand from "./commands/takedown";

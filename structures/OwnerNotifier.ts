@@ -1,12 +1,10 @@
 import readDatabase from "../functions/database/readDatabase";
 import DatabaseTables from "../enums/DatabaseTables";
 import OwnerNotificationsDBData from "../types/database/OwnerNotificationsDBData";
-import {ButtonInteraction, Interaction, Message, MessageActionRow, MessageButton, Snowflake} from "discord.js";
-import BaseUserDBData from "../types/database/base/BaseUserDBData";
+import {Interaction, Message, MessageActionRow, MessageButton, Snowflake} from "discord.js";
 
 import update200 from "../owner_messages/Update 2.0.0";
 import AwaitLock from "await-lock";
-import writeDatabase from "../functions/database/writeDatabase";
 
 const ownerMessages = [update200];
 
