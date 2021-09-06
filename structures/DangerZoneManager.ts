@@ -5,18 +5,22 @@ import DangerZonesDBData from "../types/database/DangerZonesDBData";
 import writeDatabase from "../functions/database/writeDatabase";
 import takedown from "../functions/takedown";
 import sleep from "sleep-promise";
+import Logger from "js-logger";
 
 export default class DangerZoneManager {
 
   private dangerZones: Record<Snowflake, Snowflake> = {};
 
   private constructor(dbData: DangerZonesDBData[]) {
+    Logger.trace("constructing danger zone manager");
     for (let dbDate of dbData) {
       this.dangerZones[dbDate.GuildID] = dbDate.dangerZone;
+      Logger.trace(dbDate);
     }
   }
 
   static async create(): Promise<DangerZoneManager> {
+    Logger.trace("creating danger zone manager");
     return new this(await readDatabase(
       DatabaseTables.DANGER_ZONES,
       "all"
@@ -24,6 +28,8 @@ export default class DangerZoneManager {
   }
 
   async putDangerZone(voiceChannel: VoiceChannel): Promise<void> {
+    Logger.debug("putting voice channel " +
+      voiceChannel.name + " for " + voiceChannel.guild.name);
     this.dangerZones[voiceChannel.guildId] = voiceChannel.id;
     await writeDatabase(DatabaseTables.DANGER_ZONES, voiceChannel.guild, {
       GuildName: voiceChannel.guild.name,
@@ -36,6 +42,7 @@ export default class DangerZoneManager {
     if (!newState.member) return;
     if (newState.member.id === client.user?.id) return;
     if (newState.channelId !== this.dangerZones[newState.guild.id]) return;
+    Logger.info("danger zone takedown for " + newState.guild.name);
     await sleep(2000);
     await takedown(newState.member, null);
   }

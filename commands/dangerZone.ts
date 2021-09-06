@@ -4,16 +4,21 @@ import allowGuildOwner from "./permissions/allowGuildOwner";
 import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";
 import constructCommand from "../functions/util/constructCommand";
+import Logger from "js-logger";
 
 async function dangerZoneCommand(interaction: GuildCommandInteraction) {
   await interaction.deferReply({ephemeral: true});
+  Logger.trace("deferred reply");
+
   const channel = interaction.options.getChannel("channel");
   if (channel) {
     if (channel.type === "GUILD_VOICE") {
+      Logger.debug(`selected ${channel.name} as danger zone on ${channel.guild.name}`);
       await dangerZoneManager.putDangerZone(channel as VoiceChannel);
       await interaction.editReply(`Set ${channel} as danger zone.`);
     }
     else {
+      Logger.debug(`selected channel ${channel.name} is no voice channel on ${interaction.guild.name}`);
       await interaction.editReply(`${channel} is no voice channel.`);
     }
     return;
@@ -22,6 +27,7 @@ async function dangerZoneCommand(interaction: GuildCommandInteraction) {
   if (currentDangerZone) {
     const dangerZoneChannel = await interaction.guild.channels.fetch(currentDangerZone);
     if (dangerZoneChannel && !dangerZoneChannel.deleted) {
+      Logger.debug(`replied with current danger zone ${dangerZoneChannel.name} on ${interaction.guild.name}`);
       await interaction.editReply(`Currently ${dangerZoneChannel} is set as danger zone.`);
       return;
     }

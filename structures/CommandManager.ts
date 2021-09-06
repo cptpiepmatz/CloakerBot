@@ -6,6 +6,7 @@ import takedownRoleCommand from "../commands/takedownRole";
 import dangerZoneCommand from "../commands/dangerZone";
 import {ApplicationCommand, Guild, GuildApplicationCommandPermissionData, Message, Role, Snowflake} from "discord.js";
 import CommandFunction from "../types/CommandFunction";
+import Logger from "js-logger";
 
 export default class CommandManager {
 
@@ -26,13 +27,17 @@ export default class CommandManager {
       takedownRoleCommand,
       dangerZoneCommand
     ]) {
+      Logger.trace("constructing command manager");
       this._commandFunctions[commandFunction.commandData.name] = commandFunction;
     }
   }
 
   async fetchCommands(): Promise<void> {
+    Logger.debug("fetching commands");
     const registeredCommands = await client.application!.commands.fetch();
     for (let registeredCommand of registeredCommands.values()) {
+      Logger.debug("fetched command:");
+      Logger.debug(registeredCommand);
       this._registeredCommands[registeredCommand.name] = registeredCommand;
     }
   }
@@ -46,6 +51,8 @@ export default class CommandManager {
     else if (updateFor instanceof Guild) guild = updateFor;
     else guild = updateFor.guild;
 
+    Logger.info("updating permissions for " + guild);
+
     const fullPermissions: GuildApplicationCommandPermissionData[] = [];
     for (let [name, command] of Object.entries(this.registeredCommands)) {
       if (command.defaultPermission) continue;
@@ -56,6 +63,8 @@ export default class CommandManager {
       });
     }
     await guild.commands.permissions.set({fullPermissions: fullPermissions});
+    Logger.debug("set permissions:");
+    Logger.debug(fullPermissions);
   }
 
   async initPermissions(message: Message): Promise<void> {
@@ -64,6 +73,7 @@ export default class CommandManager {
     if (this.initDone[guild.id]) return;
     await this.updatePermissions(guild);
     this.initDone[guild.id] = true;
+    Logger.info("initialized permissions for " + guild);
   }
 
 }

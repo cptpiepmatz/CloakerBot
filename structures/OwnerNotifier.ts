@@ -5,6 +5,7 @@ import {Interaction, Message, MessageActionRow, MessageButton, Snowflake} from "
 
 import update200 from "../owner_messages/Update 2.0.0";
 import AwaitLock from "await-lock";
+import Logger from "js-logger";
 
 const ownerMessages = [update200];
 
@@ -21,7 +22,9 @@ export default class OwnerNotifier {
   private lock = new AwaitLock();
 
   private constructor(dbData: OwnerNotificationsDBData[]) {
+    Logger.trace("constructing owner notifier");
     for (let date of dbData) {
+      Logger.trace(date);
       this.ownerMessageStates[date.UserID] = {
         id: date.UserID,
         username: date.UserName,
@@ -33,12 +36,15 @@ export default class OwnerNotifier {
   }
 
   static async create(): Promise<OwnerNotifier> {
+    Logger.trace("creating owner notifier");
     const dbData = await readDatabase(DatabaseTables.OWNER_NOTIFICATIONS, "all");
     return new OwnerNotifier(dbData as OwnerNotificationsDBData[]);
   }
 
   async messageOwner(message: Message): Promise<void> {
     if (!message.guild) return;
+    Logger.info("messaging owner " + message.author.username +
+      "#" + message.author.discriminator);
     const owner = await message.guild.fetchOwner();
     if (this.ownerMessageStates[owner.id]?.allowDMs ?? true) {
       await this.lock.acquireAsync();
@@ -67,6 +73,9 @@ export default class OwnerNotifier {
   async unsubscribe(interaction: Interaction) {
     if (!interaction.isButton()) return;
     if (interaction.customId !== "dm-unsub") return;
+
+    Logger.info(interaction.user.username + "#" +
+      interaction.user.discriminator + " unsubscribed from owner notifications");
 
     await interaction.deferReply();
 
@@ -103,6 +112,9 @@ export default class OwnerNotifier {
     if (!interaction.isButton()) return;
     if (interaction.customId !== "dm-sub") return;
 
+    Logger.info(interaction.user.username + "#" +
+      interaction.user.discriminator + " subscribed from owner notifications");
+
     await interaction.deferReply();
 
     const userId = interaction.user.id;
@@ -135,6 +147,8 @@ export default class OwnerNotifier {
   }
 
   private async updateDB(ownerId: Snowflake) {
+    Logger.debug("updating db entry with " + this.ownerMessageStates[ownerId]);
+
     const collection = dbo.collection(DatabaseTables.OWNER_NOTIFICATIONS);
     const currentState = this.ownerMessageStates[ownerId];
     const insertData: OwnerNotificationsDBData = {

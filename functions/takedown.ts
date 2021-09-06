@@ -18,6 +18,8 @@ import TakedownResult from "../types/TakedownResult";
 import replies from "../provider/replies";
 import Stats from "../enums/Stats";
 import incStat from "./incStat";
+import Logger from "js-logger";
+import memberString from "./util/memberString";
 
 /**
  * Creates an random audio stream for the takedown and fail sounds.
@@ -47,6 +49,12 @@ async function takedown(
   member: GuildMember,
   commander: GuildMember | null = null
 ): Promise<TakedownResult> {
+  Logger.info("initiating takedown " + memberString(member) +
+    " on " + member.guild.name);
+  if (commander) {
+    Logger.info("initiated by " + memberString(commander));
+  }
+
   const guildId = member.guild.id;
   const takedownResource = createRandomAudioResource("takedowns");
   const failResource = createRandomAudioResource("fails");
