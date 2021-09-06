@@ -8,6 +8,7 @@ export default async function allowCloakerRole(
 ): Promise<ApplicationCommandPermissionData | null> {
   const rolesDBData =
     await readDatabase(DatabaseTables.ROLES, guild) as RolesDBData;
+  if (!rolesDBData) return null;
   const roleId = rolesDBData.takedownRole;
   if (!roleId) return null;
   return {
