@@ -95,6 +95,7 @@ async function takedown(
     player.play(takedownResource);
     let incStats = [Stats.TAKEDOWNS_SUCCESS, Stats.TIMES_TAKEN_DOWN];
     if (member.user.bot) incStats.push(Stats.BOTS_TAKEN_DOWN);
+    if (commander) incStats.push(Stats.TIMES_COMMANDED_TAKEDOWN);
     incStat(incStats, member.guild, commander, member)
       .catch(console.error);
   }
