@@ -13,6 +13,7 @@ import writeDatabase from "../../../functions/database/writeDatabase";
 import DatabaseTables from "../../../enums/DatabaseTables";
 import colors from "../../../provider/colors";
 import clearDatabase from "../../../functions/database/clearDatabase";
+import Logger from "js-logger";
 
 /**
  * A util function for the random command to create an "undo" button.
@@ -76,8 +77,13 @@ export default async function createUndoButton(
     await buttonInteraction?.editReply({embeds: [undoEmbed]});
   }
   catch (e) {
-    // do nothing, I guess
+    Logger.error(e);
   }
-  row.components[0].setDisabled(true);
-  await interaction.editReply({components: [row]});
+  try {
+    row.components[0].setDisabled(true);
+    await interaction.editReply({components: [row]});
+  }
+  catch (e) {
+    Logger.error(e);
+  }
 }
