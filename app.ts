@@ -67,7 +67,7 @@ client.once("ready", async client => {
   client.on("voiceStateUpdate", dangerZoneManager.controlZone.bind(dangerZoneManager));
   Logger.debug("created danger zone manager and bound events");
 
-  new RandomTakedownManager(120000).startInterval();
+  new RandomTakedownManager(30000).startInterval();
   Logger.debug("started random takedown manager");
 
   Logger.info("booted up!");
