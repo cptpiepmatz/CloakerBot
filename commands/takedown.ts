@@ -1,4 +1,11 @@
-import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, GuildMember} from "discord.js";
+import {
+  ApplicationCommandData,
+  ApplicationCommandPermissionData,
+  Guild,
+  GuildMember,
+  GuildMemberRoleManager,
+  Permissions
+} from "discord.js";
 
 import constructCommand from "../functions/util/constructCommand";
 import takedown from "../functions/takedown";
@@ -10,6 +17,10 @@ import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";
 import allowRolesWithPermission from "./permissions/allowRolesWithPermission";
 import allowCloakerRole from "./permissions/allowCloakerRole";
+import ownerId from "../provider/ownerId";
+import readDatabase from "../functions/database/readDatabase";
+import DatabaseTables from "../enums/DatabaseTables";
+import RolesDBData from "../types/database/RolesDBData";
 
 /**
  * Command for taking down users.
@@ -17,6 +28,22 @@ import allowCloakerRole from "./permissions/allowCloakerRole";
  */
 async function takedownCommand(interaction: GuildCommandInteraction) {
   let commander = interaction.member;
+  let dbData = await readDatabase(DatabaseTables.ROLES, interaction.guild);
+  let roleId = (dbData as RolesDBData)?.takedownRole ?? "";
+  if (!commander) return;
+  if (!(
+    commander.user.id === ownerId ||
+    commander.user.id === interaction.guild.ownerId ||
+    (commander.permissions as Permissions).has("ADMINISTRATOR") ||
+    (commander.permissions as Permissions).has("MOVE_MEMBERS") ||
+    (commander.roles as GuildMemberRoleManager).resolve(roleId)
+  )) {
+    await interaction.reply({
+      content: getRandom(replies.noPerms),
+      ephemeral: true
+    });
+    return;
+  }
   let member = interaction.options.get("user")?.member;
   if (member instanceof GuildMember) {
     await interaction.deferReply({ephemeral: true});
@@ -40,7 +67,7 @@ async function takedownCommand(interaction: GuildCommandInteraction) {
 const commandData: ApplicationCommandData = {
   name: "cloaker",
   description: "Take down your friends",
-  defaultPermission: false,
+  defaultPermission: true,
   options: [{
     name: "user",
     type: "USER",
@@ -49,18 +76,4 @@ const commandData: ApplicationCommandData = {
   }]
 };
 
-async function getPermissions(
-  guild: Guild
-): Promise<ApplicationCommandPermissionData[]> {
-  const permissionData: ApplicationCommandPermissionData[] = [
-    allowGuildOwner(guild),
-    allowAdmins(guild),
-    allowBotOwner(guild),
-    allowRolesWithPermission(guild, "MOVE_MEMBERS")
-  ].flat();
-  const cloakerRolePermissions = await allowCloakerRole(guild);
-  if (cloakerRolePermissions) permissionData.push(cloakerRolePermissions);
-  return permissionData;
-}
-
-export default constructCommand(takedownCommand, commandData, getPermissions);
+export default constructCommand(takedownCommand, commandData);

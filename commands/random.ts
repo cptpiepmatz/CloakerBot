@@ -90,8 +90,8 @@ async function getPermissions(
 ): Promise<ApplicationCommandPermissionData[]> {
   return [
     allowGuildOwner(guild),
-    allowAdmins(guild),
-    allowBotOwner(guild)
+    allowBotOwner(guild),
+    allowAdmins(guild)
   ].flat();
 }
 
