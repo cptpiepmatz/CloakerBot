@@ -99,13 +99,18 @@ client.on("interactionCreate", async (interaction: Interaction) => {
     guildInteraction.member?.user.discriminator +
     "'"
   );
-  switch (interaction.commandName) {
-    case takedownCommand.commandData.name: return await takedownCommand(guildInteraction);
-    case randomCommand.commandData.name: return await randomCommand(guildInteraction);
-    case setRoleCommand.commandData.name: return await setRoleCommand(guildInteraction);
-    case ranksCommand.commandData.name: return await ranksCommand(guildInteraction);
-    case helpCommand.commandData.name: return await helpCommand(guildInteraction);
-    case dangerZoneCommand.commandData.name: return await dangerZoneCommand(guildInteraction);
+  try {
+    switch (interaction.commandName) {
+      case takedownCommand.commandData.name: return await takedownCommand(guildInteraction);
+      case randomCommand.commandData.name: return await randomCommand(guildInteraction);
+      case setRoleCommand.commandData.name: return await setRoleCommand(guildInteraction);
+      case ranksCommand.commandData.name: return await ranksCommand(guildInteraction);
+      case helpCommand.commandData.name: return await helpCommand(guildInteraction);
+      case dangerZoneCommand.commandData.name: return await dangerZoneCommand(guildInteraction);
+    }
+  }
+  catch (e) {
+    Logger.error(e);
   }
 });
 
