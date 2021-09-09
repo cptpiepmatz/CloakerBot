@@ -29,6 +29,7 @@ async function readDatabase(
   if (guild !== "all") {
     let resolvedGuild = client.guilds.resolve(guild);
     if (!resolvedGuild) throw new ResolvedNullError(guild, client.guilds);
+    //@ts-ignore null check here seems to be a broken
     return await collection.findOne({GuildID: resolvedGuild.id});
   }
 
