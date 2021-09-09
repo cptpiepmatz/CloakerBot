@@ -28,6 +28,7 @@ export default async function setHandler(
   if (enable) writeObject.doRandomTakedowns = enable === "enable";
   if (max) writeObject.randomTakedownMax = max;
   if (min) writeObject.randomTakedownMin = min;
+  writeObject.takedownDate = undefined;
 
   await writeDatabase(
     DatabaseTables.RANDOM_TAKEDOWNS,
