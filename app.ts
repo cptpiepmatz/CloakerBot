@@ -22,7 +22,7 @@ import {inspect} from "util";
 
 Logger.useDefaults();
 Logger.setHandler(createLogHandler);
-Logger.setLevel({value: 0, name: "TRACE"});
+Logger.setLevel(Logger.INFO);
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
