@@ -11,7 +11,12 @@ async function openDatabase(): Promise<void> {
   try {
     await mongoClient.connect();
 
-    globalThis.dbo = mongoClient.db("cloaker_bot");
+    if (process.argv.slice(2).includes("dev")) {
+      globalThis.dbo = mongoClient.db("cloaker_bot_dev");
+    }
+    else {
+      globalThis.dbo = mongoClient.db("cloaker_bot");
+    }
   }
   catch (e) {
     console.error(e);
