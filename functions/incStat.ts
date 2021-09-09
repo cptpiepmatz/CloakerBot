@@ -6,6 +6,7 @@ import ResolvedNullError from "../error/ResolvedNullError";
 import StatsGuildsDBData from "../types/database/StatsGuildsDBData";
 import StatsUsersDBData from "../types/database/StatsUsersDBData";
 import {UserDiscriminator} from "../types/database/base/BaseUserDBData";
+import Logger from "js-logger";
 
 const statsNeedCommander = [
   Stats.TIMES_COMMANDED_TAKEDOWN,
@@ -160,12 +161,16 @@ export default async function incStat(
   userCollection.createIndex({UserID: 1}, {unique: true})
     .catch(console.error);
 
+  Logger.debug("updating entry:");
+  Logger.debug(guildData);
   await guildCollection.updateOne(guildQuery, guildData, {upsert: true});
   if (updateCommander) {
+    Logger.debug(commanderData);
     await userCollection
       .updateOne(commanderQuery, commanderData, {upsert: true});
   }
   if (updateTarget) {
+    Logger.debug(targetData);
     await userCollection
       .updateOne(targetQuery, targetData, {upsert: true});
   }
