@@ -50,7 +50,7 @@ async function takedown(
   commander: GuildMember | null = null
 ): Promise<TakedownResult> {
   Logger.info("initiating takedown " + memberString(member) +
-    " on " + member.guild.name);
+    " on " + member.guild.name + `<${member.guild.id}>`);
   if (commander) {
     Logger.info("initiated by " + memberString(commander));
   }
@@ -76,6 +76,7 @@ async function takedown(
     };
   }
 
+  Logger.debug(`joining channel ${member.voice.channel.name}`);
   const connection = joinVoiceChannel({
     channelId: member.voice.channel.id,
     guildId: guildId,
@@ -97,6 +98,7 @@ async function takedown(
   player.pause();
   let takedownSuccess: boolean;
   try {
+    Logger.debug("trying to kick member");
     await member.voice.disconnect();
     takedownSuccess = true;
     await sleep(500);
@@ -106,13 +108,15 @@ async function takedown(
     if (commander) incStats.push(Stats.TIMES_COMMANDED_TAKEDOWN);
     incStat(incStats, member.guild, commander, member)
       .catch(console.error);
+    Logger.info("takedown successful");
   }
   catch (error) {
     takedownSuccess = false;
-    await sleep(500);
+    await sleep(800);
     player.play(failResource);
     incStat(Stats.TAKEDOWNS_FAILED, member.guild)
       .catch(console.error);
+    Logger.warn("takedown failed");
   }
 
   // wait until the bot is done with playing the resource and destroy everything
