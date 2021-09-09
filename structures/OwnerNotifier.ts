@@ -6,6 +6,7 @@ import {Interaction, Message, MessageActionRow, MessageButton, Snowflake} from "
 import update200 from "../owner_messages/Update 2.0.0";
 import AwaitLock from "await-lock";
 import Logger from "js-logger";
+import memberString from "../functions/util/memberString";
 
 const ownerMessages = [update200];
 
@@ -44,29 +45,35 @@ export default class OwnerNotifier {
   async messageOwner(message: Message): Promise<void> {
     if (!message.guild) return;
     const owner = await message.guild.fetchOwner();
+    Logger.debug("fetched owner: " + memberString(owner));
     if (this.ownerMessageStates[owner.id]?.allowDMs ?? true) {
+      Logger.debug("will message owner");
       await this.lock.acquireAsync();
-      const currentStates = this.ownerMessageStates[owner.id] ?? {
-        id: owner.id
-      };
-      const latestMessageIndex = currentStates.latestMessageIndex ?? -1;
-      if (latestMessageIndex >= ownerMessages.length - 1) return;
-      Logger.info("messaging owner " + owner.user.username +
-        "#" + owner.user.discriminator);
-      for (
-        let i = latestMessageIndex + 1;
-        i < ownerMessages.length;
-        i++
-      ) {
-        await owner.send(ownerMessages[i]);
-      }
-      currentStates.latestMessageIndex = ownerMessages.length - 1;
-      currentStates.username = owner.user.username;
-      currentStates.discriminator = owner.user.discriminator;
-      this.ownerMessageStates[owner.id] = currentStates;
+      try {
+        Logger.debug("got lock");
+        const currentStates = this.ownerMessageStates[owner.id] ?? {
+          id: owner.id
+        };
+        const latestMessageIndex = currentStates.latestMessageIndex ?? -1;
+        if (latestMessageIndex >= ownerMessages.length - 1) return;
+        Logger.info("messaging owner " + memberString(owner));
+        for (
+          let i = latestMessageIndex + 1;
+          i < ownerMessages.length;
+          i++
+        ) {
+          await owner.send(ownerMessages[i]);
+        }
+        currentStates.latestMessageIndex = ownerMessages.length - 1;
+        currentStates.username = owner.user.username;
+        currentStates.discriminator = owner.user.discriminator;
+        this.ownerMessageStates[owner.id] = currentStates;
 
-      await this.updateDB(owner.id);
-      this.lock.release();
+        await this.updateDB(owner.id);
+      }
+      finally {
+        this.lock.release();
+      }
     }
   }
 

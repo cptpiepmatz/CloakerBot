@@ -77,7 +77,12 @@ export default class CommandManager {
     }
     Logger.debug("set permissions:");
     Logger.debug(fullPermissions);
-    await guild.commands.permissions.set({fullPermissions: fullPermissions});
+    try {
+      await guild.commands.permissions.set({fullPermissions: fullPermissions});
+    }
+    catch (e) {
+      Logger.error(`couldn't set permissions for ${guild.name}<${guild.id}>`);
+    }
   }
 
   async initPermissions(message: Message): Promise<void> {
