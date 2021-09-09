@@ -65,6 +65,7 @@ async function generateUserRankGraphic(
   // replace the webp format to png so that the package is able to use it
   let avatarURL = member.user.avatarURL()
     ?.replace(/webp$/, "png") + "?size=256";
+  if (!member.user.avatarURL()) avatarURL = join(__dirname, "../noAvatar.png");
   let userAvatar = await loadImage(avatarURL);
 
   // draw the user avatar
