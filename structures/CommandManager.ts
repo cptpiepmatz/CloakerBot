@@ -4,7 +4,15 @@ import ranksCommand from "../commands/ranks";
 import takedownCommand from "../commands/takedown";
 import takedownRoleCommand from "../commands/takedownRole";
 import dangerZoneCommand from "../commands/dangerZone";
-import {ApplicationCommand, Guild, GuildApplicationCommandPermissionData, Message, Role, Snowflake} from "discord.js";
+import {
+  ApplicationCommand,
+  ApplicationCommandPermissionData,
+  Guild,
+  GuildApplicationCommandPermissionData,
+  Message,
+  Role,
+  Snowflake
+} from "discord.js";
 import CommandFunction from "../types/CommandFunction";
 import Logger from "js-logger";
 
@@ -51,7 +59,8 @@ export default class CommandManager {
     else if (updateFor instanceof Guild) guild = updateFor;
     else guild = updateFor.guild;
 
-    Logger.info("updating permissions for " + guild);
+    Logger.info("updating permissions for " + guild.name + "<" +
+      guild.id + ">");
 
     const fullPermissions: GuildApplicationCommandPermissionData[] = [];
     for (let [name, command] of Object.entries(this.registeredCommands)) {
@@ -59,12 +68,16 @@ export default class CommandManager {
       const permissions = await this.commandFunctions[name].getPermissions!(guild);
       fullPermissions.push({
         id: command.id,
-        permissions: permissions
+        permissions: permissions.slice(0, 10)
       });
+      if (permissions.length > 10) {
+        Logger.warn(`command '${name}' has too many valid users`);
+        Logger.debug(permissions);
+      }
     }
-    await guild.commands.permissions.set({fullPermissions: fullPermissions});
     Logger.debug("set permissions:");
     Logger.debug(fullPermissions);
+    await guild.commands.permissions.set({fullPermissions: fullPermissions});
   }
 
   async initPermissions(message: Message): Promise<void> {
@@ -73,7 +86,8 @@ export default class CommandManager {
     if (this.initDone[guild.id]) return;
     await this.updatePermissions(guild);
     this.initDone[guild.id] = true;
-    Logger.info("initialized permissions for " + guild);
+    Logger.info("initialized permissions for " + guild.name + "<" +
+      guild.id + ">");
   }
 
 }
