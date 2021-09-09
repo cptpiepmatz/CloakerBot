@@ -43,8 +43,6 @@ export default class OwnerNotifier {
 
   async messageOwner(message: Message): Promise<void> {
     if (!message.guild) return;
-    Logger.info("messaging owner " + message.author.username +
-      "#" + message.author.discriminator);
     const owner = await message.guild.fetchOwner();
     if (this.ownerMessageStates[owner.id]?.allowDMs ?? true) {
       await this.lock.acquireAsync();
@@ -53,6 +51,8 @@ export default class OwnerNotifier {
       };
       const latestMessageIndex = currentStates.latestMessageIndex ?? -1;
       if (latestMessageIndex >= ownerMessages.length - 1) return;
+      Logger.info("messaging owner " + owner.user.username +
+        "#" + owner.user.discriminator);
       for (
         let i = latestMessageIndex + 1;
         i < ownerMessages.length;
@@ -147,7 +147,8 @@ export default class OwnerNotifier {
   }
 
   private async updateDB(ownerId: Snowflake) {
-    Logger.debug("updating db entry with " + this.ownerMessageStates[ownerId]);
+    Logger.debug("updating db entry with");
+    Logger.debug(this.ownerMessageStates[ownerId]);
 
     const collection = dbo.collection(DatabaseTables.OWNER_NOTIFICATIONS);
     const currentState = this.ownerMessageStates[ownerId];
