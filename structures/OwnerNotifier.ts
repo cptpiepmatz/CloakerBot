@@ -62,7 +62,12 @@ export default class OwnerNotifier {
           i < ownerMessages.length;
           i++
         ) {
-          await owner.send(ownerMessages[i]);
+          try {
+            await owner.send(ownerMessages[i]);
+          }
+          catch (e) {
+            Logger.error("dm is not possible for " + memberString(owner));
+          }
         }
         currentStates.latestMessageIndex = ownerMessages.length - 1;
         currentStates.username = owner.user.username;

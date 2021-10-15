@@ -19,6 +19,7 @@ export interface Replies {
   cantJoin: string[];
   failedTakedown: string[];
   noNumber: string[];
+  commandTakedownSelf: string[];
 }
 
 export default FileProviderUtil.provideObject<Replies>(repliesPath);

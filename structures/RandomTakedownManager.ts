@@ -9,6 +9,10 @@ import writeDatabase from "../functions/database/writeDatabase";
 import dayjs from "dayjs";
 import memberString from "../functions/util/memberString";
 import {inspect} from "util";
+import guildString from "../functions/util/guildString";
+import {Guild} from "discord.js";
+import interval from "interval-promise";
+import purgeDatabase from "../functions/database/purgeDatabase";
 
 const collectionName = DatabaseTables.RANDOM_TAKEDOWNS;
 
@@ -16,67 +20,127 @@ export default class RandomTakedownManager {
 
   constructor(private checkTime: number) {
     Logger.trace("constructing random takedown manager");
-    RandomTakedownManager.setTakedownDates().catch(console.error);
   }
 
   startInterval() {
-    Logger.info("starting random takedown manager interval");
-    setInterval(async () => {
-      Logger.info("checking for random takedowns");
-      for (let dbData of await RandomTakedownManager.fetchGuildsToTakedown()) {
-        const guild = await client.guilds.resolve(dbData.GuildID);
-        if (!guild) continue;
-        Logger.info(`checking if random takedown is valid for ${guild.name}<${guild.id}>`);
+    interval(async () => {
+      Logger.debug("interval now");
+      let guildsForTakedown = await RandomTakedownManager.fetchGuildsForTakedown();
+      for (let guild of guildsForTakedown) {
+        await RandomTakedownManager.tryRandomTakedown(guild);
+      }
+      let guildsWithoutDate = await RandomTakedownManager.fetchGuildsWithoutDate();
 
-        const voices = guild.voiceStates;
-        if (voices.cache.size >= 3) {
-          Logger.debug("guild is valid");
-          let member;
-          do member = voices.cache.random().member
-          while (member?.id === client?.user?.id);
-          if (member) {
-            Logger.info(`will randomly takedown ${memberString(member)}`);
-            const result = await takedown(member);
-            if (result.success) await incStat(Stats.RANDOM_TAKEDOWNS, guild);
-          }
+      let collection = dbo.collection(collectionName);
+      for (let guild of guildsWithoutDate.concat(guildsForTakedown)) {
+        let date = await RandomTakedownManager.determineTakedownDate(guild);
+        Logger.debug("updating db entry for " + guildString(guild.GuildName, guild.GuildID));
+        Logger.trace(guild);
+        try {
+          await collection.updateOne(
+            {GuildID: guild.GuildID},
+            {$set: {takedownDate: date}}
+          );
+        }
+        catch (e) {
+          Logger.error(e);
         }
       }
-      await RandomTakedownManager.setTakedownDates();
-    }, this.checkTime);
+      Logger.debug("interval loop done");
+    }, this.checkTime, {stopOnError: false})
+      .catch(error => Logger.error(error));
   }
 
-  private static async fetchGuildsToTakedown(): Promise<RandomTakedownsDBData[]> {
-    Logger.trace("fetching guilds for takedown");
-    return await readDatabase(collectionName, "all", {
+  private static async fetchGuildsForTakedown(): Promise<RandomTakedownsDBData[]> {
+    Logger.debug("fetching guilds for random takedown");
+    let dbData = await readDatabase(collectionName, "all", {
       doRandomTakedowns: true,
       takedownDate: {
         $lte: new Date()
       }
     }) as RandomTakedownsDBData[];
+    if (dbData.length === 0) {
+      Logger.debug("found no guilds for random takedown");
+    }
+    else {
+      Logger.debug("fetched following guilds for random takedown:");
+      for (let dbDate of dbData) {
+        Logger.debug(guildString(dbDate.GuildName, dbDate.GuildID)
+          + " takedown date: " + inspect(dbDate.takedownDate, {colors: true}));
+      }
+    }
+    return dbData;
   }
 
-  private static async setTakedownDates(): Promise<void> {
-    Logger.trace("setting takedown dates");
-    const dbData = await readDatabase(collectionName, "all", {
-      doRandomTakedowns: true,
-      $or: [
-        {takedownDate: {$lte: new Date()}},
-        {takedownDate: undefined}
-      ]
+  private static async fetchGuildsWithoutDate(): Promise<RandomTakedownsDBData[]> {
+    Logger.debug("fetching guilds without takedown date");
+    let dbData = await readDatabase(collectionName, "all", {
+      doRandomTakedown: true,
+      takedownDate: null
     }) as RandomTakedownsDBData[];
-    for (let entry of dbData) {
-      Logger.debug("calculating new takedown date for:");
-      Logger.debug(entry);
-      let min = entry.randomTakedownMin ?? 4;
-      let max = entry.randomTakedownMax ?? 24;
-      [min, max] = [min, max].sort();
-      let diffTime = min + (Math.random() * (max - min));
-      Logger.debug(`min: ${min}, max: ${max}, diff: ${diffTime}`);
-      const newDate = dayjs().add(diffTime, "h").toDate();
-      Logger.debug(`next random takedown check: ${inspect(newDate, {colors: true})}`);
-      await writeDatabase(collectionName, entry.GuildID, {
-        takedownDate: newDate
-      });
+    if (dbData.length === 0) {
+      Logger.debug("found no guilds without takedown date");
+    }
+    else {
+      Logger.debug("fetched following guilds without takedown date:");
+      for (let dbDate of dbData) {
+        Logger.debug(guildString(dbDate.GuildName, dbDate.GuildID));
+      }
+    }
+    return dbData;
+  }
+
+  private static async determineTakedownDate(dbData: RandomTakedownsDBData): Promise<Date> {
+    Logger.debug("determining new takedown date for " +
+      guildString(dbData.GuildName, dbData.GuildID));
+    Logger.debug("min time: " + (dbData.randomTakedownMin ?? "4 (default)"));
+    Logger.debug("max time: " + (dbData.randomTakedownMax ?? "24 (default)"));
+    let min = dbData.randomTakedownMin ?? 4;
+    let max = dbData.randomTakedownMax ?? 24;
+    [min, max] = [min, max].sort();
+    let waitHours = (max - min) * Math.random() + min;
+    Logger.debug("wait hours: " + waitHours);
+    let newDate = dayjs().add(waitHours, "h").toDate();
+    Logger.debug("determined takedown date: " + inspect(newDate, {colors: true}));
+    return newDate;
+  }
+
+  private static async tryRandomTakedown(dbData: RandomTakedownsDBData): Promise<void> {
+    Logger.debug("trying to takedown someone random on "
+      + guildString(dbData.GuildName, dbData.GuildID));
+    let guild: Guild;
+    try {
+      guild = await client.guilds.fetch(dbData.GuildID);
+    }
+    catch (e: any) {
+      Logger.warn("couldn't fetch "
+        + guildString(dbData.GuildName, dbData.GuildID));
+      Logger.warn(e);
+      if (e?.code === 50001) {
+        Logger.warn("guild is not fetchable, will purge it from db");
+        await purgeDatabase(dbData.GuildID);
+      }
+      return;
+    }
+    Logger.debug("successfully fetched guild " + guildString(guild));
+    if (guild.voiceStates.cache.size < 3) {
+      Logger.debug(guildString(guild) + " is invalid for random takedown");
+      return;
+    }
+    let voiceState = guild.voiceStates.cache.random();
+    if (!voiceState.member) {
+      Logger.warn("voice state has no valid member");
+      Logger.warn(voiceState);
+      return;
+    }
+    let takedownResult = await takedown(voiceState.member, null);
+    if (takedownResult.success) {
+      await incStat(Stats.RANDOM_TAKEDOWNS, guild);
+      Logger.info("random takedown successful for "
+        + memberString(voiceState.member) + " on " + guildString(guild));
+    }
+    else {
+      Logger.warn("random takedown failed on " + guildString(guild));
     }
   }
 }

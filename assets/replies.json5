@@ -83,6 +83,13 @@
     "I'm gonna give you to the count of now to give me a number, before I kick your ass!",
     "Numbers aren't that hard!",
     "I can’t read your mind, give me a damn number!"
+  ],
+
+  // Replies if the user inputs the bot itself as the target
+  commandTakedownSelf: [
+    "Ah, you think you're smart. Dumpfuck!",
+    "I'm not an idiot!",
+    "Suck my ass!"
   ]
 }
 

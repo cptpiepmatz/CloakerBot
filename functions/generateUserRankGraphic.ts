@@ -63,7 +63,7 @@ async function generateUserRankGraphic(
   ctx.fillStyle = "white";
 
   // replace the webp format to png so that the package is able to use it
-  let avatarURL = member.user.avatarURL()
+  let avatarURL = member.displayAvatarURL()
     ?.replace(/webp$/, "png") + "?size=256";
   if (!member.user.avatarURL()) avatarURL = join(__dirname, "../noAvatar.png");
   let userAvatar = await loadImage(avatarURL);
@@ -94,7 +94,13 @@ async function generateUserRankGraphic(
   ctx.fillText(timesSmacked[1].toString(), 364, 115);
   ctx.fillText(timesCalled[0].toString(), 304, 140);
   ctx.fillText(timesCalled[1].toString(), 364, 140);
-  return canvas.toBuffer();
+
+  let buffer = canvas.toBuffer();
+  //@ts-ignore this is needed to clear up the ram
+  templateImage.src = null;
+  //@ts-ignore same as before
+  userAvatar.src = null;
+  return buffer;
 }
 
 export default generateUserRankGraphic;

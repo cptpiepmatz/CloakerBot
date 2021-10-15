@@ -17,8 +17,7 @@ import helpCommand from "./commands/help";
 import dangerZoneCommand from "./commands/dangerZone";
 import Logger from "js-logger";
 import createLogHandler from "./functions/createLogHandler";
-import sleep from "sleep-promise";
-import {inspect} from "util";
+import AwaitLock from "await-lock";
 
 Logger.useDefaults();
 Logger.setHandler(createLogHandler);
@@ -122,6 +121,14 @@ client.on("guildUpdate", commandManager.updatePermissions.bind(commandManager));
 client.on("roleCreate", commandManager.updatePermissions.bind(commandManager));
 client.on("roleDelete", commandManager.updatePermissions.bind(commandManager));
 client.on("roleUpdate", commandManager.updatePermissions.bind(commandManager));
+
+client.on("guildDelete", commandManager.reset.bind(commandManager));
+
+client.on("guildCreate", guild => {
+  takedownLocks[guild.id]?.release();
+  delete takedownLocks[guild.id];
+  takedownLocks[guild.id] = new AwaitLock();
+});
 
 Logger.debug("logging in...");
 client.login(token);

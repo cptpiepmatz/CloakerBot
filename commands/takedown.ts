@@ -21,6 +21,9 @@ import ownerId from "../provider/ownerId";
 import readDatabase from "../functions/database/readDatabase";
 import DatabaseTables from "../enums/DatabaseTables";
 import RolesDBData from "../types/database/RolesDBData";
+import Logger, {get} from "js-logger";
+import memberString from "../functions/util/memberString";
+import guildString from "../functions/util/guildString";
 
 /**
  * Command for taking down users.
@@ -46,6 +49,18 @@ async function takedownCommand(interaction: GuildCommandInteraction) {
   }
   let member = interaction.options.get("user")?.member;
   if (member instanceof GuildMember) {
+    if (member.id === client.user!.id) {
+      await interaction.reply({
+        ephemeral: true,
+        content: getRandom(replies.commandTakedownSelf)
+      });
+      Logger.info(
+        memberString(interaction.member as GuildMember) +
+        " tried to takedown the bot itself on " +
+        guildString(interaction.guild)
+      );
+      return;
+    }
     await interaction.deferReply({ephemeral: true});
     let result = await takedown(member, commander as GuildMember | null);
     if (result.success) {

@@ -95,4 +95,8 @@ export default class CommandManager {
       guild.id + ">");
   }
 
+  reset(guild: Guild): void {
+    delete this.initDone[guild.id];
+  }
+
 }

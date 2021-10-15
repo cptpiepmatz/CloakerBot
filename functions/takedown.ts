@@ -1,11 +1,12 @@
 import {GuildMember} from "discord.js";
 import {
+  AudioPlayer,
   AudioPlayerStatus,
   AudioResource,
   createAudioPlayer,
   createAudioResource,
   joinVoiceChannel,
-  StreamType
+  StreamType, VoiceConnection
 } from "@discordjs/voice";
 import AwaitLock from "await-lock";
 import sleep from "sleep-promise";
@@ -18,8 +19,9 @@ import TakedownResult from "../types/TakedownResult";
 import replies from "../provider/replies";
 import Stats from "../enums/Stats";
 import incStat from "./incStat";
-import Logger from "js-logger";
+import Logger, {get} from "js-logger";
 import memberString from "./util/memberString";
+import guildString from "./util/guildString";
 
 /**
  * Creates an random audio stream for the takedown and fail sounds.
@@ -67,8 +69,10 @@ async function takedown(
   if (!takedownLocks[guildId]) takedownLocks[guildId] = new AwaitLock();
   const lock = takedownLocks[guildId];
   await lock.acquireAsync();
+  Logger.debug("Acquired takedown lock for " + guildString(member.guild));
 
   if (!member.voice.channel) {
+    lock.release();
     return {
       target: member,
       success: false,
@@ -76,18 +80,72 @@ async function takedown(
     };
   }
 
-  Logger.debug(`joining channel ${member.voice.channel.name}`);
-  const connection = joinVoiceChannel({
-    channelId: member.voice.channel.id,
-    guildId: guildId,
-    adapterCreator: member.guild.voiceAdapterCreator,
-    selfDeaf: false,
-    selfMute: false
-  });
+  if (!member.voice.channel.viewable) {
+    Logger.warn(
+      "cannot see channel " +
+      member.voice.channel.name +
+      " on " +
+      guildString(member.guild)
+    );
+    lock.release();
+    return {
+      target: member,
+      success: false,
+      message: getRandom(replies.noChannel)
+    };
+  }
 
-  const player = createAudioPlayer();
-  connection.subscribe(player);
-  player.play(wululuResource);
+  if (!member.voice.channel.joinable) {
+    Logger.warn(
+      "cannot join channel " +
+      member.voice.channel.name +
+      " on " +
+      guildString(member.guild)
+    );
+    lock.release();
+    return {
+      target: member,
+      success: false,
+      message: getRandom(replies.cantJoin)
+    };
+  }
+
+  Logger.debug(`joining channel ${member.voice.channel.name}`);
+  let connection: VoiceConnection;
+  try {
+    connection = joinVoiceChannel({
+      channelId: member.voice.channel.id,
+      guildId: guildId,
+      // @ts-ignore I don't know what, seems turbo broken rn
+      adapterCreator: member.guild.voiceAdapterCreator,
+      selfDeaf: false,
+      selfMute: false
+    });
+  }
+  catch (e) {
+    lock.release();
+    return {
+      target: member,
+      success: false,
+      message: getRandom(replies.cantJoin)
+    };
+  }
+
+
+  let player: AudioPlayer
+  try {
+    player = createAudioPlayer();
+    connection.subscribe(player);
+    player.play(wululuResource);
+  }
+  catch (e) {
+    lock.release();
+    return {
+      target: member,
+      success: false,
+      message: "can't talk here"
+    };
+  }
 
   // Calculate time of the wululu
   const wululuTime = 2000 + Math.floor(Math.random() * 3000);
@@ -120,13 +178,17 @@ async function takedown(
   }
 
   // wait until the bot is done with playing the resource and destroy everything
-  await pEvent(player, AudioPlayerStatus.Idle);
+  await Promise.any([
+    pEvent(player, AudioPlayerStatus.Idle),
+    sleep(20000)
+  ]);
   player.stop();
   connection.destroy();
   wululuResource.playStream.destroy();
   takedownResource.playStream.destroy();
   failResource.playStream.destroy();
   lock.release();
+  Logger.debug("released takedown lock for " + guildString(member.guild));
   return {target: member, success: takedownSuccess}
 }
 
