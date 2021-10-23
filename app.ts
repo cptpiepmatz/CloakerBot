@@ -130,5 +130,14 @@ client.on("guildCreate", guild => {
   takedownLocks[guild.id] = new AwaitLock();
 });
 
+// if the bot loses it's ready state try to log in again
+setInterval(() => {
+  if (!client.isReady()) {
+    Logger.warn("bot is not ready anymore, will try to log in again");
+    // @ts-ignore the client may not ready sometimes
+    client.login(token).catch((error: any) => Logger.error(error));
+  }
+}, 60000);
+
 Logger.debug("logging in...");
 client.login(token);
