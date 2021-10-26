@@ -132,9 +132,8 @@ client.on("guildCreate", guild => {
 
 // if the bot loses it's ready state try to log in again
 setInterval(() => {
-  if (!client.isReady()) {
-    Logger.warn("bot is not ready anymore, will try to log in again");
-    // @ts-ignore the client may not ready sometimes
+  if (client.ws.status === 5) {
+    Logger.warn("bot is disconnected, will try to log in again");
     client.login(token).catch((error: any) => Logger.error(error));
   }
 }, 60000);
