@@ -1,5 +1,5 @@
 /// <reference types="./types/global" />
-import {Client, Intents, Interaction, Options} from "discord.js";
+import {Client, ContextMenuInteraction, Intents, Interaction, Options} from "discord.js";
 
 import token from "./provider/token";
 import openDatabase from "./functions/database/openDatabase";
@@ -18,6 +18,7 @@ import dangerZoneCommand from "./commands/dangerZone";
 import Logger from "js-logger";
 import createLogHandler from "./functions/createLogHandler";
 import AwaitLock from "await-lock";
+import takedownContextCommand from "./commands/context/takedown";
 
 Logger.useDefaults();
 Logger.setHandler(createLogHandler);
@@ -110,6 +111,15 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   }
   catch (e) {
     Logger.error(e);
+  }
+});
+
+client.on("interactionCreate", async (interaction: Interaction) => {
+  if (!interaction.isContextMenu()) return;
+  let contextInteraction = interaction as ContextMenuInteraction;
+
+  if (contextInteraction.commandName === "takedown") {
+    await takedownContextCommand(contextInteraction);
   }
 });
 

@@ -7,6 +7,7 @@ import setRoleCommand from "../commands/takedownRole";
 import ranksCommand from "../commands/ranks";
 import helpCommand from "../commands/help";
 import dangerZoneCommand from "../commands/dangerZone";
+import takedownContextCommand from "../commands/context/takedown";
 import ora from "ora";
 
 const spinner = ora();
@@ -21,14 +22,16 @@ const spinner = ora();
   spinner.succeed("Logged in");
 
   spinner.start("Registering commands...");
-  await client.application?.commands.set([
+  let applicationCommands = await client.application?.commands.set([
     takedownCommand.commandData,
     randomCommand.commandData,
     setRoleCommand.commandData,
     ranksCommand.commandData,
     helpCommand.commandData,
-    dangerZoneCommand.commandData
+    dangerZoneCommand.commandData,
+    takedownContextCommand.commandData
   ]);
+  console.log(applicationCommands);
   spinner.succeed("Registered commands");
 
   client.destroy();

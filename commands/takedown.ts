@@ -1,9 +1,9 @@
 import {
   ApplicationCommandData,
-  ApplicationCommandPermissionData,
+  ApplicationCommandPermissionData, ContextMenuInteraction,
   Guild,
   GuildMember,
-  GuildMemberRoleManager,
+  GuildMemberRoleManager, Interaction,
   Permissions
 } from "discord.js";
 
@@ -24,19 +24,36 @@ import RolesDBData from "../types/database/RolesDBData";
 import Logger, {get} from "js-logger";
 import memberString from "../functions/util/memberString";
 import guildString from "../functions/util/guildString";
+import interval from "interval-promise";
 
 /**
  * Command for taking down users.
  * @param interaction
  */
 async function takedownCommand(interaction: GuildCommandInteraction) {
+  if (!await commandTakedownPermCheck(interaction)) return;
+  let member = interaction.options.get("user")?.member;
+  if (member instanceof GuildMember) {
+    await tryTakedownMember(member, interaction);
+  }
+  else {
+    await interaction.reply({
+      content: getRandom(replies.noMember),
+      ephemeral: true
+    });
+  }
+}
+
+export async function commandTakedownPermCheck(
+  interaction: GuildCommandInteraction | ContextMenuInteraction
+): Promise<boolean> {
   let commander = interaction.member;
-  let dbData = await readDatabase(DatabaseTables.ROLES, interaction.guild);
+  let dbData = await readDatabase(DatabaseTables.ROLES, interaction.guild as Guild);
   let roleId = (dbData as RolesDBData)?.takedownRole ?? "";
-  if (!commander) return;
+  if (!commander) return false;
   if (!(
     commander.user.id === ownerId ||
-    commander.user.id === interaction.guild.ownerId ||
+    commander.user.id === (interaction.guild as Guild).ownerId ||
     (commander.permissions as Permissions).has("ADMINISTRATOR") ||
     (commander.permissions as Permissions).has("MOVE_MEMBERS") ||
     (commander.roles as GuildMemberRoleManager).resolve(roleId)
@@ -45,37 +62,36 @@ async function takedownCommand(interaction: GuildCommandInteraction) {
       content: getRandom(replies.noPerms),
       ephemeral: true
     });
+    return false;
+  }
+  return true;
+}
+
+export async function tryTakedownMember(
+  member: GuildMember,
+  interaction: GuildCommandInteraction | ContextMenuInteraction
+) {
+  let commander = interaction.member;
+  if (member.id === client.user!.id) {
+    await interaction.reply({
+      ephemeral: true,
+      content: getRandom(replies.commandTakedownSelf)
+    });
+    Logger.info(
+      memberString(interaction.member as GuildMember) +
+      " tried to takedown the bot itself on " +
+      guildString(interaction.guild as Guild)
+    );
     return;
   }
-  let member = interaction.options.get("user")?.member;
-  if (member instanceof GuildMember) {
-    if (member.id === client.user!.id) {
-      await interaction.reply({
-        ephemeral: true,
-        content: getRandom(replies.commandTakedownSelf)
-      });
-      Logger.info(
-        memberString(interaction.member as GuildMember) +
-        " tried to takedown the bot itself on " +
-        guildString(interaction.guild)
-      );
-      return;
-    }
-    await interaction.deferReply({ephemeral: true});
-    let result = await takedown(member, commander as GuildMember | null);
-    if (result.success) {
-      await interaction.editReply(getRandom(replies.takedownSuccessful));
-    }
-    else {
-      let response = result.message ?? getRandom(replies.failedTakedown);
-      await interaction.editReply(response);
-    }
+  await interaction.deferReply({ephemeral: true});
+  let result = await takedown(member, commander as GuildMember | null);
+  if (result.success) {
+    await interaction.editReply(getRandom(replies.takedownSuccessful));
   }
   else {
-    await interaction.reply({
-      content: getRandom(replies.noMember),
-      ephemeral: true
-    });
+    let response = result.message ?? getRandom(replies.failedTakedown);
+    await interaction.editReply(response);
   }
 }
 
