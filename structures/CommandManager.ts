@@ -15,6 +15,9 @@ import {
 } from "discord.js";
 import CommandFunction from "../types/CommandFunction";
 import Logger from "js-logger";
+// @ts-ignore this has no types yet
+import Cooldown from "cooldown";
+import AwaitLock from "await-lock";
 
 export default class CommandManager {
 
@@ -25,6 +28,9 @@ export default class CommandManager {
   get commandFunctions() {return this._commandFunctions};
 
   private initDone: Record<Snowflake, boolean> = {};
+  private initLock: AwaitLock = new AwaitLock();
+
+  private updatePermCooldown: Record<Snowflake, Cooldown> = {};
 
   constructor() {
     for (let commandFunction of [
@@ -59,6 +65,11 @@ export default class CommandManager {
     else if (updateFor instanceof Guild) guild = updateFor;
     else guild = updateFor.guild;
 
+    if (!this.updatePermCooldown[guild.id]) {
+      this.updatePermCooldown[guild.id] = new Cooldown(5000);
+    }
+    if (!this.updatePermCooldown[guild.id].fire()) return;
+
     Logger.info("updating permissions for " + guild.name + "<" +
       guild.id + ">");
 
@@ -89,10 +100,16 @@ export default class CommandManager {
     if (!message.guild) return;
     const guild = message.guild;
     if (this.initDone[guild.id]) return;
+    await this.initLock.acquireAsync();
+    if (this.initDone[guild.id]) {
+      this.initLock.release();
+      return;
+    }
     await this.updatePermissions(guild);
     this.initDone[guild.id] = true;
     Logger.info("initialized permissions for " + guild.name + "<" +
       guild.id + ">");
+    this.initLock.release();
   }
 
   reset(guild: Guild): void {
