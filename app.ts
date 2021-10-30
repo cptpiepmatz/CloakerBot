@@ -111,6 +111,7 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   }
   catch (e) {
     Logger.error(e);
+    process.exit(1);
   }
 });
 
