@@ -141,6 +141,8 @@ client.on("guildCreate", guild => {
   takedownLocks[guild.id] = new AwaitLock();
 });
 
+client.on("debug", debugData => Logger.debug(debugData));
+client.on("error", error => Logger.error(error));
 
 Logger.debug("logging in...");
 client.login(token);
