@@ -21,7 +21,7 @@
     "chalk": "^4.1.2",
     "cooldown": "^0.2.0",
     "dayjs": "^1.10.6",
-    "discord.js": "^13.2.0",
+    "discord.js": "^13.3.1",
     "ffmpeg-static": "^4.4.0",
     "interval-promise": "^1.4.0",
     "js-logger": "^1.6.1",

@@ -128,7 +128,7 @@ export default class RandomTakedownManager {
       return;
     }
     let voiceState = guild.voiceStates.cache.random();
-    if (!voiceState.member) {
+    if (!voiceState?.member) {
       Logger.warn("voice state has no valid member");
       Logger.warn(voiceState);
       return;

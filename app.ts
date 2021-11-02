@@ -22,7 +22,7 @@ import takedownContextCommand from "./commands/context/takedown";
 
 Logger.useDefaults();
 Logger.setHandler(createLogHandler);
-Logger.setLevel(Logger.INFO);
+Logger.setLevel(Logger.DEBUG);
 
 globalThis.client = new Client({
   makeCache: Options.cacheWithLimits({
@@ -84,6 +84,7 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   Logger.debug(`member: ${guildInteraction.member?.user.username}#${guildInteraction.member?.user.discriminator}`);
   Logger.debug(`command: ${interaction.commandName}`);
   Logger.debug("options:");
+  // @ts-ignore
   for (let option of interaction.options["_hoistedOptions"]) {
     Logger.debug(`[${option.type}] ${option.name}: ${option.value}`);
   }
@@ -142,7 +143,10 @@ client.on("guildCreate", guild => {
 });
 
 client.on("debug", debugData => Logger.debug(debugData));
-client.on("error", error => Logger.error(error));
+client.on("error", error => {
+  Logger.error(error);
+  process.exit(1);
+});
 
 Logger.debug("logging in...");
 client.login(token);
