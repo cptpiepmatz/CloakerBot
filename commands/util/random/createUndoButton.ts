@@ -78,6 +78,7 @@ export default async function createUndoButton(
   }
   catch (e) {
     Logger.error(e);
+    process.exit(1);
   }
   try {
     row.components[0].setDisabled(true);
@@ -85,5 +86,6 @@ export default async function createUndoButton(
   }
   catch (e) {
     Logger.error(e);
+    process.exit(1);
   }
 }
