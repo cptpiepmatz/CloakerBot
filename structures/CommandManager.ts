@@ -4,15 +4,7 @@ import ranksCommand from "../commands/ranks";
 import takedownCommand from "../commands/takedown";
 import takedownRoleCommand from "../commands/takedownRole";
 import dangerZoneCommand from "../commands/dangerZone";
-import {
-  ApplicationCommand,
-  ApplicationCommandPermissionData,
-  Guild,
-  GuildApplicationCommandPermissionData,
-  Message,
-  Role,
-  Snowflake
-} from "discord.js";
+import {ApplicationCommand, Guild, GuildApplicationCommandPermissionData, Message, Role, Snowflake} from "discord.js";
 import CommandFunction from "../types/CommandFunction";
 import Logger from "js-logger";
 // @ts-ignore this has no types yet

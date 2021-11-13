@@ -1,8 +1,8 @@
-import Logger, {ILogHandler, ILogger} from "js-logger";
-import {blue, bold, cyan, gray, green, greenBright, magenta, red, white, yellow} from "chalk";
+import Logger, {ILogHandler} from "js-logger";
+import {blue, cyan, gray, greenBright, red, white, yellow} from "chalk";
 import callsites from "callsites";
 import {inspect} from "util";
-import {extname, basename, relative, join} from "path";
+import {join, relative} from "path";
 
 const createLogHandler: ILogHandler = function(messages, context) {
   let callPath = "";

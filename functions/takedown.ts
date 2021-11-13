@@ -6,7 +6,8 @@ import {
   createAudioPlayer,
   createAudioResource,
   joinVoiceChannel,
-  StreamType, VoiceConnection
+  StreamType,
+  VoiceConnection
 } from "@discordjs/voice";
 import AwaitLock from "await-lock";
 import sleep from "sleep-promise";
@@ -19,7 +20,7 @@ import TakedownResult from "../types/TakedownResult";
 import replies from "../provider/replies";
 import Stats from "../enums/Stats";
 import incStat from "./incStat";
-import Logger, {get} from "js-logger";
+import Logger from "js-logger";
 import memberString from "./util/memberString";
 import guildString from "./util/guildString";
 

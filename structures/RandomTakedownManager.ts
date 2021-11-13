@@ -5,7 +5,6 @@ import takedown from "../functions/takedown";
 import incStat from "../functions/incStat";
 import Stats from "../enums/Stats";
 import Logger from "js-logger";
-import writeDatabase from "../functions/database/writeDatabase";
 import dayjs from "dayjs";
 import memberString from "../functions/util/memberString";
 import {inspect} from "util";
