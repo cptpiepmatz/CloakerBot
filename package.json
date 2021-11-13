@@ -20,13 +20,13 @@
     "canvas": "^2.8.0",
     "chalk": "^4.1.2",
     "cooldown": "^0.2.0",
-    "dayjs": "^1.10.6",
+    "dayjs": "^1.10.7",
     "discord.js": "^13.3.1",
     "ffmpeg-static": "^4.4.0",
     "interval-promise": "^1.4.0",
     "js-logger": "^1.6.1",
     "json5": "^2.2.0",
-    "mongodb": "^4.1.1",
+    "mongodb": "^4.1.4",
     "p-event": "^4.2.0",
     "set-interval-async": "^2.0.3",
     "sleep-promise": "^9.1.0",
@@ -36,8 +36,8 @@
   "devDependencies": {
     "@types/cli-progress": "^3.9.2",
     "@types/ffmpeg-static": "^3.0.0",
-    "cli-progress": "^3.9.0",
+    "cli-progress": "^3.9.1",
     "ora": "^5.4.1",
-    "ts-node": "^10.2.1"
+    "ts-node": "^10.4.0"
   }
 }
