@@ -1,7 +1,5 @@
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
 import {ApplicationCommandData, ApplicationCommandPermissionData, Guild, VoiceChannel} from "discord.js";
-import allowGuildOwner from "./permissions/allowGuildOwner";
-import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";
 import constructCommand from "../functions/util/constructCommand";
 import Logger from "js-logger";
@@ -53,9 +51,7 @@ async function getPermissions(
   guild: Guild
 ): Promise<ApplicationCommandPermissionData[]> {
   return [
-    allowGuildOwner(guild),
-    allowBotOwner(guild),
-    allowAdmins(guild)
+    allowBotOwner(guild)
   ].flat();
 }
 

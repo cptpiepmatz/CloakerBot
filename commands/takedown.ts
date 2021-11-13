@@ -1,9 +1,9 @@
 import {
   ApplicationCommandData,
-  ApplicationCommandPermissionData, ContextMenuInteraction,
+  ContextMenuInteraction,
   Guild,
   GuildMember,
-  GuildMemberRoleManager, Interaction,
+  GuildMemberRoleManager,
   Permissions
 } from "discord.js";
 
@@ -12,19 +12,13 @@ import takedown from "../functions/takedown";
 import replies from "../provider/replies";
 import getRandom from "../functions/util/getRandom";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
-import allowGuildOwner from "./permissions/allowGuildOwner";
-import allowAdmins from "./permissions/allowAdmins";
-import allowBotOwner from "./permissions/allowBotOwner";
-import allowRolesWithPermission from "./permissions/allowRolesWithPermission";
-import allowCloakerRole from "./permissions/allowCloakerRole";
 import ownerId from "../provider/ownerId";
 import readDatabase from "../functions/database/readDatabase";
 import DatabaseTables from "../enums/DatabaseTables";
 import RolesDBData from "../types/database/RolesDBData";
-import Logger, {get} from "js-logger";
+import Logger from "js-logger";
 import memberString from "../functions/util/memberString";
 import guildString from "../functions/util/guildString";
-import interval from "interval-promise";
 
 /**
  * Command for taking down users.
