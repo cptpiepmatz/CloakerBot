@@ -150,3 +150,7 @@ client.on("error", error => {
 
 Logger.debug("logging in...");
 client.login(token);
+
+setInterval(() => {
+  if (client.ws.shards.first()?.status === 5) process.exit(1);
+}, 60000);
