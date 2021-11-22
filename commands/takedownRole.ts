@@ -6,6 +6,8 @@ import constructCommand from "../functions/util/constructCommand";
 import readDatabase from "../functions/database/readDatabase";
 import RolesDBData from "../types/database/RolesDBData";
 import GuildCommandInteraction from "../types/GuildCommandInteraction";
+import allowGuildOwner from "./permissions/allowGuildOwner";
+import allowAdmins from "./permissions/allowAdmins";
 import allowBotOwner from "./permissions/allowBotOwner";
 
 const collectionName = DatabaseTables.ROLES;
@@ -60,7 +62,9 @@ async function getPermissions(
   guild: Guild
 ): Promise<ApplicationCommandPermissionData[]> {
   return [
-    allowBotOwner(guild)
+    allowGuildOwner(guild),
+    allowBotOwner(guild),
+    allowAdmins(guild)
   ].flat();
 }
 
