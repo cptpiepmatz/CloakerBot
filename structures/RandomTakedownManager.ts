@@ -74,7 +74,7 @@ export default class RandomTakedownManager {
   private static async fetchGuildsWithoutDate(): Promise<RandomTakedownsDBData[]> {
     Logger.debug("fetching guilds without takedown date");
     let dbData = await readDatabase(collectionName, "all", {
-      doRandomTakedown: true,
+      doRandomTakedowns: true,
       takedownDate: null
     }) as RandomTakedownsDBData[];
     if (dbData.length === 0) {
