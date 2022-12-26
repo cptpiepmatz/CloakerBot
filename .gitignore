@@ -2,8 +2,5 @@
 dev.token
 .ownerId
 .idea
-node_modules
 Thumbs.db
-test_function.js
 assets/sounds/generated
-*.js
