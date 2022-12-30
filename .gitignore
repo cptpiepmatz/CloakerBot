@@ -3,7 +3,6 @@ dev.token
 .ownerId
 .idea
 Thumbs.db
-assets/sounds/generated
 
 # dynamically download file via build script
 Lavalink.jar
