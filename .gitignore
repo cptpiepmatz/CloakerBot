@@ -1,12 +1,14 @@
 .token
 dev.token
 .ownerId
-.idea
+/.idea
 Thumbs.db
+
+# ignored working directory to test self-extraction
+/working
 
 # dynamically download file via build script
 Lavalink.jar
 
 # Added by cargo
-
 /target
