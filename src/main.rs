@@ -1,7 +1,5 @@
 use std::collections::{BTreeMap, VecDeque};
-use std::error::Error;
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use futures::stream::StreamExt;
 use tokio::sync::mpsc::Sender;
@@ -9,19 +7,14 @@ use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::Cluster;
-use twilight_http::client::InteractionClient;
 use twilight_http::Client as HttpClient;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
-use twilight_model::gateway::payload::incoming::InteractionCreate;
 use twilight_model::gateway::Intents;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
-use twilight_model::user::User;
 
 use crate::interactions::{commands, handle_interaction};
-use crate::preparations::file_extract::extract_files;
-use crate::preparations::java::find_java_executable;
 
 mod assets;
 mod embedded_files;
@@ -85,7 +78,7 @@ async fn main() {
         Intents::GUILD_MESSAGES |
         Intents::GUILD_INTEGRATIONS;
 
-    let (cluster, mut discord_events) = Cluster::new(String::from(DISCORD_TOKEN.trim()), intents)
+    let (cluster, discord_events) = Cluster::new(String::from(DISCORD_TOKEN.trim()), intents)
         .await
         .unwrap();
     let cluster = Arc::new(cluster);
@@ -103,7 +96,7 @@ async fn main() {
         planned_takedowns: BTreeMap::new()
     });
 
-    let (event_sender, mut events) = tokio::sync::mpsc::channel::<Event>(100);
+    let (event_sender, events) = tokio::sync::mpsc::channel::<Event>(100);
 
     let com = Arc::new(Com {
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),

@@ -1,12 +1,9 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-use tokio::sync::RwLock;
-use twilight_http::client::InteractionClient;
-use twilight_http::Client as HttpClient;
 use twilight_model::application::interaction::{Interaction, InteractionType};
 
 use crate::interactions::commands::handle_application_command;
-use crate::{Com, SharedData};
+use crate::Com;
 
 pub mod commands;
 

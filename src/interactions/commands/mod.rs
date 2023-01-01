@@ -4,17 +4,14 @@ mod counter;
 mod help;
 mod ranks;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-use tokio::sync::RwLock;
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
-use twilight_http::Client as HttpClient;
-use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::id::Id;
 
-use crate::{Com, SharedData};
+use crate::Com;
 
 pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), TwilightHttpError> {
     let _res = client

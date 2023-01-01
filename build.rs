@@ -1,7 +1,8 @@
-use std::{env, fs};
 use std::path::PathBuf;
+use std::{env, fs};
 
-const LAVALINK_URL: &str = "https://github.com/freyacodes/Lavalink/releases/download/3.6.2/Lavalink.jar";
+const LAVALINK_URL: &str =
+    "https://github.com/freyacodes/Lavalink/releases/download/3.6.2/Lavalink.jar";
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -16,7 +17,10 @@ fn main() {
     #[cfg(windows)]
     java_exe.set_extension("exe");
     if !java_exe.exists() {
-        panic!("expected java executable to be at {}", java_exe.to_string_lossy());
+        panic!(
+            "expected java executable to be at {}",
+            java_exe.to_string_lossy()
+        );
     }
 
     // make sure LavaLink is available

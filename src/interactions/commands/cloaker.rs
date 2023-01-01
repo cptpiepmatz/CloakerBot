@@ -2,20 +2,15 @@ use std::collections::VecDeque;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use tokio::sync::RwLock;
-use twilight_http::client::InteractionClient;
-use twilight_http::Client as HttpClient;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{GuildMarker, UserMarker};
-use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::{Com, SharedData, TakedownPlan, APPLICATION_ID};
+use crate::{Com, TakedownPlan, APPLICATION_ID};
 
 pub const NAME: &str = "cloaker";
 const DESCRIPTION: &str = "Take down your friends!";
