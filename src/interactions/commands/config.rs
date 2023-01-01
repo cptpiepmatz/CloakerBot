@@ -3,7 +3,7 @@ use twilight_util::builder::command::{
     BooleanBuilder, CommandBuilder, NumberBuilder, SubCommandBuilder
 };
 
-const NAME: &str = "config";
+pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
 
 pub fn chat_input() -> Command {

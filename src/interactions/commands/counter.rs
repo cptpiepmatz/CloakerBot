@@ -1,7 +1,7 @@
 use twilight_model::application::command::{Command, CommandType};
 use twilight_util::builder::command::CommandBuilder;
 
-const NAME: &str = "counter";
+pub const NAME: &str = "counter";
 const DESCRIPTION: &str = "Counter an incoming takedown.";
 
 pub fn chat_input() -> Command {
