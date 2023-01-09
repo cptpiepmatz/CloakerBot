@@ -12,8 +12,12 @@ pub fn chat_input() -> Command {
     let counter = SubCommandBuilder::new("counter", "Configure countering.")
         .option(BooleanBuilder::new("enable", "Enable/disable countering.").build())
         .build();
+    let target_bots =
+        SubCommandBuilder::new("targetbots", "Configure if the bot should target bots.")
+            .option(BooleanBuilder::new("allow", "Allow/disallow targeting bots.").build())
+            .build();
     let random = SubCommandBuilder::new("random", "Configure random takedown behavior.")
-        .option(BooleanBuilder::new("enable", "Enable/Disable random takedowns.").build())
+        .option(BooleanBuilder::new("enable", "Enable/disable random takedowns.").build())
         .option(
             NumberBuilder::new(
                 "min",
@@ -35,6 +39,7 @@ pub fn chat_input() -> Command {
         .option(log_channel)
         .option(danger_zones)
         .option(counter)
+        .option(target_bots)
         .option(random)
         .build()
 }
