@@ -13,12 +13,13 @@ twilight-http = "0.14"
 twilight-model = "0.14"
 twilight-lavalink = "0.14"
 twilight-mention = "0.14"
-twilight-util = { version = "0.14", features = ["builder"] }
+twilight-util = { version = "0.14", features = ["builder", "permission-calculator"] }
 
 # async
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
 futures = "0.3"
+dashmap = "5"
 
 # database
 # surrealdb = { git = "https://github.com/surrealdb/surrealdb.git", rev = "d7c26bd64b7385701bc3ff46419f86de19701523" }
