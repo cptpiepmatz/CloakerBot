@@ -5,12 +5,15 @@ use std::sync::Arc;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
+use twilight_model::channel::message::MessageFlags;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::{Com, TakedownPlan, APPLICATION_ID};
+use crate::assets::replies;
+use crate::permissions::get_in_channel_permissions;
+use crate::{Com, TakedownPlan, APPLICATION_ID, BOT_USER_ID};
 
 pub const NAME: &str = "cloaker";
 const DESCRIPTION: &str = "Take down your friends!";
@@ -43,10 +46,13 @@ pub fn message_context_menu() -> Command {
 }
 
 pub async fn action(interaction: Interaction, com: Arc<Com>) {
-    let com = com.deref();
+    let destruct_com = com.clone();
     let Com {
-        http, shared_data, ..
-    } = com;
+        http,
+        planned_takedowns,
+        event_cache: cache,
+        ..
+    } = destruct_com.deref();
 
     // pull the target from the options
     let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
@@ -55,30 +61,81 @@ pub async fn action(interaction: Interaction, com: Arc<Com>) {
     let Some(CommandOptionValue::User(target_id)) = data.options.first().map(|opt| &opt.value) else {
         return;
     };
+    let target_id = *target_id;
     let Some(guild_id) = data.guild_id else {
         return;
     };
 
+    // check if target is in voice channel
+    let Some(voice_channel_id) = cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
+        let response = InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(InteractionResponseDataBuilder::new()
+                .flags(MessageFlags::EPHEMERAL)
+                .content(replies::select(&replies::NO_CHANNEL))
+                .build())
+        };
+
+        #[allow(clippy::single_match)]
+        match http.interaction(APPLICATION_ID).create_response(interaction.id, interaction.token.as_str(), &response).await {
+            Ok(_) => {}, // TODO: add logging
+            Err(_) => {}
+        }
+
+        return;
+    };
+
+    // check if bot can join voice channel
+    let Ok(channel_perms) = get_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com).await else {
+        // TODO: add some logging here
+        return;
+    };
+    if !channel_perms.contains(Permissions::CONNECT) {
+        let response = InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(
+                InteractionResponseDataBuilder::new()
+                    .flags(MessageFlags::EPHEMERAL)
+                    .content(replies::select(&replies::CANT_JOIN))
+                    .build()
+            )
+        };
+
+        #[allow(clippy::single_match)]
+        match http
+            .interaction(APPLICATION_ID)
+            .create_response(interaction.id, interaction.token.as_str(), &response)
+            .await
+        {
+            Ok(_) => {} // TODO: add logging
+            Err(_) => {}
+        }
+
+        return;
+    }
+
+    // check if target is bot
+
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: Some(InteractionResponseDataBuilder::new().content("lol").build())
+        data: None
     };
-    if let Ok(_) = http
+    if (http
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await
+        .await)
+        .is_ok()
     {
-        let planned_takedowns = &mut shared_data.write().await.planned_takedowns;
         let plan = TakedownPlan {
             initiator_id: interaction.author_id(),
-            target_id: *target_id,
+            target_id,
             countered: false
         };
         match planned_takedowns.get_mut(&guild_id) {
             None => {
                 planned_takedowns.insert(guild_id, VecDeque::from([plan]));
             }
-            Some(q) => {
+            Some(mut q) => {
                 q.push_back(plan);
             }
         };
