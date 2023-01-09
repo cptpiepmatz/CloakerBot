@@ -29,6 +29,7 @@ use crate::preparations::java::find_java_executable;
 mod assets;
 mod embedded_files;
 mod interactions;
+mod permissions;
 mod preparations;
 
 #[cfg(debug_assertions)]
