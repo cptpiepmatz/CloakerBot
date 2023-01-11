@@ -1,5 +1,18 @@
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::interaction::application_command::CommandData;
 use twilight_util::builder::command::CommandBuilder;
+
+use crate::interactions::commands::TryFromInteractionError;
+
+pub struct CounterCommand;
+
+impl TryFrom<&mut CommandData> for CounterCommand {
+    type Error = TryFromInteractionError;
+
+    fn try_from(value: &mut CommandData) -> Result<Self, Self::Error> {
+        Ok(CounterCommand)
+    }
+}
 
 pub const NAME: &str = "counter";
 const DESCRIPTION: &str = "Counter an incoming takedown.";

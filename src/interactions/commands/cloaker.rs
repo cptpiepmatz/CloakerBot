@@ -3,17 +3,61 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::application_command::CommandOptionValue;
+use twilight_model::application::interaction::application_command::{
+    CommandData, CommandDataOption, CommandOptionValue
+};
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
+use twilight_model::id::marker::UserMarker;
+use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::replies;
+use crate::interactions::commands::TryFromInteractionError;
 use crate::permissions::get_in_channel_permissions;
 use crate::{Com, TakedownPlan, APPLICATION_ID, BOT_USER_ID};
+
+#[derive(Debug)]
+pub struct CloakerCommand {
+    target: Id<UserMarker>
+}
+
+impl TryFrom<&mut CommandData> for CloakerCommand {
+    type Error = TryFromInteractionError;
+
+    fn try_from(data: &mut CommandData) -> Result<Self, Self::Error> {
+        let mut target: Option<Id<UserMarker>> = None;
+        for option in data.options {
+            let CommandDataOption { name, value } = option;
+            match name.as_str() {
+                "target" => match value {
+                    CommandOptionValue::User(u) => target = Some(u),
+                    v => {
+                        return Err(TryFromInteractionError::IncorrectFieldType {
+                            command: NAME.into(),
+                            field: name,
+                            value: value.clone()
+                        })
+                    }
+                },
+                n => {
+                    return Err(TryFromInteractionError::UnknownField {
+                        command: NAME.into(),
+                        field: name
+                    })
+                }
+            }
+        }
+        
+        match target {
+            None => Err(TryFromInteractionError::MissingField {command: NAME.into(), field: "target".into()}),
+            Some(target) => Ok(CloakerCommand { target })
+        }
+    }
+}
 
 pub const NAME: &str = "cloaker";
 const DESCRIPTION: &str = "Take down your friends!";

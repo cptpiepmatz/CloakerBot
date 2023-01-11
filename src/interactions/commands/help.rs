@@ -1,5 +1,18 @@
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::interaction::application_command::CommandData;
 use twilight_util::builder::command::CommandBuilder;
+
+use crate::interactions::commands::TryFromInteractionError;
+
+pub struct HelpCommand;
+
+impl TryFrom<&mut CommandData> for HelpCommand {
+    type Error = TryFromInteractionError;
+
+    fn try_from(value: &mut CommandData) -> Result<Self, Self::Error> {
+        Ok(HelpCommand)
+    }
+}
 
 pub const NAME: &str = "help";
 const DESCRIPTION: &str = "Shows a help page.";
