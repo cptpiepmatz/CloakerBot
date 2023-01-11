@@ -6,10 +6,10 @@ use crate::interactions::commands::TryFromInteractionError;
 
 pub struct CounterCommand;
 
-impl TryFrom<&mut CommandData> for CounterCommand {
+impl TryFrom<&CommandData> for CounterCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(value: &mut CommandData) -> Result<Self, Self::Error> {
+    fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
         Ok(CounterCommand)
     }
 }

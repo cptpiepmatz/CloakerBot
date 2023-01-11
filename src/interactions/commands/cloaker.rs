@@ -25,10 +25,10 @@ pub struct CloakerCommand {
     target: Id<UserMarker>
 }
 
-impl TryFrom<&mut CommandData> for CloakerCommand {
+impl TryFrom<&CommandData> for CloakerCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(data: &mut CommandData) -> Result<Self, Self::Error> {
+    fn try_from(data: &CommandData) -> Result<Self, Self::Error> {
         let mut target: Option<Id<UserMarker>> = None;
         for option in data.options {
             let CommandDataOption { name, value } = option;
@@ -51,9 +51,12 @@ impl TryFrom<&mut CommandData> for CloakerCommand {
                 }
             }
         }
-        
+
         match target {
-            None => Err(TryFromInteractionError::MissingField {command: NAME.into(), field: "target".into()}),
+            None => Err(TryFromInteractionError::MissingField {
+                command: NAME.into(),
+                field: "target".into()
+            }),
             Some(target) => Ok(CloakerCommand { target })
         }
     }
@@ -67,7 +70,7 @@ fn permissions() -> Permissions {
 }
 
 pub fn chat_input() -> Command {
-    let option = UserBuilder::new("user", "User to take down.")
+    let option = UserBuilder::new("target", "User to take down.")
         .required(true)
         .build();
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)

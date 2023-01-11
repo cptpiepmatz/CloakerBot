@@ -30,20 +30,20 @@ enum ApplicationCommand {
     Ranks(RanksCommand)
 }
 
-impl TryFrom<&mut Interaction> for ApplicationCommand {
+impl TryFrom<&Interaction> for ApplicationCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(interaction: &mut Interaction) -> Result<Self, Self::Error> {
-        let Some(InteractionData::ApplicationCommand(data)) = &mut interaction.data else {
+    fn try_from(interaction: &Interaction) -> Result<Self, Self::Error> {
+        let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
             return Err(TryFromInteractionError::NoApplicationCommand);
         };
 
         match data.name.as_str() {
-            cloaker::NAME => Ok(Self::Cloaker(CloakerCommand::try_from(data.as_mut())?)),
-            config::NAME => Ok(Self::Config(ConfigCommand::try_from(data.as_mut())?)),
-            counter::NAME => Ok(Self::Counter(CounterCommand::try_from(data.as_mut())?)),
-            help::NAME => Ok(Self::Help(HelpCommand::try_from(data.as_mut())?)),
-            ranks::NAME => Ok(Self::Ranks(RanksCommand::try_from(data.as_mut())?)),
+            cloaker::NAME => Ok(Self::Cloaker(CloakerCommand::try_from(data.as_ref())?)),
+            config::NAME => Ok(Self::Config(ConfigCommand::try_from(data.as_ref())?)),
+            counter::NAME => Ok(Self::Counter(CounterCommand::try_from(data.as_ref())?)),
+            help::NAME => Ok(Self::Help(HelpCommand::try_from(data.as_ref())?)),
+            ranks::NAME => Ok(Self::Ranks(RanksCommand::try_from(data.as_ref())?)),
             _ => Err(TryFromInteractionError::UnknownCommandName { name: data.name })
         }
     }

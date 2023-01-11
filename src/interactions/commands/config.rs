@@ -39,10 +39,10 @@ pub enum ConfigCommand {
     }
 }
 
-impl TryFrom<&mut CommandData> for ConfigCommand {
+impl TryFrom<&CommandData> for ConfigCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(data: &mut CommandData) -> Result<Self, Self::Error> {
+    fn try_from(data: &CommandData) -> Result<Self, Self::Error> {
         let Some(CommandDataOption {name, value}) = data.options.first() else {
             return Err(TryFromInteractionError::MissingField {command: NAME.into(), field: "subcommand".into()})
         };

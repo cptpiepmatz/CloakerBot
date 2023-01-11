@@ -7,10 +7,10 @@ use crate::interactions::commands::TryFromInteractionError;
 #[derive(Debug)]
 pub struct RanksCommand;
 
-impl TryFrom<&mut CommandData> for RanksCommand {
+impl TryFrom<&CommandData> for RanksCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(value: &mut CommandData) -> Result<Self, Self::Error> {
+    fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
         Ok(RanksCommand)
     }
 }
