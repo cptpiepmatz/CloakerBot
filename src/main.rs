@@ -5,6 +5,9 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use futures::stream::StreamExt;
+use surrealdb::engine::local::{Db, Mem};
+use surrealdb::opt::Strict;
+use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::RwLock;
 use tokio_stream::wrappers::ReceiverStream;
@@ -27,6 +30,7 @@ use crate::preparations::file_extract::extract_files;
 use crate::preparations::java::find_java_executable;
 
 mod assets;
+mod db;
 mod embedded_files;
 mod interactions;
 mod permissions;
@@ -85,6 +89,7 @@ pub struct TakedownPlan {
 }
 
 pub struct Com {
+    db: Surreal<Db>,
     http: HttpClient,
     lavalink: Lavalink,
     event_sender: Sender<Event>,
@@ -133,7 +138,14 @@ async fn main() {
 
     let (event_sender, events) = tokio::sync::mpsc::channel::<Event>(100);
 
+    let db = Surreal::new::<Mem>(()).await.expect("create db");
+    db.use_ns("cptpiepmatz")
+        .use_db("cloaker_bot")
+        .await
+        .expect("set ns and db");
+
     let com = Arc::new(Com {
+        db,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         lavalink,
         event_sender,
