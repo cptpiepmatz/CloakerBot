@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
+use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
 use futures::TryFutureExt;
@@ -11,12 +12,29 @@ use twilight_util::permission_calculator::PermissionCalculator;
 
 use crate::Com;
 
+#[derive(Debug)]
+pub enum PermSearchError {
+    EveryoneNotInCache,
+    RoleNotInAllRoles
+}
+
+impl Display for PermSearchError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PermSearchError::EveryoneNotInCache => write!(f, "everyone role is not in cache"),
+            PermSearchError::RoleNotInAllRoles => write!(f, "role not found in all roles")
+        }
+    }
+}
+
+impl Error for PermSearchError {}
+
 pub async fn get_in_channel_permissions(
     user_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
     com: Arc<Com>
-) -> Result<Permissions, Box<dyn Error>> {
+) -> anyhow::Result<Permissions> {
     // get role ids
     let event_cache_role_ids = || {
         com.event_cache
@@ -68,7 +86,7 @@ pub async fn get_in_channel_permissions(
                 let role = roles
                     .iter()
                     .find(|r| r.id == role_id)
-                    .ok_or("could not find role")?
+                    .ok_or(PermSearchError::RoleNotInAllRoles)?
                     .clone();
                 let pairs = roles.into_iter().map(|r| (r.id, r));
                 let map: HashMap<Id<RoleMarker>, Role> = HashMap::from_iter(pairs);
@@ -82,7 +100,7 @@ pub async fn get_in_channel_permissions(
     // get everyone role
     let everyone_role = event_cache_role(guild_id.cast())
         .or_else(|| http_cache_role(guild_id.cast()))
-        .ok_or("everyone not in cache")?;
+        .ok_or(PermSearchError::EveryoneNotInCache)?;
 
     // construct calculator
     let calc = PermissionCalculator::new(

@@ -1,7 +1,11 @@
 use std::collections::VecDeque;
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 use std::sync::Arc;
 
+use twilight_http::response::marker::EmptyBody;
+use twilight_http::Response;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -16,7 +20,7 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::replies;
-use crate::interactions::commands::TryFromInteractionError;
+use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::get_in_channel_permissions;
 use crate::{Com, TakedownPlan, APPLICATION_ID, BOT_USER_ID};
 
@@ -92,73 +96,45 @@ pub fn message_context_menu() -> Command {
         .build()
 }
 
-pub async fn action(interaction: Interaction, com: Arc<Com>) {
-    let destruct_com = com.clone();
-    let Com {
-        http,
-        planned_takedowns,
-        event_cache: cache,
-        ..
-    } = destruct_com.deref();
+#[derive(Debug)]
+pub enum CloakerActionError {
+    NotInGuild
+}
 
-    // pull the target from the options
-    let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
-        return;
-    };
-    let Some(CommandOptionValue::User(target_id)) = data.options.first().map(|opt| &opt.value) else {
-        return;
-    };
-    let target_id = *target_id;
-    let Some(guild_id) = data.guild_id else {
-        return;
-    };
+impl Display for CloakerActionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
+impl Error for CloakerActionError {}
+
+pub async fn action(
+    interaction: Interaction,
+    command: CloakerCommand,
+    com: Arc<Com>
+) -> anyhow::Result<()> {
+    let target_id = command.target;
+    let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
+    defer(&interaction, com.clone()).await?;
 
     // check if target is in voice channel
-    let Some(voice_channel_id) = cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
-        let response = InteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(InteractionResponseDataBuilder::new()
-                .flags(MessageFlags::EPHEMERAL)
-                .content(replies::select(&replies::NO_CHANNEL))
-                .build())
-        };
-
-        #[allow(clippy::single_match)]
-        match http.interaction(APPLICATION_ID).create_response(interaction.id, interaction.token.as_str(), &response).await {
-            Ok(_) => {}, // TODO: add logging
-            Err(_) => {}
-        }
-
-        return;
+    let Some(voice_channel_id) = com.event_cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
+        update_defer(&interaction, replies::select(&replies::NO_CHANNEL), com.clone()).await?;
+        return Ok(());
     };
 
     // check if bot can join voice channel
-    let Ok(channel_perms) = get_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com).await else {
-        // TODO: add some logging here
-        return;
-    };
+    let channel_perms =
+        get_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com).await?;
     if !channel_perms.contains(Permissions::CONNECT) {
-        let response = InteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(
-                InteractionResponseDataBuilder::new()
-                    .flags(MessageFlags::EPHEMERAL)
-                    .content(replies::select(&replies::CANT_JOIN))
-                    .build()
-            )
-        };
-
-        #[allow(clippy::single_match)]
-        match http
-            .interaction(APPLICATION_ID)
-            .create_response(interaction.id, interaction.token.as_str(), &response)
-            .await
-        {
-            Ok(_) => {} // TODO: add logging
-            Err(_) => {}
-        }
-
-        return;
+        update_defer(
+            &interaction,
+            replies::select(&replies::CANT_JOIN),
+            com.clone()
+        )
+        .await?;
+        return Ok(());
     }
 
     // check if target is bot

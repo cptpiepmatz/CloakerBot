@@ -11,16 +11,21 @@ use std::sync::Arc;
 
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
+use twilight_http::response::marker::EmptyBody;
+use twilight_http::Response;
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
+use twilight_model::channel::message::MessageFlags;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
+use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::interactions::commands::cloaker::CloakerCommand;
 use crate::interactions::commands::config::ConfigCommand;
 use crate::interactions::commands::counter::CounterCommand;
 use crate::interactions::commands::help::HelpCommand;
 use crate::interactions::commands::ranks::RanksCommand;
-use crate::Com;
+use crate::{Com, APPLICATION_ID};
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),
@@ -72,7 +77,27 @@ pub enum TryFromInteractionError {
 
 impl Display for TryFromInteractionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match self {
+            TryFromInteractionError::NoApplicationCommand => write!(f, "no application command"),
+            TryFromInteractionError::UnknownCommandName { name } => {
+                write!(f, "unknown command {}", name)
+            }
+            TryFromInteractionError::MissingField { command, field } => {
+                write!(f, "missing field {} in {}", field, command)
+            }
+            TryFromInteractionError::IncorrectFieldType {
+                command,
+                field,
+                value
+            } => write!(
+                f,
+                "incorrect field type of {} in {}, got {:?}",
+                field, command, value
+            ),
+            TryFromInteractionError::UnknownField { command, field } => {
+                write!(f, "unknown field {} in {}", field, command)
+            }
+        }
     }
 }
 
@@ -95,15 +120,47 @@ pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), Twi
     Ok(())
 }
 
-pub async fn handle_application_command(interaction: Interaction, com: Arc<Com>) {
-    if let Some(InteractionData::ApplicationCommand(data)) = &interaction.data {
-        match data.name.as_str() {
-            cloaker::NAME => cloaker::action(interaction, com).await,
-            config::NAME => {}
-            counter::NAME => {}
-            help::NAME => {}
-            ranks::NAME => {}
-            _ => {}
-        }
-    }
+pub async fn handle_application_command(
+    interaction: Interaction,
+    com: Arc<Com>
+) -> anyhow::Result<()> {
+    Ok(match ApplicationCommand::try_from(&interaction)? {
+        ApplicationCommand::Cloaker(_) => {}
+        ApplicationCommand::Config(_) => {}
+        ApplicationCommand::Counter(_) => {}
+        ApplicationCommand::Help(_) => {}
+        ApplicationCommand::Ranks(_) => {}
+    })
+}
+
+async fn defer(
+    interaction: &Interaction,
+    com: Arc<Com>
+) -> Result<Response<EmptyBody>, twilight_http::Error> {
+    let response = InteractionResponse {
+        kind: InteractionResponseType::DeferredChannelMessageWithSource,
+        data: None
+    };
+    com.http
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, interaction.token.as_str(), &response)
+        .await
+}
+
+async fn update_defer(
+    interaction: &Interaction,
+    msg: &str,
+    com: Arc<Com>
+) -> Result<Response<EmptyBody>, twilight_http::Error> {
+    let response = InteractionResponse {
+        kind: InteractionResponseType::DeferredUpdateMessage,
+        data: Some(InteractionResponseDataBuilder::new()
+            .flags(MessageFlags::EPHEMERAL)
+            .content(msg)
+            .build())
+    };
+    com.http
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, interaction.token.as_str(), &response)
+        .await
 }

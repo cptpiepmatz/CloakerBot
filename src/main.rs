@@ -160,12 +160,13 @@ async fn main() {
     );
 
     while let Some(event) = events.next().await {
+        // TODO: add some error handling here
         tokio::spawn(handle_event(event, Arc::clone(&com)));
     }
 }
 
-async fn handle_event(event: Event, com: Arc<Com>) {
-    match event {
+async fn handle_event(event: Event, com: Arc<Com>) -> anyhow::Result<()> {
+    Ok(match event {
         Event::Discord(event) => {
             com.event_cache.update(&event);
             com.lavalink.process(&event).await.unwrap();
@@ -175,7 +176,7 @@ async fn handle_event(event: Event, com: Arc<Com>) {
                 }
                 DiscordEvent::InteractionCreate(interaction_create) => {
                     let interaction = (*interaction_create).0;
-                    handle_interaction(interaction, com).await;
+                    handle_interaction(interaction, com).await?;
                 }
                 _ => {}
             }
@@ -184,5 +185,5 @@ async fn handle_event(event: Event, com: Arc<Com>) {
             todo!()
         }
         _ => {}
-    }
+    })
 }
