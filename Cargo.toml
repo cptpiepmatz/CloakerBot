@@ -27,6 +27,9 @@ image = "0.24"
 # logging
 log = "0.4"
 
+# error handling
+anyhow = "1"
+
 # lavalink for audio
 java-locator = "0.1"
 
