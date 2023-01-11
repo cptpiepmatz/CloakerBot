@@ -21,9 +21,6 @@ tokio-stream = "0.1"
 futures = "0.3"
 dashmap = "5"
 
-# database
-# surrealdb = { git = "https://github.com/surrealdb/surrealdb.git", rev = "d7c26bd64b7385701bc3ff46419f86de19701523" }
-
 # image manipulation
 image = "0.24"
 
@@ -32,6 +29,19 @@ log = "0.4"
 
 # lavalink for audio
 java-locator = "0.1"
+
+# database
+serde = { version = "1", features = ["derive"] }
+[dependencies.surrealdb]
+git = "https://github.com/surrealdb/surrealdb.git"
+rev = "7fabf54593e25681c6d1180a8b803d4439f11f50"
+default-features = false
+features = [
+    "kv-mem",
+    "kv-rocksdb",
+    "scripting"
+]
+
 
 [build-dependencies]
 java-locator = "0.1"
