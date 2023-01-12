@@ -183,3 +183,11 @@ async fn handle_event(event: Event, com: Arc<Com>) -> anyhow::Result<()> {
         _ => {}
     })
 }
+
+pub async fn user_is_bot(user_id: Id<UserMarker>, com: Arc<Com>) -> anyhow::Result<bool> {
+    if let Some(user) = com.event_cache.user(user_id) {
+        return Ok(user.bot);
+    }
+    let user = com.http_cache.fetch_user(user_id, com.clone()).await?;
+    Ok(user.bot)
+}
