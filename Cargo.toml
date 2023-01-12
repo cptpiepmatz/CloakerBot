@@ -41,8 +41,7 @@ rev = "7fabf54593e25681c6d1180a8b803d4439f11f50"
 default-features = false
 features = [
     "kv-mem",
-    "kv-rocksdb",
-    "scripting"
+    "kv-rocksdb"
 ]
 
 
