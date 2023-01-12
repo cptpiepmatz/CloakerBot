@@ -35,6 +35,7 @@ mod embedded_files;
 mod interactions;
 mod permissions;
 mod preparations;
+mod log;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
