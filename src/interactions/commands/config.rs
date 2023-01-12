@@ -1,30 +1,36 @@
-use std::ops::Deref;
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+
 use std::sync::Arc;
 
+
+
+use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::{Interaction, InteractionData};
-use twilight_model::channel::message::MessageFlags;
-use twilight_model::guild::Guild;
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::ChannelMarker;
+use twilight_model::application::interaction::{Interaction};
+
+
+use twilight_model::guild::{Permissions};
+
+use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{
     BooleanBuilder, ChannelBuilder, CommandBuilder, NumberBuilder, SubCommandBuilder
 };
-use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::replies;
-use crate::db::GuildConfig;
-use crate::interactions::commands::TryFromInteractionError;
-use crate::{Com, APPLICATION_ID};
+
+
+
+use crate::db::config::GuildConfig;
+use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
+use crate::log::fetch_log_channel;
+use crate::permissions::fetch_in_channel_permissions;
+use crate::{db, Com, BOT_USER_ID};
 
 pub enum ConfigCommand {
-    Counter {
-        enable: Option<bool>
-    },
     DangerZones,
     LogChannel {
         channel: Option<Id<ChannelMarker>>
@@ -52,33 +58,8 @@ impl TryFrom<&CommandData> for ConfigCommand {
         };
 
         match name.as_str() {
-            SUB_COMMAND_COUNTER => {
-                let mut enable: Option<bool> = None;
-                let command = format!("{NAME} {SUB_COMMAND_COUNTER}");
-                for option in options {
-                    match option.name.as_str() {
-                        "enable" => match &option.value {
-                            CommandOptionValue::Boolean(b) => enable = Some(*b),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "enable".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        n => {
-                            return Err(TryFromInteractionError::UnknownField {
-                                command,
-                                field: n.into()
-                            })
-                        }
-                    }
-                }
-                Ok(ConfigCommand::Counter { enable })
-            }
             SUB_COMMAND_DANGER_ZONES => {
-                for option in options {
+                if let Some(option) = options.iter().next() {
                     return Err(TryFromInteractionError::UnknownField {
                         command: format!("{NAME} {SUB_COMMAND_DANGER_ZONES}"),
                         field: String::from(&option.name)
@@ -164,7 +145,7 @@ impl TryFrom<&CommandData> for ConfigCommand {
                             }
                         },
                         "max" => match &option.value {
-                            CommandOptionValue::Number(f) => min = Some(*f),
+                            CommandOptionValue::Number(f) => max = Some(*f),
                             v => {
                                 return Err(TryFromInteractionError::IncorrectFieldType {
                                     command,
@@ -192,7 +173,6 @@ impl TryFrom<&CommandData> for ConfigCommand {
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
-const SUB_COMMAND_COUNTER: &str = "counter";
 const SUB_COMMAND_DANGER_ZONES: &str = "dangerzones";
 const SUB_COMMAND_LOG_CHANNEL: &str = "logchannel";
 const SUB_COMMAND_TARGET_BOTS: &str = "targetbots";
@@ -204,9 +184,6 @@ pub fn chat_input() -> Command {
         .build();
     let danger_zones =
         SubCommandBuilder::new(SUB_COMMAND_DANGER_ZONES, "Define your danger zones.").build();
-    let counter = SubCommandBuilder::new(SUB_COMMAND_COUNTER, "Configure countering.")
-        .option(BooleanBuilder::new("enable", "Enable/disable countering.").build())
-        .build();
     let target_bots = SubCommandBuilder::new(
         SUB_COMMAND_TARGET_BOTS,
         "Configure if the bot should target bots."
@@ -235,10 +212,175 @@ pub fn chat_input() -> Command {
         .dm_permission(false)
         .option(log_channel)
         .option(danger_zones)
-        .option(counter)
         .option(target_bots)
         .option(random)
         .build()
 }
 
-pub async fn action(interaction: Interaction, com: Arc<Com>) {}
+#[derive(Debug)]
+pub enum ConfigActionError {
+    NotInGuild
+}
+
+impl Display for ConfigActionError {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
+impl Error for ConfigActionError {}
+
+pub async fn action(
+    interaction: Interaction,
+    command: ConfigCommand,
+    com: Arc<Com>
+) -> anyhow::Result<()> {
+    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    defer(&interaction, com.clone()).await?;
+
+    match command {
+        ConfigCommand::DangerZones => action_danger_zones(interaction, guild_id, com).await?,
+        ConfigCommand::LogChannel { channel } => {
+            action_log_channel(interaction, guild_id, channel, com).await?
+        }
+        ConfigCommand::Random { enable, min, max } => {
+            action_random(interaction, guild_id, enable, min, max, com).await?
+        }
+        ConfigCommand::TargetBots { allow } => {
+            action_target_bots(interaction, guild_id, allow, com).await?
+        }
+    }
+
+    Ok(())
+}
+
+async fn action_danger_zones(
+    _interaction: Interaction,
+    _guild_id: Id<GuildMarker>,
+    _com: Arc<Com>
+) -> anyhow::Result<()> {
+    todo!()
+}
+
+async fn action_log_channel(
+    interaction: Interaction,
+    guild_id: Id<GuildMarker>,
+    log_channel_id: Option<Id<ChannelMarker>>,
+    com: Arc<Com>
+) -> anyhow::Result<()> {
+    let mut config = guild_config(guild_id, com.clone()).await?;
+
+    match (log_channel_id, config.log_channel) {
+        (None, None) => {
+            let log_channel_id = fetch_log_channel(guild_id, com.clone()).await?;
+            let reply = match log_channel_id {
+                Some(channel_id) => format!(
+                    concat!(
+                        "**🛠️ No log channel defined, will log into {}.**\n",
+                        "Provide a log channel to select where to log.\n",
+                        "With permissions you can deny the bot to send log into that channel."
+                    ),
+                    channel_id.mention()
+                ),
+                None => concat!(
+                    "**🛠️ No log channel defined, no logging will occur.**\n",
+                    "Provide a log channel to avoid this."
+                )
+                .into()
+            };
+            update_defer(&interaction, &reply, com.clone()).await?;
+        }
+        (None, Some(log_channel)) => {
+            let channel_perms =
+                fetch_in_channel_permissions(BOT_USER_ID, guild_id, log_channel, com.clone())
+                    .await?;
+            let reply = match channel_perms.contains(Permissions::SEND_MESSAGES) {
+                true => format!("**🛠️ {} is set as log channel.**", log_channel.mention()),
+                false => {
+                    let fallback = fetch_log_channel(guild_id, com.clone()).await?;
+                    match fallback {
+                        Some(fallback_id) => format!(
+                            concat!(
+                                "**🛠️ {} is set as log channel, but will log into {}.**\n",
+                                "The bot is not allowed to send messages into the log channel."
+                            ),
+                            log_channel.mention(),
+                            fallback_id.mention()
+                        ),
+                        None => format!(
+                            concat!(
+                                "**🛠️ {} is set as log channel, but no logging will occur.**\n",
+                                "The bot is not allowed to send messages into the log channel."
+                            ),
+                            log_channel.mention()
+                        )
+                    }
+                }
+            };
+            update_defer(&interaction, &reply, com.clone()).await?;
+        }
+        (Some(log_channel), _) => {
+            config.log_channel = Some(log_channel);
+            let _: Option<GuildConfig> = com
+                .db
+                .update((db::config::TABLE_NAME, guild_id.get()))
+                .content(config)
+                .await?;
+            let channel_perms =
+                fetch_in_channel_permissions(BOT_USER_ID, guild_id, log_channel, com.clone())
+                    .await?;
+            let reply = match channel_perms.contains(Permissions::SEND_MESSAGES) {
+                true => format!("**🛠️ Defined {} as log channel.**", log_channel.mention()),
+                false => {
+                    let fallback_channel_id = fetch_log_channel(guild_id, com.clone()).await?;
+                    match fallback_channel_id {
+                        Some(fallback) => format!(
+                            concat!(
+                                "**🛠️ Defined {} as log channel, but will log into {}.**\n",
+                                "The bot is not allowed to send messages into the log channel."
+                            ),
+                            log_channel.mention(),
+                            fallback.mention()
+                        ),
+                        None => format!(
+                            concat!(
+                                "**🛠️ Defined {} as log channel, no logging will occur.**\n",
+                                "The bot is not allowed to send messages into the log channel."
+                            ),
+                            log_channel.mention()
+                        )
+                    }
+                }
+            };
+            update_defer(&interaction, &reply, com.clone()).await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn action_random(
+    _interaction: Interaction,
+    _guild_id: Id<GuildMarker>,
+    _enable: Option<bool>,
+    _min: Option<f64>,
+    _max: Option<f64>,
+    _com: Arc<Com>
+) -> anyhow::Result<()> {
+    todo!()
+}
+
+async fn action_target_bots(
+    _interaction: Interaction,
+    _guild_id: Id<GuildMarker>,
+    _allow: Option<bool>,
+    _com: Arc<Com>
+) -> anyhow::Result<()> {
+    todo!()
+}
+
+async fn guild_config(guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<GuildConfig> {
+    let db_key = (db::config::TABLE_NAME, guild_id.get());
+    let config_db: Option<GuildConfig> = com.db.select(db_key).await?;
+    Ok(config_db.unwrap_or_default())
+}

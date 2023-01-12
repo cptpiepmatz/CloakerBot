@@ -9,7 +9,7 @@ pub struct HelpCommand;
 impl TryFrom<&CommandData> for HelpCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
+    fn try_from(_value: &CommandData) -> Result<Self, Self::Error> {
         Ok(HelpCommand)
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{VecDeque};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
@@ -6,22 +6,22 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use futures::stream::StreamExt;
 use surrealdb::engine::local::{Db, Mem};
-use surrealdb::opt::Strict;
+
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::RwLock;
+
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
 use twilight_gateway::Cluster;
 use twilight_http::Client as HttpClient;
 use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::Channel;
+
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::Intents;
-use twilight_model::guild::{Member, Role};
+
 use twilight_model::id::marker::{
-    ApplicationMarker, ChannelMarker, GuildMarker, RoleMarker, UserMarker
+    ApplicationMarker, GuildMarker, UserMarker
 };
 use twilight_model::id::Id;
 

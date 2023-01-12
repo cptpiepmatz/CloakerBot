@@ -9,7 +9,7 @@ pub struct CounterCommand;
 impl TryFrom<&CommandData> for CounterCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
+    fn try_from(_value: &CommandData) -> Result<Self, Self::Error> {
         Ok(CounterCommand)
     }
 }

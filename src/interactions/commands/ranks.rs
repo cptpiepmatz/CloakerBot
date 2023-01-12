@@ -10,7 +10,7 @@ pub struct RanksCommand;
 impl TryFrom<&CommandData> for RanksCommand {
     type Error = TryFromInteractionError;
 
-    fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
+    fn try_from(_value: &CommandData) -> Result<Self, Self::Error> {
         Ok(RanksCommand)
     }
 }

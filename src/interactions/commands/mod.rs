@@ -6,7 +6,7 @@ mod ranks;
 
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::Deref;
+
 use std::sync::Arc;
 
 use twilight_http::client::InteractionClient;
@@ -16,6 +16,7 @@ use twilight_http::Response;
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
+use twilight_model::channel::Message;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
 use twilight_util::builder::InteractionResponseDataBuilder;
@@ -49,7 +50,9 @@ impl TryFrom<&Interaction> for ApplicationCommand {
             counter::NAME => Ok(Self::Counter(CounterCommand::try_from(data.as_ref())?)),
             help::NAME => Ok(Self::Help(HelpCommand::try_from(data.as_ref())?)),
             ranks::NAME => Ok(Self::Ranks(RanksCommand::try_from(data.as_ref())?)),
-            _ => Err(TryFromInteractionError::UnknownCommandName { name: data.name })
+            _ => Err(TryFromInteractionError::UnknownCommandName {
+                name: data.name.clone()
+            })
         }
     }
 }
@@ -124,13 +127,15 @@ pub async fn handle_application_command(
     interaction: Interaction,
     com: Arc<Com>
 ) -> anyhow::Result<()> {
-    Ok(match ApplicationCommand::try_from(&interaction)? {
+    match ApplicationCommand::try_from(&interaction)? {
         ApplicationCommand::Cloaker(_) => {}
-        ApplicationCommand::Config(_) => {}
+        ApplicationCommand::Config(command) => config::action(interaction, command, com).await?,
         ApplicationCommand::Counter(_) => {}
         ApplicationCommand::Help(_) => {}
         ApplicationCommand::Ranks(_) => {}
-    })
+    };
+
+    Ok(())
 }
 
 async fn defer(
@@ -139,7 +144,11 @@ async fn defer(
 ) -> Result<Response<EmptyBody>, twilight_http::Error> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: None
+        data: Some(
+            InteractionResponseDataBuilder::new()
+                .flags(MessageFlags::EPHEMERAL)
+                .build()
+        )
     };
     com.http
         .interaction(APPLICATION_ID)
@@ -151,16 +160,11 @@ async fn update_defer(
     interaction: &Interaction,
     msg: &str,
     com: Arc<Com>
-) -> Result<Response<EmptyBody>, twilight_http::Error> {
-    let response = InteractionResponse {
-        kind: InteractionResponseType::DeferredUpdateMessage,
-        data: Some(InteractionResponseDataBuilder::new()
-            .flags(MessageFlags::EPHEMERAL)
-            .content(msg)
-            .build())
-    };
-    com.http
+) -> anyhow::Result<Response<Message>> {
+    Ok(com
+        .http
         .interaction(APPLICATION_ID)
-        .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await
+        .update_response(interaction.token.as_str())
+        .content(Some(msg))?
+        .await?)
 }

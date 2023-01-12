@@ -1,28 +1,28 @@
-use std::collections::VecDeque;
+
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::Deref;
+
 use std::sync::Arc;
 
-use twilight_http::response::marker::EmptyBody;
-use twilight_http::Response;
+
+
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::{Interaction, InteractionData};
-use twilight_model::channel::message::MessageFlags;
+use twilight_model::application::interaction::{Interaction};
+
 use twilight_model::guild::Permissions;
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
+
 use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
-use twilight_util::builder::InteractionResponseDataBuilder;
+
 
 use crate::assets::replies;
 use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
-use crate::permissions::get_in_channel_permissions;
-use crate::{Com, TakedownPlan, APPLICATION_ID, BOT_USER_ID};
+use crate::permissions::fetch_in_channel_permissions;
+use crate::{user_is_bot, Com, BOT_USER_ID};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
@@ -34,23 +34,23 @@ impl TryFrom<&CommandData> for CloakerCommand {
 
     fn try_from(data: &CommandData) -> Result<Self, Self::Error> {
         let mut target: Option<Id<UserMarker>> = None;
-        for option in data.options {
+        for option in &data.options {
             let CommandDataOption { name, value } = option;
             match name.as_str() {
                 "target" => match value {
-                    CommandOptionValue::User(u) => target = Some(u),
-                    v => {
+                    CommandOptionValue::User(u) => target = Some(*u),
+                    _v => {
                         return Err(TryFromInteractionError::IncorrectFieldType {
                             command: NAME.into(),
-                            field: name,
+                            field: name.clone(),
                             value: value.clone()
                         })
                     }
                 },
-                n => {
+                _n => {
                     return Err(TryFromInteractionError::UnknownField {
                         command: NAME.into(),
-                        field: name
+                        field: name.clone()
                     })
                 }
             }
@@ -102,7 +102,7 @@ pub enum CloakerActionError {
 }
 
 impl Display for CloakerActionError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
@@ -126,7 +126,7 @@ pub async fn action(
 
     // check if bot can join voice channel
     let channel_perms =
-        get_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com).await?;
+        fetch_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com.clone()).await?;
     if !channel_perms.contains(Permissions::CONNECT) {
         update_defer(
             &interaction,
@@ -138,29 +138,16 @@ pub async fn action(
     }
 
     // check if target is bot
-
-    let response = InteractionResponse {
-        kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: None
-    };
-    if (http
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await)
-        .is_ok()
-    {
-        let plan = TakedownPlan {
-            initiator_id: interaction.author_id(),
-            target_id,
-            countered: false
-        };
-        match planned_takedowns.get_mut(&guild_id) {
-            None => {
-                planned_takedowns.insert(guild_id, VecDeque::from([plan]));
-            }
-            Some(mut q) => {
-                q.push_back(plan);
-            }
-        };
+    if user_is_bot(target_id, com.clone()).await? {
+        // TODO: add db check
+        update_defer(
+            &interaction,
+            replies::select(&replies::INVALID_MEMBER),
+            com.clone()
+        )
+        .await?;
+        return Ok(());
     }
+
+    todo!()
 }
