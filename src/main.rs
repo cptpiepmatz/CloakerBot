@@ -161,27 +161,33 @@ async fn main() {
     }
 }
 
-async fn handle_event(event: Event, com: Arc<Com>) -> anyhow::Result<()> {
-    Ok(match event {
-        Event::Discord(event) => {
-            com.event_cache.update(&event);
-            com.lavalink.process(&event).await.unwrap();
-            match event {
-                DiscordEvent::ShardConnected(_) => {
-                    println!("Connected");
+async fn handle_event(event: Event, com: Arc<Com>) {
+    async fn run(event: Event, com: Arc<Com>) -> anyhow::Result<()> {
+        match event {
+            Event::Discord(event) => {
+                com.event_cache.update(&event);
+                com.lavalink.process(&event).await.unwrap();
+                match event {
+                    DiscordEvent::ShardConnected(_) => {
+                        println!("Connected");
+                    }
+                    DiscordEvent::InteractionCreate(interaction_create) => {
+                        let interaction = (*interaction_create).0;
+                        handle_interaction(interaction, com).await?;
+                    }
+                    _ => {}
                 }
-                DiscordEvent::InteractionCreate(interaction_create) => {
-                    let interaction = (*interaction_create).0;
-                    handle_interaction(interaction, com).await?;
-                }
-                _ => {}
             }
-        }
-        Event::TakedownPrep => {
-            todo!()
-        }
-        _ => {}
-    })
+            Event::TakedownPrep => {
+                todo!()
+            }
+            _ => {}
+        };
+
+        Ok(())
+    }
+
+    run(event, com).await.unwrap();
 }
 
 pub async fn user_is_bot(user_id: Id<UserMarker>, com: Arc<Com>) -> anyhow::Result<bool> {
