@@ -61,7 +61,9 @@ const INTENTS: Intents = Intents::GUILDS
 const EVENT_CACHE_RESOURCE_TYPES: ResourceType = ResourceType::VOICE_STATE
     .union(ResourceType::CHANNEL)
     .union(ResourceType::MEMBER)
-    .union(ResourceType::ROLE);
+    .union(ResourceType::ROLE)
+    .union(ResourceType::USER)
+    .union(ResourceType::GUILD);
 
 pub enum Event {
     /// events from the discord gateway
