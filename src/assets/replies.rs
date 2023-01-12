@@ -56,6 +56,12 @@ pub const NO_MEMBER: [&str; 3] = [
     "Tell me who, idiot!"
 ];
 
+// Replies when the member is an invalid target
+pub const INVALID_MEMBER: [&str; 2] = [
+    "Fuck no! Not this one!",
+    "That is not our target dipshit!"
+];
+
 // Replies if the bot can't find the channel to join
 pub const NO_CHANNEL: [&str; 5] = [
     "Where you wanted me to go?! Dickhead!",
