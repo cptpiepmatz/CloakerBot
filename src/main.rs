@@ -25,11 +25,13 @@ use twilight_model::id::marker::{
 };
 use twilight_model::id::Id;
 
+use crate::cache::http::Cache as HttpCache;
 use crate::interactions::{commands, handle_interaction};
 use crate::preparations::file_extract::extract_files;
 use crate::preparations::java::find_java_executable;
 
 mod assets;
+mod cache;
 mod db;
 mod embedded_files;
 mod interactions;
@@ -74,13 +76,6 @@ pub enum Event {
 
     /// check if random takedowns should be queued
     RandomCheck
-}
-
-#[derive(Debug, Default)]
-pub struct HttpCache {
-    guild_members: DashMap<(Id<GuildMarker>, Id<UserMarker>), Member>,
-    roles: DashMap<Id<GuildMarker>, HashMap<Id<RoleMarker>, Role>>,
-    channels: DashMap<Id<GuildMarker>, HashMap<Id<ChannelMarker>, Channel>>
 }
 
 pub struct TakedownPlan {
