@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use twilight_model::id::marker::{ChannelMarker};
+use twilight_model::id::marker::ChannelMarker;
 use twilight_model::id::Id;
 
 pub const TABLE_NAME: &str = "config";

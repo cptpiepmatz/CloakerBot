@@ -16,7 +16,7 @@ use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::Intents;
-use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
+use twilight_model::id::marker::{ApplicationMarker, GuildMarker, InteractionMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::cache::http::Cache as HttpCache;
@@ -87,7 +87,8 @@ pub struct Com {
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
-    planned_takedowns: DashMap<Id<GuildMarker>, VecDeque<TakedownPlan>>
+    planned_takedowns: DashMap<Id<GuildMarker>, VecDeque<TakedownPlan>>,
+    tracked_interactions: DashMap<Id<InteractionMarker>, Interaction>
 }
 
 #[tokio::main]
@@ -143,7 +144,8 @@ async fn main() {
         event_sender,
         event_cache: cache,
         http_cache: HttpCache::default(),
-        planned_takedowns: DashMap::new()
+        planned_takedowns: DashMap::default(),
+        tracked_interactions: DashMap::default()
     });
 
     let mut events = futures::stream::select(

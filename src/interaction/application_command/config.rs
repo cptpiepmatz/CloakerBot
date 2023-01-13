@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
+use std::time::Duration;
 
 use serde_json::json;
 use twilight_mention::Mention;
@@ -9,6 +10,7 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::component::ButtonStyle;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
@@ -19,6 +21,9 @@ use twilight_util::builder::command::{
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
+use crate::interaction::message_component::custom_id::{
+    CONFIG_DANGER_ZONES_BUTTON, CONFIG_DANGER_ZONES_SELECT
+};
 use crate::log::fetch_log_channel;
 use crate::permissions::fetch_in_channel_permissions;
 use crate::{db, Com, APPLICATION_ID, BOT_USER_ID};
@@ -252,18 +257,50 @@ async fn action_danger_zones(
     guild_id: Id<GuildMarker>,
     com: Arc<Com>
 ) -> anyhow::Result<()> {
+    let config = guild_config(guild_id, com.clone()).await?;
+
+    let content = match config.danger_zones.is_empty() {
+        true => "**🛠️ *No* danger zones are currently set.**".to_owned(),
+        false => format!(
+            "**🛠️ The following channels are set as danger zones:** {}",
+            config
+                .danger_zones
+                .iter()
+                .map(|c| c.mention().to_string() + "\n")
+                .collect::<String>()
+        )
+    };
+
     let payload = json!({
-        "components": [{
-            "type": 1,
-            "components": [{
-                "type": 8,
-                "custom_id": "config_danger_zones_select",
-                "channel_types": [ChannelType::GuildVoice],
-                "min_values": 0,
-                "max_values": 25,
-                "placeholder": "🛠️ Select channels as danger zones."
-            }]
-        }]
+        "content": content,
+        "components": [
+            {
+                "type": 1,
+                "components": [{
+                    // select menu for channel select
+                    "type": 8,
+                    "custom_id": format!("{}#{}", CONFIG_DANGER_ZONES_SELECT, interaction.id),
+                    "channel_types": [ChannelType::GuildVoice],
+                    "min_values": 0,
+                    "max_values": 25,
+                    "placeholder": "⚠️ Select channels as danger zones."
+                }]
+            },
+            {
+                "type": 1,
+                "components": [{
+                    // button to remove all channels
+                    "type": 2,
+                    "custom_id": format!("{}#{}", CONFIG_DANGER_ZONES_BUTTON, interaction.id),
+                    "label": "Delete Danger Zones",
+                    "style": ButtonStyle::Danger,
+                    "emoji": {
+                        "id": null,
+                        "name": "🗑️"
+                    }
+                }]
+            }
+        ]
     });
 
     com.http
@@ -271,6 +308,28 @@ async fn action_danger_zones(
         .update_response(&interaction.token)
         .payload_json(payload.to_string().as_bytes())
         .await?;
+
+    let interaction_id = interaction.id;
+    com.tracked_interactions.insert(interaction.id, interaction);
+
+    tokio::time::sleep(Duration::from_secs(3 * 60)).await;
+
+    if let Some((_, interaction)) = com.tracked_interactions.remove(&interaction_id) {
+        let payload = json!({
+            "content": format!(
+                "**⌛ Timed Out.**\nTry `/{} {}` again to modify danger zones.",
+                NAME,
+                SUB_COMMAND_DANGER_ZONES
+            ),
+            "components": []
+        });
+
+        com.http
+            .interaction(APPLICATION_ID)
+            .update_response(&interaction.token)
+            .payload_json(payload.to_string().as_bytes())
+            .await?;
+    }
 
     Ok(())
 }
