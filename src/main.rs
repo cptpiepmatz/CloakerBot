@@ -1,4 +1,4 @@
-use std::collections::{VecDeque};
+use std::collections::VecDeque;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
@@ -6,38 +6,32 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use futures::stream::StreamExt;
 use surrealdb::engine::local::{Db, Mem};
-
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
-
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
 use twilight_gateway::Cluster;
 use twilight_http::Client as HttpClient;
 use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
-
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::Intents;
-
-use twilight_model::id::marker::{
-    ApplicationMarker, GuildMarker, UserMarker
-};
+use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::cache::http::Cache as HttpCache;
-use crate::interactions::{commands, handle_interaction};
-use crate::preparations::file_extract::extract_files;
-use crate::preparations::java::find_java_executable;
+use crate::interaction::{application_command, handle_interaction};
+use crate::preparation::file_extract::extract_files;
+use crate::preparation::java::find_java_executable;
 
 mod assets;
 mod cache;
 mod db;
 mod embedded_files;
-mod interactions;
-mod permissions;
-mod preparations;
+mod interaction;
 mod log;
+mod permissions;
+mod preparation;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
@@ -116,7 +110,7 @@ async fn main() {
 
     // create http client and register commands
     let http_client = HttpClient::new(String::from(DISCORD_TOKEN.trim()));
-    commands::register_commands(&http_client.interaction(APPLICATION_ID))
+    application_command::register_commands(&http_client.interaction(APPLICATION_ID))
         .await
         .expect("set commands");
 

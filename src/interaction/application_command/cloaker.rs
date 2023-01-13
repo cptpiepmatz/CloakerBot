@@ -1,26 +1,19 @@
-
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-
 use std::sync::Arc;
-
-
 
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::{Interaction};
-
+use twilight_model::application::interaction::Interaction;
 use twilight_model::guild::Permissions;
-
 use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
-
 use crate::assets::replies;
-use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
+use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::{user_is_bot, Com, BOT_USER_ID};
 

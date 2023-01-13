@@ -6,7 +6,6 @@ mod ranks;
 
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-
 use std::sync::Arc;
 
 use twilight_http::client::InteractionClient;
@@ -21,11 +20,11 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_model::id::Id;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::interactions::commands::cloaker::CloakerCommand;
-use crate::interactions::commands::config::ConfigCommand;
-use crate::interactions::commands::counter::CounterCommand;
-use crate::interactions::commands::help::HelpCommand;
-use crate::interactions::commands::ranks::RanksCommand;
+use crate::interaction::application_command::cloaker::CloakerCommand;
+use crate::interaction::application_command::config::ConfigCommand;
+use crate::interaction::application_command::counter::CounterCommand;
+use crate::interaction::application_command::help::HelpCommand;
+use crate::interaction::application_command::ranks::RanksCommand;
 use crate::{Com, APPLICATION_ID};
 
 enum ApplicationCommand {

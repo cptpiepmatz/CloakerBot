@@ -2,7 +2,7 @@ use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::interactions::commands::TryFromInteractionError;
+use crate::interaction::application_command::TryFromInteractionError;
 
 pub struct CounterCommand;
 

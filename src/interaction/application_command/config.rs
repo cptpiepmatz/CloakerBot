@@ -18,7 +18,7 @@ use twilight_util::builder::command::{
 };
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
-use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
+use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::log::fetch_log_channel;
 use crate::permissions::fetch_in_channel_permissions;
 use crate::{db, Com, APPLICATION_ID, BOT_USER_ID};
