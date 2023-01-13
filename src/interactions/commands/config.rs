@@ -1,34 +1,27 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-
 use std::sync::Arc;
 
-
-
+use serde_json::json;
 use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::{Interaction};
-
-
-use twilight_model::guild::{Permissions};
-
+use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::ChannelType;
+use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{
     BooleanBuilder, ChannelBuilder, CommandBuilder, NumberBuilder, SubCommandBuilder
 };
 
-
-
-
-use crate::db::config::GuildConfig;
+use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::interactions::commands::{defer, update_defer, TryFromInteractionError};
 use crate::log::fetch_log_channel;
 use crate::permissions::fetch_in_channel_permissions;
-use crate::{db, Com, BOT_USER_ID};
+use crate::{db, Com, APPLICATION_ID, BOT_USER_ID};
 
 pub enum ConfigCommand {
     DangerZones,
@@ -255,11 +248,31 @@ pub async fn action(
 }
 
 async fn action_danger_zones(
-    _interaction: Interaction,
-    _guild_id: Id<GuildMarker>,
-    _com: Arc<Com>
+    interaction: Interaction,
+    guild_id: Id<GuildMarker>,
+    com: Arc<Com>
 ) -> anyhow::Result<()> {
-    todo!()
+    let payload = json!({
+        "components": [{
+            "type": 1,
+            "components": [{
+                "type": 8,
+                "custom_id": "config_danger_zones_select",
+                "channel_types": [ChannelType::GuildVoice],
+                "min_values": 0,
+                "max_values": 25,
+                "placeholder": "🛠️ Select channels as danger zones."
+            }]
+        }]
+    });
+
+    com.http
+        .interaction(APPLICATION_ID)
+        .update_response(&interaction.token)
+        .payload_json(payload.to_string().as_bytes())
+        .await?;
+
+    Ok(())
 }
 
 async fn action_log_channel(
@@ -360,23 +373,100 @@ async fn action_log_channel(
 }
 
 async fn action_random(
-    _interaction: Interaction,
-    _guild_id: Id<GuildMarker>,
-    _enable: Option<bool>,
-    _min: Option<f64>,
-    _max: Option<f64>,
-    _com: Arc<Com>
+    interaction: Interaction,
+    guild_id: Id<GuildMarker>,
+    enable: Option<bool>,
+    min: Option<f64>,
+    max: Option<f64>,
+    com: Arc<Com>
 ) -> anyhow::Result<()> {
-    todo!()
+    let mut config = guild_config(guild_id, com.clone()).await?;
+
+    match (enable, min, max) {
+        (Some(false), _, _) => {
+            config.random.enabled = false;
+            let _: Option<GuildConfig> = com
+                .db
+                .update((db::config::TABLE_NAME, guild_id.get()))
+                .content(config)
+                .await?;
+            let reply = "**🛠️ *Disabled* random takedowns on this server.**";
+            update_defer(&interaction, reply, com.clone()).await?;
+        }
+        (None, None, None) => {
+            let reply = match config.random.enabled {
+                false => String::from("**🛠️ Random takedowns are *disabled* on this server.**"),
+                true => format!(
+                    concat!(
+                        "**🛠️ ",
+                        "Random takedowns are *enabled* on this server.**\n",
+                        "The time interval for random takedowns is set to {}-{}."
+                    ),
+                    config.random.min, config.random.max
+                )
+            };
+            update_defer(&interaction, &reply, com.clone()).await?;
+        }
+        (_, min, max) => {
+            let min = min.unwrap_or(config.random.min);
+            let max = max.unwrap_or(config.random.max);
+            config.random = GuildConfigRandom {
+                enabled: true,
+                min,
+                max
+            };
+            let _: Option<GuildConfig> = com
+                .db
+                .update((db::config::TABLE_NAME, guild_id.get()))
+                .content(config)
+                .await?;
+            let reply = format!(
+                concat!(
+                    "**🛠️ ",
+                    "*Enabled* random takedowns on this server.**\n",
+                    "The time interval for random takedowns is set to {}-{}."
+                ),
+                min, max
+            );
+            update_defer(&interaction, &reply, com.clone()).await?;
+        }
+    }
+
+    Ok(())
 }
 
 async fn action_target_bots(
-    _interaction: Interaction,
-    _guild_id: Id<GuildMarker>,
-    _allow: Option<bool>,
-    _com: Arc<Com>
+    interaction: Interaction,
+    guild_id: Id<GuildMarker>,
+    allow: Option<bool>,
+    com: Arc<Com>
 ) -> anyhow::Result<()> {
-    todo!()
+    let mut config = guild_config(guild_id, com.clone()).await?;
+
+    match allow {
+        None => {
+            let reply = match config.target_bots {
+                true => "**🛠️ Taking down bots is *allowed* on this server.**",
+                false => "**🛠️ Taking down bots is *disallowed* on this server.**"
+            };
+            update_defer(&interaction, reply, com.clone()).await?;
+        }
+        Some(allow) => {
+            config.target_bots = allow;
+            let _: Option<GuildConfig> = com
+                .db
+                .update((db::config::TABLE_NAME, guild_id.get()))
+                .content(config)
+                .await?;
+            let reply = match allow {
+                true => "**🛠️ *Allowed* taking down bots on this server.**",
+                false => "**🛠️ *Disallowed* taking down bots on this server.**"
+            };
+            update_defer(&interaction, reply, com.clone()).await?;
+        }
+    }
+
+    Ok(())
 }
 
 async fn guild_config(guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<GuildConfig> {
