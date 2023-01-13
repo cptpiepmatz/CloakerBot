@@ -420,6 +420,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde",
+ "serde_json",
  "surrealdb",
  "tokio",
  "tokio-stream",
