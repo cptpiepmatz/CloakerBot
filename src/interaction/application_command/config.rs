@@ -171,10 +171,10 @@ impl TryFrom<&CommandData> for ConfigCommand {
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
-const SUB_COMMAND_DANGER_ZONES: &str = "dangerzones";
-const SUB_COMMAND_LOG_CHANNEL: &str = "logchannel";
-const SUB_COMMAND_TARGET_BOTS: &str = "targetbots";
-const SUB_COMMAND_RANDOM: &str = "random";
+pub const SUB_COMMAND_DANGER_ZONES: &str = "dangerzones";
+pub const SUB_COMMAND_LOG_CHANNEL: &str = "logchannel";
+pub const SUB_COMMAND_TARGET_BOTS: &str = "targetbots";
+pub const SUB_COMMAND_RANDOM: &str = "random";
 
 pub fn chat_input() -> Command {
     let log_channel = SubCommandBuilder::new(SUB_COMMAND_LOG_CHANNEL, "Define your log channel.")

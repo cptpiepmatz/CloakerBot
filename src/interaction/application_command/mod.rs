@@ -71,6 +71,11 @@ pub enum TryFromInteractionError {
         field: String,
         value: CommandOptionValue
     },
+    IncorrectFieldValue {
+        command: String,
+        field: String,
+        value: CommandOptionValue
+    },
     UnknownField {
         command: String,
         field: String
@@ -94,6 +99,15 @@ impl Display for TryFromInteractionError {
             } => write!(
                 f,
                 "incorrect field type of {} in {}, got {:?}",
+                field, command, value
+            ),
+            TryFromInteractionError::IncorrectFieldValue {
+                command,
+                field,
+                value
+            } => write!(
+                f,
+                "incorrect field value of {} in {}, got {:?}",
                 field, command, value
             ),
             TryFromInteractionError::UnknownField { command, field } => {
@@ -130,7 +144,7 @@ pub async fn handle_application_command(
         ApplicationCommand::Cloaker(_) => {}
         ApplicationCommand::Config(command) => config::action(interaction, command, com).await?,
         ApplicationCommand::Counter(_) => {}
-        ApplicationCommand::Help(_) => {}
+        ApplicationCommand::Help(command) => help::action(interaction, command, com).await?,
         ApplicationCommand::Ranks(_) => {}
     };
 
