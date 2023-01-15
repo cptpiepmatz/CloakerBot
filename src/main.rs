@@ -35,6 +35,7 @@ mod log;
 mod permissions;
 mod preparation;
 mod sounds;
+mod sync;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
