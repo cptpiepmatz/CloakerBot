@@ -24,6 +24,7 @@ tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
 futures = "0.3"
 dashmap = "5"
+parking_lot = "0.12"
 
 # image manipulation
 image = "0.24"
@@ -41,6 +42,7 @@ hyper = "0.14"
 # utility
 const_format = "0.2"
 lazy_static = "1"
+uuid = "1"
 
 # database
 [dependencies.surrealdb]

@@ -421,6 +421,7 @@ dependencies = [
  "java-locator",
  "lazy_static",
  "log",
+ "parking_lot",
  "reqwest",
  "serde",
  "serde_json",
@@ -434,6 +435,7 @@ dependencies = [
  "twilight-mention",
  "twilight-model",
  "twilight-util",
+ "uuid",
 ]
 
 [[package]]
