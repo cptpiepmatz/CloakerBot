@@ -1,5 +1,5 @@
 pub mod http {
-    
+
     use std::sync::Arc;
 
     use dashmap::mapref::one::Ref;
@@ -80,7 +80,7 @@ pub mod http {
 
             Ok(self.roles.get(&role_id))
         }
-        
+
         pub async fn fetch_channel(
             &self,
             guild_id: Id<GuildMarker>,
@@ -90,38 +90,46 @@ pub mod http {
             if let Some(channel) = self.channels.get(&channel_id) {
                 return Ok(Some(channel));
             }
-            
+
             let channels = com.http.guild_channels(guild_id).await?.model().await?;
             for channel in channels.iter().cloned() {
                 self.channels.insert(channel.id, channel);
             }
             self.guild_channels.insert(guild_id, channels);
-            
+
             Ok(self.channels.get(&channel_id))
         }
-        
-        pub async fn fetch_guild(&self, guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<Ref<Id<GuildMarker>, Guild>> {
+
+        pub async fn fetch_guild(
+            &self,
+            guild_id: Id<GuildMarker>,
+            com: Arc<Com>
+        ) -> anyhow::Result<Ref<Id<GuildMarker>, Guild>> {
             if let Some(guild) = self.guilds.get(&guild_id) {
                 return Ok(guild);
             }
-            
+
             let guild = com.http.guild(guild_id).await?.model().await?;
             self.guilds.insert(guild_id, guild);
-            
+
             Ok(self.guilds.get(&guild_id).expect("just inserted"))
         }
-        
-        pub async fn fetch_guild_channels(&self, guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<Ref<Id<GuildMarker>, Vec<Channel>>> {
+
+        pub async fn fetch_guild_channels(
+            &self,
+            guild_id: Id<GuildMarker>,
+            com: Arc<Com>
+        ) -> anyhow::Result<Ref<Id<GuildMarker>, Vec<Channel>>> {
             if let Some(channels) = self.guild_channels.get(&guild_id) {
                 return Ok(channels);
             }
-            
+
             let channels = com.http.guild_channels(guild_id).await?.model().await?;
             for channel in channels.iter().cloned() {
                 self.channels.insert(channel.id, channel);
             }
             self.guild_channels.insert(guild_id, channels);
-            
+
             Ok(self.guild_channels.get(&guild_id).expect("just inserted"))
         }
     }

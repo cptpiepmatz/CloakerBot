@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::ops::Deref;
 use std::process::Command;
 use std::sync::Arc;
 

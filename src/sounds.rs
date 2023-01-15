@@ -3,10 +3,10 @@ use std::fmt::{Display, Formatter};
 
 use hyper::client::HttpConnector;
 use hyper::{Body, Client as HyperClient, Request};
-use twilight_lavalink::http::{LoadedTracks, Track};
+use twilight_lavalink::http::LoadedTracks;
 
 use crate::assets::sounds;
-use crate::{Com, LAVALINK_ADDR, LAVALINK_AUTH};
+use crate::{LAVALINK_ADDR, LAVALINK_AUTH};
 
 type TrackString = String;
 

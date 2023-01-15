@@ -8,11 +8,8 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::Embed;
-use twilight_util::builder::command::{
-    CommandBuilder, StringBuilder, SubCommandBuilder, SubCommandGroupBuilder
-};
-use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder, EmbedFooterBuilder};
+use twilight_util::builder::command::{CommandBuilder, StringBuilder};
+use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::assets::colors;
 use crate::interaction::application_command::{
