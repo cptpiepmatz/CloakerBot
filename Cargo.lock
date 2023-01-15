@@ -416,6 +416,7 @@ dependencies = [
  "const_format",
  "dashmap",
  "futures",
+ "hyper",
  "image",
  "java-locator",
  "lazy_static",

@@ -36,6 +36,7 @@ anyhow = "1"
 
 # lavalink for audio
 java-locator = "0.1"
+hyper = "0.14"
 
 # utility
 const_format = "0.2"
