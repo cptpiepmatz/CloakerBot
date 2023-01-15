@@ -1,10 +1,12 @@
 use std::collections::VecDeque;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::ops::Deref;
 use std::process::Command;
 use std::sync::Arc;
 
 use dashmap::DashMap;
 use futures::stream::StreamExt;
+use lazy_static::lazy_static;
 use surrealdb::engine::local::{Db, Mem};
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
@@ -23,6 +25,7 @@ use crate::cache::http::Cache as HttpCache;
 use crate::interaction::{application_command, handle_interaction};
 use crate::preparation::file_extract::extract_files;
 use crate::preparation::java::find_java_executable;
+use crate::sounds::{load_sounds, LoadedSounds};
 
 mod assets;
 mod cache;
@@ -32,6 +35,7 @@ mod interaction;
 mod log;
 mod permissions;
 mod preparation;
+mod sounds;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
@@ -45,6 +49,10 @@ const APPLICATION_ID: Id<ApplicationMarker> = Id::new(772259037580361729);
 
 const BOT_USER_ID: Id<UserMarker> = APPLICATION_ID.cast();
 
+lazy_static! {
+    // TODO: make this const when https://github.com/rust-lang/rust/issues/82485 lands
+    static ref LAVALINK_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2333);
+}
 const LAVALINK_AUTH: &str = "youshallnotpass";
 
 const INTENTS: Intents = Intents::GUILDS
@@ -84,6 +92,7 @@ pub struct Com {
     db: Surreal<Db>,
     http: HttpClient,
     lavalink: Lavalink,
+    sounds: LoadedSounds,
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
@@ -101,13 +110,9 @@ async fn main() {
         .spawn()
         .expect("spawn lavalink process");
     let lavalink = Lavalink::new(BOT_USER_ID, 1);
-    lavalink
-        .add(
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2333),
-            LAVALINK_AUTH
-        )
-        .await
-        .unwrap();
+    lavalink.add(*LAVALINK_ADDR, LAVALINK_AUTH).await.unwrap();
+    let sounds = load_sounds().await.expect("load sounds into node");
+    println!("{sounds:#?}");
 
     // create http client and register commands
     let http_client = HttpClient::new(String::from(DISCORD_TOKEN.trim()));
@@ -141,6 +146,7 @@ async fn main() {
         db,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         lavalink,
+        sounds,
         event_sender,
         event_cache: cache,
         http_cache: HttpCache::default(),
