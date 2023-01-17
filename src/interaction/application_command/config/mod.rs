@@ -20,19 +20,14 @@ use crate::db::config::GuildConfig;
 use crate::interaction::application_command::{defer, TryFromInteractionError};
 use crate::{db, Com};
 
+pub const NAME: &str = "config";
+const DESCRIPTION: &str = "Configure the CloakerBot.";
+
 pub enum ConfigCommand {
-    DangerZones,
-    LogChannel {
-        channel: Option<Id<ChannelMarker>>
-    },
-    Random {
-        enable: Option<bool>,
-        min: Option<f64>,
-        max: Option<f64>
-    },
-    TargetBots {
-        allow: Option<bool>
-    }
+    DangerZones(danger_zones::DangerZonesSubCommand),
+    LogChannel(log_channel::LogChannelSubCommand),
+    Random(random::RandomSubCommand),
+    TargetBots(target_bots::TargetBotsSubCommand)
 }
 
 impl TryFrom<&CommandData> for ConfigCommand {
@@ -48,121 +43,24 @@ impl TryFrom<&CommandData> for ConfigCommand {
         };
 
         match name.as_str() {
-            SUB_COMMAND_DANGER_ZONES => {
-                if let Some(option) = options.iter().next() {
-                    return Err(TryFromInteractionError::UnknownField {
-                        command: format!("{NAME} {SUB_COMMAND_DANGER_ZONES}"),
-                        field: String::from(&option.name)
-                    });
-                }
-                Ok(ConfigCommand::DangerZones)
-            }
-            SUB_COMMAND_LOG_CHANNEL => {
-                let mut channel: Option<Id<ChannelMarker>> = None;
-                let command = format!("{NAME} {SUB_COMMAND_LOG_CHANNEL}");
-                for option in options {
-                    match option.name.as_str() {
-                        "channel" => match &option.value {
-                            CommandOptionValue::Channel(c) => channel = Some(*c),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "channel".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        n => {
-                            return Err(TryFromInteractionError::UnknownField {
-                                command,
-                                field: n.into()
-                            })
-                        }
-                    }
-                }
-                Ok(ConfigCommand::LogChannel { channel })
-            }
-            SUB_COMMAND_TARGET_BOTS => {
-                let mut allow: Option<bool> = None;
-                let command = format!("{NAME} {SUB_COMMAND_TARGET_BOTS}");
-                for option in options {
-                    match option.name.as_str() {
-                        "allow" => match &option.value {
-                            CommandOptionValue::Boolean(b) => allow = Some(*b),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "allow".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        n => {
-                            return Err(TryFromInteractionError::UnknownField {
-                                command,
-                                field: n.into()
-                            })
-                        }
-                    }
-                }
-                Ok(ConfigCommand::TargetBots { allow })
-            }
-            SUB_COMMAND_RANDOM => {
-                let mut enable: Option<bool> = None;
-                let mut min: Option<f64> = None;
-                let mut max: Option<f64> = None;
-                let command = format!("{NAME} {SUB_COMMAND_RANDOM}");
-                for option in options {
-                    match option.name.as_str() {
-                        "enable" => match &option.value {
-                            CommandOptionValue::Boolean(b) => enable = Some(*b),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "allow".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        "min" => match &option.value {
-                            CommandOptionValue::Number(f) => min = Some(*f),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "min".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        "max" => match &option.value {
-                            CommandOptionValue::Number(f) => max = Some(*f),
-                            v => {
-                                return Err(TryFromInteractionError::IncorrectFieldType {
-                                    command,
-                                    field: "max".into(),
-                                    value: v.clone()
-                                })
-                            }
-                        },
-                        n => {
-                            return Err(TryFromInteractionError::UnknownField {
-                                command,
-                                field: n.into()
-                            })
-                        }
-                    }
-                }
-                Ok(ConfigCommand::Random { enable, min, max })
-            }
+            danger_zones::NAME => Ok(ConfigCommand::DangerZones(
+                danger_zones::DangerZonesSubCommand::try_from(options)?
+            )),
+            log_channel::NAME => Ok(ConfigCommand::LogChannel(
+                log_channel::LogChannelSubCommand::try_from(options)?
+            )),
+            target_bots::NAME => Ok(ConfigCommand::TargetBots(
+                target_bots::TargetBotsSubCommand::try_from(options)?
+            )),
+            random::NAME => Ok(ConfigCommand::Random(random::RandomSubCommand::try_from(
+                options
+            )?)),
             n => Err(TryFromInteractionError::UnknownCommandName {
                 name: format!("{NAME} {}", n)
             })
         }
     }
 }
-
-pub const NAME: &str = "config";
-const DESCRIPTION: &str = "Configure the CloakerBot.";
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
@@ -196,15 +94,17 @@ pub async fn action(
     defer(&interaction, com.clone()).await?;
 
     match command {
-        ConfigCommand::DangerZones => danger_zones::action(interaction, guild_id, com).await?,
-        ConfigCommand::LogChannel { channel } => {
-            log_channel::action(interaction, guild_id, channel, com).await?
+        ConfigCommand::DangerZones(sub_cmd) => {
+            danger_zones::action(interaction, guild_id, sub_cmd, com).await?
         }
-        ConfigCommand::Random { enable, min, max } => {
-            random::action(interaction, guild_id, enable, min, max, com).await?
+        ConfigCommand::LogChannel(sub_cmd) => {
+            log_channel::action(interaction, guild_id, sub_cmd, com).await?
         }
-        ConfigCommand::TargetBots { allow } => {
-            target_bots::action(interaction, guild_id, allow, com).await?
+        ConfigCommand::TargetBots(sub_cmd) => {
+            target_bots::action(interaction, guild_id, sub_cmd, com).await?
+        }
+        ConfigCommand::Random(sub_cmd) => {
+            random::action(interaction, guild_id, sub_cmd, com).await?
         }
     }
 
@@ -215,4 +115,18 @@ async fn guild_config(guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Resul
     let db_key = (db::config::TABLE_NAME, guild_id.get());
     let config_db: Option<GuildConfig> = com.db.select(db_key).await?;
     Ok(config_db.unwrap_or_default())
+}
+
+async fn update_db(
+    config: GuildConfig,
+    guild_id: Id<GuildMarker>,
+    com: Arc<Com>
+) -> anyhow::Result<()> {
+    let _: Option<GuildConfig> = com
+        .db
+        .update((db::config::TABLE_NAME, guild_id.get()))
+        .content(config)
+        .await?;
+
+    Ok(())
 }
