@@ -43,6 +43,7 @@ hyper = "0.14"
 const_format = "0.2"
 lazy_static = "1"
 uuid = "1"
+rand = "0.8"
 
 # database
 [dependencies.surrealdb]
