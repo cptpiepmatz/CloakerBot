@@ -55,16 +55,16 @@ impl TryFrom<&CommandData> for HelpCommand {
             name => {
                 let mut split = name.split(' ');
                 match (split.next(), split.next()) {
-                    (Some(config::NAME), Some(config::SUB_COMMAND_DANGER_ZONES)) => {
+                    (Some(config::NAME), Some(config::danger_zones::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::DangerZones))
                     }
-                    (Some(config::NAME), Some(config::SUB_COMMAND_LOG_CHANNEL)) => {
+                    (Some(config::NAME), Some(config::log_channel::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::LogChannel))
                     }
-                    (Some(config::NAME), Some(config::SUB_COMMAND_TARGET_BOTS)) => {
+                    (Some(config::NAME), Some(config::target_bots::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::TargetBots))
                     }
-                    (Some(config::NAME), Some(config::SUB_COMMAND_RANDOM)) => {
+                    (Some(config::NAME), Some(config::random::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::Random))
                     }
                     _ => Err(TryFromInteractionError::IncorrectFieldValue {
@@ -82,10 +82,10 @@ pub const NAME: &str = "help";
 const DESCRIPTION: &str = "Shows a help page.";
 const CHOICES: [&str; 7] = [
     cloaker::NAME,
-    formatcp!("{} {}", config::NAME, config::SUB_COMMAND_DANGER_ZONES),
-    formatcp!("{} {}", config::NAME, config::SUB_COMMAND_LOG_CHANNEL),
-    formatcp!("{} {}", config::NAME, config::SUB_COMMAND_TARGET_BOTS),
-    formatcp!("{} {}", config::NAME, config::SUB_COMMAND_RANDOM),
+    formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
+    formatcp!("{} {}", config::NAME, config::log_channel::NAME),
+    formatcp!("{} {}", config::NAME, config::target_bots::NAME),
+    formatcp!("{} {}", config::NAME, config::random::NAME),
     counter::NAME,
     ranks::NAME
 ];
@@ -137,13 +137,13 @@ pub async fn action(
                 format!("/{}", config::NAME),
                 concatcp!(
                     "Configure the bot for this server.\n",
-                    formatcp!("**{}**\n", config::SUB_COMMAND_DANGER_ZONES),
+                    formatcp!("**{}**\n", config::danger_zones::NAME),
                     "Define what channels should be marked as danger zones.\n",
-                    formatcp!("**{}**\n", config::SUB_COMMAND_LOG_CHANNEL),
+                    formatcp!("**{}**\n", config::log_channel::NAME),
                     "Define what channel to use for logging.\n",
-                    formatcp!("**{}**\n", config::SUB_COMMAND_TARGET_BOTS),
+                    formatcp!("**{}**\n", config::target_bots::NAME),
                     "Define whether the CloakerBot should take down bots.\n",
-                    formatcp!("**{}**\n", config::SUB_COMMAND_RANDOM),
+                    formatcp!("**{}**\n", config::random::NAME),
                     "Configure the random takedowns."
                 )
             ))
@@ -164,7 +164,7 @@ pub async fn action(
             .title(format!(
                 "🔎 Help for /{} {}",
                 config::NAME,
-                config::SUB_COMMAND_DANGER_ZONES
+                config::danger_zones::NAME
             ))
             .description(CONFIG_DANGER_ZONES_HELP_TEXT.deref()),
 
@@ -172,7 +172,7 @@ pub async fn action(
             .title(format!(
                 "🔎 Help for /{} {}",
                 config::NAME,
-                config::SUB_COMMAND_LOG_CHANNEL
+                config::log_channel::NAME
             ))
             .description(CONFIG_LOG_CHANNEL_HELP_TEXT.deref()),
 
@@ -180,7 +180,7 @@ pub async fn action(
             .title(format!(
                 "🔎 Help for /{} {}",
                 config::NAME,
-                config::SUB_COMMAND_TARGET_BOTS
+                config::target_bots::NAME
             ))
             .description(CONFIG_TARGET_BOTS_HELP_TEXT.deref()),
 
@@ -188,7 +188,7 @@ pub async fn action(
             .title(format!(
                 "🔎 Help for /{} {}",
                 config::NAME,
-                config::SUB_COMMAND_RANDOM
+                config::random::NAME
             ))
             .description(CONFIG_RANDOM_HELP_TEXT.deref()),
 
