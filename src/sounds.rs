@@ -12,9 +12,9 @@ type TrackString = String;
 
 #[derive(Debug)]
 pub struct LoadedSounds {
-    fails: Vec<TrackString>,
-    takedowns: Vec<TrackString>,
-    wululululu: TrackString
+    pub fails: Vec<TrackString>,
+    pub takedowns: Vec<TrackString>,
+    pub wululululu: TrackString
 }
 
 // designed after example https://github.com/twilight-rs/twilight/blob/main/examples/lavalink-basic-bot.rs
