@@ -1,9 +1,8 @@
-
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
 
-use dashmap::{DashMap};
+use dashmap::DashMap;
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
 use surrealdb::engine::local::{Db, Mem};
@@ -11,7 +10,7 @@ use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
-use twilight_gateway::{Shard};
+use twilight_gateway::Shard;
 use twilight_http::Client as HttpClient;
 use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;

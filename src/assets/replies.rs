@@ -1,5 +1,3 @@
-
-
 use rand::Rng;
 
 pub fn select<'r>(replies: &[&'r str]) -> &'r str {

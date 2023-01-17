@@ -78,5 +78,8 @@ async fn request_track(
     let res_bytes = hyper::body::to_bytes(res.into_body()).await?;
     let loaded = serde_json::from_slice::<LoadedTracks>(&res_bytes)?;
     let track = loaded.tracks.first().ok_or(MatchTrackError { path })?;
-    Ok((track.track.clone(), Duration::from_millis(track.info.length)))
+    Ok((
+        track.track.clone(),
+        Duration::from_millis(track.info.length)
+    ))
 }

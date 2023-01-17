@@ -1,5 +1,3 @@
-
-
 // macro for including sound assets
 macro_rules! sa {
     ($name:ident, $file:literal) => {
