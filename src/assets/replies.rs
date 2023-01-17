@@ -1,11 +1,10 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use rand::Rng;
+
 pub fn select<'r>(replies: &[&'r str]) -> &'r str {
-    let millisecond = match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(n) => n.as_millis(),
-        Err(_) => 0
-    };
-    replies[(millisecond % replies.len() as u128) as usize]
+    let index = rand::thread_rng().gen_range(0..replies.len());
+    replies[index]
 }
 
 // Replies when the bot does do random takedowns
