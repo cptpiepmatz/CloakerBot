@@ -149,8 +149,6 @@ pub mod takedowns {
     ];
 }
 
-// TODO: get more precise duration
-pub const WULULULULU_LEN: Duration = Duration::from_secs(5);
 pub const WULULULULU: (&str, &[u8]) = (
     "WULULULULU.wav",
     include_bytes!("../../assets/sounds/WULULULULU.wav")

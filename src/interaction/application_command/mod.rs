@@ -141,7 +141,7 @@ pub async fn handle_application_command(
     com: Arc<Com>
 ) -> anyhow::Result<()> {
     match ApplicationCommand::try_from(&interaction)? {
-        ApplicationCommand::Cloaker(_) => {}
+        ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command, com).await?,
         ApplicationCommand::Config(command) => config::action(interaction, command, com).await?,
         ApplicationCommand::Counter(_) => {}
         ApplicationCommand::Help(command) => help::action(interaction, command, com).await?,

@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 use hyper::client::HttpConnector;
 use hyper::{Body, Client as HyperClient, Request};
@@ -12,9 +13,9 @@ type TrackString = String;
 
 #[derive(Debug)]
 pub struct LoadedSounds {
-    pub fails: Vec<TrackString>,
-    pub takedowns: Vec<TrackString>,
-    pub wululululu: TrackString
+    pub fails: Vec<(TrackString, Duration)>,
+    pub takedowns: Vec<(TrackString, Duration)>,
+    pub wululululu: (TrackString, Duration)
 }
 
 // designed after example https://github.com/twilight-rs/twilight/blob/main/examples/lavalink-basic-bot.rs
@@ -69,7 +70,7 @@ impl Error for MatchTrackError {}
 async fn request_track(
     client: &HyperClient<HttpConnector>,
     path: String
-) -> anyhow::Result<TrackString> {
+) -> anyhow::Result<(TrackString, Duration)> {
     let (parts, body) =
         twilight_lavalink::http::load_track(*LAVALINK_ADDR, &path, LAVALINK_AUTH)?.into_parts();
     let req = Request::from_parts(parts, Body::from(body));
@@ -77,5 +78,5 @@ async fn request_track(
     let res_bytes = hyper::body::to_bytes(res.into_body()).await?;
     let loaded = serde_json::from_slice::<LoadedTracks>(&res_bytes)?;
     let track = loaded.tracks.first().ok_or(MatchTrackError { path })?;
-    Ok(track.track.clone())
+    Ok((track.track.clone(), Duration::from_millis(track.info.length)))
 }

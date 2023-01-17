@@ -10,16 +10,18 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
+use twilight_model::user::User;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
-use crate::{user_is_bot, Com, BOT_USER_ID};
+use crate::takedown::TakedownType;
+use crate::{user_is_bot, Com, Event, BOT_USER_ID};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
-    target: Id<UserMarker>
+    target_id: Id<UserMarker>
 }
 
 impl TryFrom<&CommandData> for CloakerCommand {
@@ -54,7 +56,7 @@ impl TryFrom<&CommandData> for CloakerCommand {
                 command: NAME.into(),
                 field: "target".into()
             }),
-            Some(target) => Ok(CloakerCommand { target })
+            Some(target) => Ok(CloakerCommand { target_id: target })
         }
     }
 }
@@ -91,7 +93,8 @@ pub fn message_context_menu() -> Command {
 
 #[derive(Debug)]
 pub enum CloakerActionError {
-    NotInGuild
+    NotInGuild,
+    NoUser
 }
 
 impl Display for CloakerActionError {
@@ -107,13 +110,17 @@ pub async fn action(
     command: CloakerCommand,
     com: Arc<Com>
 ) -> anyhow::Result<()> {
-    let target_id = command.target;
+    let target_id = command.target_id;
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
+    let initiator_id = interaction
+        .author_id()
+        .or(Option::from(&interaction.user).map(|u: &User| u.id))
+        .ok_or(CloakerActionError::NoUser)?;
     defer(&interaction, com.clone()).await?;
 
     // check if target is in voice channel
     let Some(voice_channel_id) = com.event_cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
-        update_defer(&interaction, replies::select(&replies::NO_CHANNEL), com.clone()).await?;
+        update_defer(&interaction,  replies::select(&replies::NO_CHANNEL), com.clone()).await?;
         return Ok(());
     };
 
@@ -142,5 +149,16 @@ pub async fn action(
         return Ok(());
     }
 
-    todo!()
+    com.event_sender
+        .send(Event::TakedownInit {
+            target_id,
+            guild_id,
+            kind: TakedownType::User {
+                initiator_id,
+                interaction
+            }
+        })
+        .await?;
+
+    Ok(())
 }

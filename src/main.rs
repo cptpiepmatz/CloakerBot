@@ -3,7 +3,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
 use surrealdb::engine::local::{Db, Mem};
@@ -25,6 +25,10 @@ use crate::interaction::{application_command, handle_interaction};
 use crate::preparation::file_extract::extract_files;
 use crate::preparation::java::find_java_executable;
 use crate::sounds::{load_sounds, LoadedSounds};
+use crate::sync::TaggedMutex;
+use crate::takedown::{
+    handle_takedown_init, handle_takedown_strike, PlannedTakedowns, TakedownPlan, TakedownType
+};
 
 mod assets;
 mod cache;
@@ -36,6 +40,7 @@ mod permissions;
 mod preparation;
 mod sounds;
 mod sync;
+mod takedown;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
@@ -52,6 +57,8 @@ const BOT_USER_ID: Id<UserMarker> = APPLICATION_ID.cast();
 lazy_static! {
     // TODO: make this const when https://github.com/rust-lang/rust/issues/82485 lands
     static ref LAVALINK_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2333);
+
+    static ref GUILD_VOICE_MUTEX: TaggedMutex<Id<GuildMarker>> = TaggedMutex::new();
 }
 const LAVALINK_AUTH: &str = "youshallnotpass";
 
@@ -67,25 +74,24 @@ const EVENT_CACHE_RESOURCE_TYPES: ResourceType = ResourceType::VOICE_STATE
     .union(ResourceType::USER)
     .union(ResourceType::GUILD);
 
+#[derive(Debug)]
 pub enum Event {
     /// events from the discord gateway
     Discord(DiscordEvent),
 
-    /// preparation of a takedown, may be initiated by either a user or the
-    /// random attack
-    TakedownPrep,
+    /// preparation of a takedown, may be initiated by either a user, the
+    /// random attack or a danger zone
+    TakedownInit {
+        target_id: Id<UserMarker>,
+        guild_id: Id<GuildMarker>,
+        kind: TakedownType
+    },
 
     /// check for the takedown strike
-    TakedownStrike { interaction: Interaction },
+    TakedownStrike { guild_id: Id<GuildMarker> },
 
     /// check if random takedowns should be queued
     RandomCheck
-}
-
-pub struct TakedownPlan {
-    initiator_id: Option<Id<UserMarker>>,
-    target_id: Id<UserMarker>,
-    countered: bool
 }
 
 pub struct Com {
@@ -97,7 +103,7 @@ pub struct Com {
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
-    planned_takedowns: DashMap<Id<GuildMarker>, VecDeque<TakedownPlan>>,
+    planned_takedowns: PlannedTakedowns,
     tracked_interactions: DashMap<Id<InteractionMarker>, Interaction>
 }
 
@@ -165,7 +171,7 @@ async fn handle_event(event: Event, com: Arc<Com>) {
         match event {
             Event::Discord(event) => {
                 com.event_cache.update(&event);
-                com.lavalink.process(&event).await.unwrap();
+                com.lavalink.process(&event).await?;
                 match event {
                     DiscordEvent::ShardConnected(_) => {
                         println!("Connected");
@@ -177,9 +183,14 @@ async fn handle_event(event: Event, com: Arc<Com>) {
                     _ => {}
                 }
             }
-            Event::TakedownPrep => {
-                todo!()
+            Event::TakedownInit {
+                target_id,
+                guild_id,
+                kind
+            } => {
+                handle_takedown_init(target_id, guild_id, kind, com).await?;
             }
+            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id, com).await?,
             _ => {}
         };
 
