@@ -11,7 +11,7 @@ use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
-use twilight_gateway::Cluster;
+use twilight_gateway::{Cluster, Shard};
 use twilight_http::Client as HttpClient;
 use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
@@ -91,6 +91,7 @@ pub struct TakedownPlan {
 pub struct Com {
     db: Surreal<Db>,
     http: HttpClient,
+    shard: Shard,
     lavalink: Lavalink,
     sounds: LoadedSounds,
     event_sender: Sender<Event>,
@@ -120,15 +121,8 @@ async fn main() {
         .await
         .expect("set commands");
 
-    let (cluster, discord_events) = Cluster::new(String::from(DISCORD_TOKEN.trim()), INTENTS)
-        .await
-        .unwrap();
-    let cluster = Arc::new(cluster);
-
-    let cluster_spawn = Arc::clone(&cluster);
-    tokio::spawn(async move {
-        cluster_spawn.up().await;
-    });
+    let (shard, discord_events) = Shard::new(DISCORD_TOKEN.trim().to_owned(), INTENTS);
+    shard.start().await.expect("shard is necessary");
 
     let cache = EventCache::builder()
         .resource_types(EVENT_CACHE_RESOURCE_TYPES)
@@ -145,6 +139,7 @@ async fn main() {
     let com = Arc::new(Com {
         db,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
+        shard,
         lavalink,
         sounds,
         event_sender,
@@ -155,7 +150,7 @@ async fn main() {
     });
 
     let mut events = futures::stream::select(
-        discord_events.map(|item| Event::Discord(item.1)),
+        discord_events.map(Event::Discord),
         ReceiverStream::new(events)
     );
 
