@@ -110,23 +110,3 @@ pub async fn action(
 
     Ok(())
 }
-
-async fn guild_config(guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<GuildConfig> {
-    let db_key = (db::config::TABLE_NAME, guild_id.get());
-    let config_db: Option<GuildConfig> = com.db.select(db_key).await?;
-    Ok(config_db.unwrap_or_default())
-}
-
-async fn update_db(
-    config: GuildConfig,
-    guild_id: Id<GuildMarker>,
-    com: Arc<Com>
-) -> anyhow::Result<()> {
-    let _: Option<GuildConfig> = com
-        .db
-        .update((db::config::TABLE_NAME, guild_id.get()))
-        .content(config)
-        .await?;
-
-    Ok(())
-}

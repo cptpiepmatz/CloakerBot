@@ -9,6 +9,7 @@ use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 
+use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::Com;
 
@@ -61,7 +62,7 @@ pub async fn action(
     TargetBotsSubCommand { allow }: TargetBotsSubCommand,
     com: Arc<Com>
 ) -> anyhow::Result<()> {
-    let mut config = super::guild_config(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
 
     match allow {
         None => {
@@ -73,7 +74,7 @@ pub async fn action(
         }
         Some(allow) => {
             config.target_bots = allow;
-            super::update_db(config, guild_id, com.clone()).await?;
+            config.save(guild_id, com.clone()).await?;
             let reply = match allow {
                 true => "**🛠️ *Allowed* taking down bots on this server.**",
                 false => "**🛠️ *Disallowed* taking down bots on this server.**"

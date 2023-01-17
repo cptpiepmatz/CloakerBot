@@ -109,9 +109,8 @@ pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .dm_permission(false)
         .option(
-            StringBuilder::new("command", "shows help for a command")
+            StringBuilder::new("command", "Shows help for a command.")
                 .choices(CHOICES.iter().map(|c| (c.to_owned(), c.to_owned())))
-                .build()
         )
         .build()
 }
