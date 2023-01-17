@@ -1,9 +1,9 @@
-use std::collections::VecDeque;
+
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
 
-use dashmap::{DashMap, DashSet};
+use dashmap::{DashMap};
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
 use surrealdb::engine::local::{Db, Mem};
@@ -11,7 +11,7 @@ use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
-use twilight_gateway::{Cluster, Shard};
+use twilight_gateway::{Shard};
 use twilight_http::Client as HttpClient;
 use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
@@ -27,7 +27,7 @@ use crate::preparation::java::find_java_executable;
 use crate::sounds::{load_sounds, LoadedSounds};
 use crate::sync::TaggedMutex;
 use crate::takedown::{
-    handle_takedown_init, handle_takedown_strike, PlannedTakedowns, TakedownPlan, TakedownType
+    handle_takedown_init, handle_takedown_strike, PlannedTakedowns, TakedownType
 };
 
 mod assets;
