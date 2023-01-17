@@ -6,32 +6,19 @@ pub mod target_bots;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
-use std::time::Duration;
 
-use serde_json::json;
-use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::component::ButtonStyle;
-use twilight_model::channel::ChannelType;
-use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::command::{
-    BooleanBuilder, ChannelBuilder, CommandBuilder, NumberBuilder, SubCommandBuilder
-};
+use twilight_util::builder::command::CommandBuilder;
 
-use crate::db::config::{GuildConfig, GuildConfigRandom};
-use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
-use crate::interaction::message_component::custom_id::{
-    CONFIG_DANGER_ZONES_BUTTON, CONFIG_DANGER_ZONES_SELECT
-};
-use crate::log::fetch_log_channel;
-use crate::permissions::fetch_in_channel_permissions;
-use crate::{db, Com, APPLICATION_ID, BOT_USER_ID};
+use crate::db::config::GuildConfig;
+use crate::interaction::application_command::{defer, TryFromInteractionError};
+use crate::{db, Com};
 
 pub enum ConfigCommand {
     DangerZones,
