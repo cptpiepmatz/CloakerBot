@@ -12,7 +12,7 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker};
+use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 

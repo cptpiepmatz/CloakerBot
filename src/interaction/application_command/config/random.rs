@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
-    CommandData, CommandDataOption, CommandOptionValue
+    CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 
-use crate::db::config::{GuildConfig, GuildConfigRandom};
+use crate::db::config::GuildConfigRandom;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::Com;
 

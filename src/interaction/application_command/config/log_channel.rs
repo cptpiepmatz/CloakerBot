@@ -3,7 +3,7 @@ use std::sync::Arc;
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
-    CommandData, CommandDataOption, CommandOptionValue
+    CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::guild::Permissions;
@@ -11,9 +11,8 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 
-use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::{db, Com, BOT_USER_ID};
+use crate::{Com, BOT_USER_ID};
 
 pub const NAME: &str = "log-channel";
 const DESCRIPTION: &str = "Define your log channel.";

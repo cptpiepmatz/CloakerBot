@@ -4,9 +4,7 @@ use std::time::Duration;
 use serde_json::json;
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
-use twilight_model::application::interaction::application_command::{
-    CommandData, CommandDataOption, CommandOptionValue
-};
+use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::ButtonStyle;
 use twilight_model::channel::ChannelType;
