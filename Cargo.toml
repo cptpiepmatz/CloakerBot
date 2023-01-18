@@ -44,6 +44,7 @@ const_format = "0.2"
 lazy_static = "1"
 uuid = "1"
 rand = "0.8"
+once_cell = "1"
 
 # database
 [dependencies.surrealdb]
