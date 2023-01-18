@@ -17,7 +17,7 @@ use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::takedown::TakedownType;
-use crate::{user_is_bot, Event, State, BOT_USER_ID};
+use crate::{user_is_bot, Event, State, BOT_USER_ID, STATE};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
@@ -105,51 +105,38 @@ impl Display for CloakerActionError {
 
 impl Error for CloakerActionError {}
 
-pub async fn action(
-    interaction: Interaction,
-    command: CloakerCommand,
-    com: Arc<State>
-) -> anyhow::Result<()> {
+pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow::Result<()> {
     let target_id = command.target_id;
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
     let initiator_id = interaction
         .author_id()
         .or(Option::from(&interaction.user).map(|u: &User| u.id))
         .ok_or(CloakerActionError::NoUser)?;
-    defer(&interaction, com.clone()).await?;
+    defer(&interaction).await?;
 
     // check if target is in voice channel
-    let Some(voice_channel_id) = com.event_cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
-        update_defer(&interaction,  replies::select(&replies::NO_CHANNEL), com.clone()).await?;
+    let Some(voice_channel_id) = STATE.event_cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
+        update_defer(&interaction,  replies::select(&replies::NO_CHANNEL)).await?;
         return Ok(());
     };
 
     // check if bot can join voice channel
     let channel_perms =
-        fetch_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id, com.clone()).await?;
+        fetch_in_channel_permissions(BOT_USER_ID, guild_id, voice_channel_id).await?;
     if !channel_perms.contains(Permissions::CONNECT) {
-        update_defer(
-            &interaction,
-            replies::select(&replies::CANT_JOIN),
-            com.clone()
-        )
-        .await?;
+        update_defer(&interaction, replies::select(&replies::CANT_JOIN)).await?;
         return Ok(());
     }
 
     // check if target is bot
-    if user_is_bot(target_id, com.clone()).await? {
+    if user_is_bot(target_id).await? {
         // TODO: add db check
-        update_defer(
-            &interaction,
-            replies::select(&replies::INVALID_MEMBER),
-            com.clone()
-        )
-        .await?;
+        update_defer(&interaction, replies::select(&replies::INVALID_MEMBER)).await?;
         return Ok(());
     }
 
-    com.event_sender
+    STATE
+        .event_sender
         .send(Event::TakedownInit {
             target_id,
             guild_id,

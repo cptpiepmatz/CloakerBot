@@ -107,27 +107,24 @@ impl Display for TryFromInteractionError {
 
 impl Error for TryFromInteractionError {}
 
-pub async fn handle_message_component(
-    interaction: Interaction,
-    com: Arc<State>
-) -> anyhow::Result<()> {
+pub async fn handle_message_component(interaction: Interaction) -> anyhow::Result<()> {
     match MessageComponent::try_from(&interaction)? {
         MessageComponent::ConfigDangerZonesSelect(ConfigDangerZonesSelect {
             og_interaction_id,
             channels
-        }) => config_danger_zones::action(interaction, og_interaction_id, channels, com).await?,
+        }) => config_danger_zones::action(interaction, og_interaction_id, channels).await?,
         MessageComponent::ConfigDangerZonesButton(ConfigDangerZonesButton {
             og_interaction_id
-        }) => config_danger_zones::action(interaction, og_interaction_id, Vec::new(), com).await?,
+        }) => config_danger_zones::action(interaction, og_interaction_id, Vec::new()).await?,
         MessageComponent::ConfigImmunitySelect(ConfigImmunitySelect {
             og_interaction_id,
             kind,
             role
-        }) => config_immunity::action(interaction, og_interaction_id, role, kind, com).await?,
+        }) => config_immunity::action(interaction, og_interaction_id, role, kind).await?,
         MessageComponent::ConfigImmunityButton(ConfigImmunityButton {
             og_interaction_id,
             kind
-        }) => config_immunity::action(interaction, og_interaction_id, None, kind, com).await?
+        }) => config_immunity::action(interaction, og_interaction_id, None, kind).await?
     }
 
     Ok(())

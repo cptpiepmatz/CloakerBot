@@ -97,17 +97,16 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
-    RandomSubCommand { enable, min, max }: RandomSubCommand,
-    com: Arc<State>
+    RandomSubCommand { enable, min, max }: RandomSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     match (enable, min, max) {
         (Some(false), _, _) => {
             config.random.enabled = false;
-            config.save(guild_id, com.clone()).await?;
+            config.save(guild_id).await?;
             let reply = "**🛠️ *Disabled* random takedowns on this server.**";
-            super::super::update_defer(&interaction, reply, com.clone()).await?;
+            super::super::update_defer(&interaction, reply).await?;
         }
         (None, None, None) => {
             let reply = match config.random.enabled {
@@ -121,7 +120,7 @@ pub async fn action(
                     config.random.min, config.random.max
                 )
             };
-            super::super::update_defer(&interaction, &reply, com.clone()).await?;
+            super::super::update_defer(&interaction, &reply).await?;
         }
         (_, min, max) => {
             let min = min.unwrap_or(config.random.min);
@@ -131,7 +130,7 @@ pub async fn action(
                 min,
                 max
             };
-            config.save(guild_id, com.clone()).await?;
+            config.save(guild_id).await?;
             let reply = format!(
                 concat!(
                     "**🛠️ ",
@@ -140,7 +139,7 @@ pub async fn action(
                 ),
                 min, max
             );
-            super::super::update_defer(&interaction, &reply, com.clone()).await?;
+            super::super::update_defer(&interaction, &reply).await?;
         }
     }
 

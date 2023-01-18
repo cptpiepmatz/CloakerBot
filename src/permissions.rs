@@ -7,7 +7,7 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMar
 use twilight_model::id::Id;
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::State;
+use crate::{State, STATE};
 
 #[derive(Debug)]
 pub enum PermSearchError {
@@ -33,17 +33,17 @@ impl Error for PermSearchError {}
 pub async fn fetch_in_channel_permissions(
     user_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
-    channel_id: Id<ChannelMarker>,
-    com: Arc<State>
+    channel_id: Id<ChannelMarker>
 ) -> anyhow::Result<Permissions> {
     // get role ids
     let role_ids = {
-        let member = com.event_cache.member(guild_id, user_id);
+        let event_cache = &STATE.event_cache;
+        let member = event_cache.member(guild_id, user_id);
         match member {
             Some(member) => Vec::from(member.roles()),
-            None => com
+            None => STATE
                 .http_cache
-                .fetch_member(guild_id, user_id, com.clone())
+                .fetch_member(guild_id, user_id)
                 .await?
                 .roles
                 .iter()
@@ -55,11 +55,12 @@ pub async fn fetch_in_channel_permissions(
     // get role permissions
     let mut role_permissions: Vec<(Id<RoleMarker>, Permissions)> = Vec::new();
     for role_id in role_ids.iter().cloned() {
-        let role_perms = match com.event_cache.role(role_id) {
+        let role_perms = match STATE.event_cache.role(role_id) {
             Some(r) => r.permissions,
             None => {
-                com.http_cache
-                    .fetch_role(guild_id, role_id, com.clone())
+                STATE
+                    .http_cache
+                    .fetch_role(guild_id, role_id)
                     .await?
                     .ok_or(PermSearchError::RoleNotInAllRoles)?
                     .permissions
@@ -69,11 +70,12 @@ pub async fn fetch_in_channel_permissions(
     }
 
     // get everyone role
-    let everyone_perms = match com.event_cache.role(guild_id.cast()) {
+    let everyone_perms = match STATE.event_cache.role(guild_id.cast()) {
         Some(r) => r.permissions,
         None => {
-            com.http_cache
-                .fetch_role(guild_id, guild_id.cast(), com.clone())
+            STATE
+                .http_cache
+                .fetch_role(guild_id, guild_id.cast())
                 .await?
                 .ok_or(PermSearchError::EveryoneNotInCache)?
                 .permissions
@@ -84,12 +86,12 @@ pub async fn fetch_in_channel_permissions(
     let calc = PermissionCalculator::new(guild_id, user_id, everyone_perms, &role_permissions);
 
     // get channel overwrites
-    let (channel_kind, channel_po) = match com.event_cache.channel(channel_id) {
+    let (channel_kind, channel_po) = match STATE.event_cache.channel(channel_id) {
         Some(c) => (c.kind, c.permission_overwrites.clone()),
         None => {
-            let channel = com
-                .http_cache
-                .fetch_channel(guild_id, channel_id, com.clone())
+            let http_cache = &STATE.http_cache;
+            let channel = http_cache
+                .fetch_channel(guild_id, channel_id)
                 .await?
                 .ok_or(PermSearchError::ChannelNotInAllChannels)?;
             (channel.kind, channel.permission_overwrites.clone())

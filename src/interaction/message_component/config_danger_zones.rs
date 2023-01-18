@@ -11,7 +11,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
-use crate::{db, State, APPLICATION_ID};
+use crate::{db, State, APPLICATION_ID, STATE};
 
 pub const SELECT_CUSTOM_ID: &str = "cfg_dz_select";
 pub const BUTTON_CUSTOM_ID: &str = "cfg_dz_button";
@@ -87,10 +87,9 @@ impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesButt
 pub async fn action(
     interaction: Interaction,
     og_interaction_id: Id<InteractionMarker>,
-    channels: Vec<Id<ChannelMarker>>,
-    com: Arc<State>
+    channels: Vec<Id<ChannelMarker>>
 ) -> anyhow::Result<()> {
-    let og_interaction = match com.tracked_interactions.remove(&og_interaction_id) {
+    let og_interaction = match STATE.tracked_interactions.remove(&og_interaction_id) {
         Some((_, interaction)) => interaction,
         None => return Ok(())
     };
@@ -100,7 +99,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     let reply = match channels.is_empty() {
         true => "**🛠️ All danger zones *removed*.**".to_string(),
@@ -114,14 +113,15 @@ pub async fn action(
     };
 
     config.danger_zones = channels;
-    config.save(guild_id, com.clone()).await?;
+    config.save(guild_id).await?;
 
     let payload = json!({
         "content": reply,
         "components": []
     });
 
-    com.http
+    STATE
+        .http
         .interaction(APPLICATION_ID)
         .update_response(&og_interaction.token)
         .payload_json(payload.to_string().as_bytes())

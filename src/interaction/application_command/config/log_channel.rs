@@ -63,14 +63,13 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
-    LogChannelSubCommand { channel_id }: LogChannelSubCommand,
-    com: Arc<State>
+    LogChannelSubCommand { channel_id }: LogChannelSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     match (channel_id, config.log_channel) {
         (None, None) => {
-            let log_channel_id = crate::log::fetch_log_channel(guild_id, com.clone()).await?;
+            let log_channel_id = crate::log::fetch_log_channel(guild_id).await?;
             let reply = match log_channel_id {
                 Some(channel_id) => format!(
                     concat!(
@@ -86,20 +85,19 @@ pub async fn action(
                 )
                 .into()
             };
-            super::super::update_defer(&interaction, &reply, com.clone()).await?;
+            super::super::update_defer(&interaction, &reply).await?;
         }
         (None, Some(log_channel)) => {
             let channel_perms = crate::permissions::fetch_in_channel_permissions(
                 BOT_USER_ID,
                 guild_id,
-                log_channel,
-                com.clone()
+                log_channel
             )
             .await?;
             let reply = match channel_perms.contains(Permissions::SEND_MESSAGES) {
                 true => format!("**🛠️ {} is set as log channel.**", log_channel.mention()),
                 false => {
-                    let fallback = crate::log::fetch_log_channel(guild_id, com.clone()).await?;
+                    let fallback = crate::log::fetch_log_channel(guild_id).await?;
                     match fallback {
                         Some(fallback_id) => format!(
                             concat!(
@@ -119,23 +117,21 @@ pub async fn action(
                     }
                 }
             };
-            super::super::update_defer(&interaction, &reply, com.clone()).await?;
+            super::super::update_defer(&interaction, &reply).await?;
         }
         (Some(log_channel), _) => {
             config.log_channel = Some(log_channel);
-            config.save(guild_id, com.clone()).await?;
+            config.save(guild_id).await?;
             let channel_perms = crate::permissions::fetch_in_channel_permissions(
                 BOT_USER_ID,
                 guild_id,
-                log_channel,
-                com.clone()
+                log_channel
             )
             .await?;
             let reply = match channel_perms.contains(Permissions::SEND_MESSAGES) {
                 true => format!("**🛠️ Defined {} as log channel.**", log_channel.mention()),
                 false => {
-                    let fallback_channel_id =
-                        crate::log::fetch_log_channel(guild_id, com.clone()).await?;
+                    let fallback_channel_id = crate::log::fetch_log_channel(guild_id).await?;
                     match fallback_channel_id {
                         Some(fallback) => format!(
                             concat!(
@@ -155,7 +151,7 @@ pub async fn action(
                     }
                 }
             };
-            super::super::update_defer(&interaction, &reply, com.clone()).await?;
+            super::super::update_defer(&interaction, &reply).await?;
         }
     }
 

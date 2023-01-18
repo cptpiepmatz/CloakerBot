@@ -18,7 +18,7 @@ use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component;
 use crate::interaction::message_component::config_immunity::{BUTTON_CUSTOM_ID, SELECT_CUSTOM_ID};
-use crate::{State, APPLICATION_ID};
+use crate::{State, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "immunity";
 const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -93,12 +93,11 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
-    command: ImmunitySubCommand,
-    com: Arc<State>
+    command: ImmunitySubCommand
 ) -> anyhow::Result<()> {
     use ImmunitySubCommand::{General, Random};
 
-    let config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let config = GuildConfig::fetch(guild_id).await?;
     let role_id = match command {
         General => config.immunity.general,
         Random => config.immunity.random
@@ -152,18 +151,21 @@ pub async fn action(
         ]
     });
 
-    com.http
+    STATE
+        .http
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
         .payload_json(payload.to_string().as_bytes())
         .await?;
 
     let interaction_id = interaction.id;
-    com.tracked_interactions.insert(interaction.id, interaction);
+    STATE
+        .tracked_interactions
+        .insert(interaction.id, interaction);
 
     tokio::time::sleep(Duration::from_secs(3 * 60)).await;
 
-    if let Some((_, interaction)) = com.tracked_interactions.remove(&interaction_id) {
+    if let Some((_, interaction)) = STATE.tracked_interactions.remove(&interaction_id) {
         let payload = json!({
             "content": format!(
                 "**⌛ Timed Out.**\nTry `/{} {}` again to modify immune roles.",
@@ -173,7 +175,8 @@ pub async fn action(
             "components": []
         });
 
-        com.http
+        STATE
+            .http
             .interaction(APPLICATION_ID)
             .update_response(&interaction.token)
             .payload_json(payload.to_string().as_bytes())

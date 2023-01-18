@@ -6,7 +6,7 @@ pub struct InitCell<T> {
 }
 
 impl<T> InitCell<T> {
-    pub fn new() -> InitCell<T> {
+    pub const fn new() -> InitCell<T> {
         InitCell {
             value: UnsafeCell::new(None)
         }

@@ -91,30 +91,22 @@ impl Display for ConfigActionError {
 
 impl Error for ConfigActionError {}
 
-pub async fn action(
-    interaction: Interaction,
-    command: ConfigCommand,
-    com: Arc<State>
-) -> anyhow::Result<()> {
+pub async fn action(interaction: Interaction, command: ConfigCommand) -> anyhow::Result<()> {
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
-    defer(&interaction, com.clone()).await?;
+    defer(&interaction).await?;
 
     match command {
         ConfigCommand::DangerZones(sub_cmd) => {
-            danger_zones::action(interaction, guild_id, sub_cmd, com).await?
+            danger_zones::action(interaction, guild_id, sub_cmd).await?
         }
         ConfigCommand::LogChannel(sub_cmd) => {
-            log_channel::action(interaction, guild_id, sub_cmd, com).await?
+            log_channel::action(interaction, guild_id, sub_cmd).await?
         }
         ConfigCommand::TargetBots(sub_cmd) => {
-            target_bots::action(interaction, guild_id, sub_cmd, com).await?
+            target_bots::action(interaction, guild_id, sub_cmd).await?
         }
-        ConfigCommand::Random(sub_cmd) => {
-            random::action(interaction, guild_id, sub_cmd, com).await?
-        }
-        ConfigCommand::Immunity(sub_cmd) => {
-            immunity::action(interaction, guild_id, sub_cmd, com).await?
-        }
+        ConfigCommand::Random(sub_cmd) => random::action(interaction, guild_id, sub_cmd).await?,
+        ConfigCommand::Immunity(sub_cmd) => immunity::action(interaction, guild_id, sub_cmd).await?
     }
 
     Ok(())

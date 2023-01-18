@@ -20,6 +20,7 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, InteractionMark
 use twilight_model::id::Id;
 
 use crate::cache::http::Cache as HttpCache;
+use crate::cell::InitCell;
 use crate::interaction::{application_command, handle_interaction};
 use crate::preparation::file_extract::extract_files;
 use crate::preparation::java::find_java_executable;
@@ -73,6 +74,8 @@ const EVENT_CACHE_RESOURCE_TYPES: ResourceType = ResourceType::VOICE_STATE
     .union(ResourceType::ROLE)
     .union(ResourceType::USER)
     .union(ResourceType::GUILD);
+
+const STATE: InitCell<State> = InitCell::new();
 
 #[derive(Debug)]
 pub enum Event {
@@ -142,7 +145,7 @@ async fn main() {
         .await
         .expect("set ns and db");
 
-    let com = Arc::new(State {
+    InitCell::init(&STATE, State {
         db,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         shard,
@@ -162,23 +165,23 @@ async fn main() {
 
     while let Some(event) = events.next().await {
         // TODO: add some error handling here
-        tokio::spawn(handle_event(event, Arc::clone(&com)));
+        tokio::spawn(handle_event(event));
     }
 }
 
-async fn handle_event(event: Event, com: Arc<State>) {
-    async fn run(event: Event, com: Arc<State>) -> anyhow::Result<()> {
+async fn handle_event(event: Event) {
+    async fn run(event: Event) -> anyhow::Result<()> {
         match event {
             Event::Discord(event) => {
-                com.event_cache.update(&event);
-                com.lavalink.process(&event).await?;
+                STATE.event_cache.update(&event);
+                STATE.lavalink.process(&event).await?;
                 match event {
                     DiscordEvent::ShardConnected(_) => {
                         println!("Connected");
                     }
                     DiscordEvent::InteractionCreate(interaction_create) => {
                         let interaction = (*interaction_create).0;
-                        handle_interaction(interaction, com).await?;
+                        handle_interaction(interaction).await?;
                     }
                     _ => {}
                 }
@@ -188,22 +191,23 @@ async fn handle_event(event: Event, com: Arc<State>) {
                 guild_id,
                 kind
             } => {
-                handle_takedown_init(target_id, guild_id, kind, com).await?;
+                handle_takedown_init(target_id, guild_id, kind).await?;
             }
-            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id, com).await?,
+            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id).await?,
             _ => {}
         };
 
         Ok(())
     }
 
-    run(event, com).await.unwrap();
+    run(event).await.unwrap();
 }
 
-pub async fn user_is_bot(user_id: Id<UserMarker>, com: Arc<State>) -> anyhow::Result<bool> {
-    if let Some(user) = com.event_cache.user(user_id) {
+pub async fn user_is_bot(user_id: Id<UserMarker>) -> anyhow::Result<bool> {
+    if let Some(user) = STATE.event_cache.user(user_id) {
         return Ok(user.bot);
     }
-    let user = com.http_cache.fetch_user(user_id, com.clone()).await?;
+    let http_cache = &STATE.http_cache;
+    let user = http_cache.fetch_user(user_id).await?;
     Ok(user.bot)
 }

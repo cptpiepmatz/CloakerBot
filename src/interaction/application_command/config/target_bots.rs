@@ -59,10 +59,9 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
-    TargetBotsSubCommand { allow }: TargetBotsSubCommand,
-    com: Arc<State>
+    TargetBotsSubCommand { allow }: TargetBotsSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     match allow {
         None => {
@@ -70,16 +69,16 @@ pub async fn action(
                 true => "**🛠️ Taking down bots is *allowed* on this server.**",
                 false => "**🛠️ Taking down bots is *disallowed* on this server.**"
             };
-            super::super::update_defer(&interaction, reply, com.clone()).await?;
+            super::super::update_defer(&interaction, reply).await?;
         }
         Some(allow) => {
             config.target_bots = allow;
-            config.save(guild_id, com.clone()).await?;
+            config.save(guild_id).await?;
             let reply = match allow {
                 true => "**🛠️ *Allowed* taking down bots on this server.**",
                 false => "**🛠️ *Disallowed* taking down bots on this server.**"
             };
-            super::super::update_defer(&interaction, reply, com.clone()).await?;
+            super::super::update_defer(&interaction, reply).await?;
         }
     }
 

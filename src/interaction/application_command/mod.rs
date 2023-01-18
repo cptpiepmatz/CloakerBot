@@ -25,7 +25,7 @@ use crate::interaction::application_command::config::ConfigCommand;
 use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
-use crate::{State, APPLICATION_ID};
+use crate::{State, APPLICATION_ID, STATE};
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),
@@ -136,25 +136,19 @@ pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), Twi
     Ok(())
 }
 
-pub async fn handle_application_command(
-    interaction: Interaction,
-    com: Arc<State>
-) -> anyhow::Result<()> {
+pub async fn handle_application_command(interaction: Interaction) -> anyhow::Result<()> {
     match ApplicationCommand::try_from(&interaction)? {
-        ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command, com).await?,
-        ApplicationCommand::Config(command) => config::action(interaction, command, com).await?,
+        ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command).await?,
+        ApplicationCommand::Config(command) => config::action(interaction, command).await?,
         ApplicationCommand::Counter(_) => {}
-        ApplicationCommand::Help(command) => help::action(interaction, command, com).await?,
+        ApplicationCommand::Help(command) => help::action(interaction, command).await?,
         ApplicationCommand::Ranks(_) => {}
     };
 
     Ok(())
 }
 
-async fn defer(
-    interaction: &Interaction,
-    com: Arc<State>
-) -> Result<Response<EmptyBody>, twilight_http::Error> {
+async fn defer(interaction: &Interaction) -> Result<Response<EmptyBody>, twilight_http::Error> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
         data: Some(
@@ -163,18 +157,15 @@ async fn defer(
                 .build()
         )
     };
-    com.http
+    STATE
+        .http
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
         .await
 }
 
-async fn update_defer(
-    interaction: &Interaction,
-    msg: &str,
-    com: Arc<State>
-) -> anyhow::Result<Response<Message>> {
-    Ok(com
+async fn update_defer(interaction: &Interaction, msg: &str) -> anyhow::Result<Response<Message>> {
+    Ok(STATE
         .http
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())

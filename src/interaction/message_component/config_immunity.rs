@@ -11,7 +11,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
-use crate::{State, APPLICATION_ID};
+use crate::{State, APPLICATION_ID, STATE};
 
 pub const SELECT_CUSTOM_ID: ConfigImmunityCustomId = ConfigImmunityCustomId {
     general: "cfg_im_gen_select",
@@ -119,12 +119,11 @@ pub async fn action(
     interaction: Interaction,
     og_interaction_id: Id<InteractionMarker>,
     role_id: Option<Id<RoleMarker>>,
-    kind: ConfigImmunityType,
-    com: Arc<State>
+    kind: ConfigImmunityType
 ) -> anyhow::Result<()> {
     use ConfigImmunityType::{General, Random};
 
-    let og_interaction = match com.tracked_interactions.remove(&og_interaction_id) {
+    let og_interaction = match STATE.tracked_interactions.remove(&og_interaction_id) {
         Some((_, interaction)) => interaction,
         None => return Ok(())
     };
@@ -134,7 +133,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     let reply = match (&kind, role_id) {
         (General, None) => "**🛠️ Removed immune role for *all* takedowns.**".into(),
@@ -153,14 +152,15 @@ pub async fn action(
         General => config.immunity.general = role_id,
         Random => config.immunity.random = role_id
     }
-    config.save(guild_id, com.clone()).await?;
+    config.save(guild_id).await?;
 
     let payload = json!({
         "content": reply,
         "components": []
     });
 
-    com.http
+    STATE
+        .http
         .interaction(APPLICATION_ID)
         .update_response(&og_interaction.token)
         .payload_json(payload.to_string().as_bytes())

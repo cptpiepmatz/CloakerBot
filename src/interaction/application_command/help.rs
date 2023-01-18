@@ -15,7 +15,7 @@ use crate::assets::colors;
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, TryFromInteractionError
 };
-use crate::{State, APPLICATION_ID};
+use crate::{State, APPLICATION_ID, STATE};
 
 pub enum HelpCommand {
     All,
@@ -115,12 +115,8 @@ pub fn chat_input() -> Command {
         .build()
 }
 
-pub async fn action(
-    interaction: Interaction,
-    command: HelpCommand,
-    com: Arc<State>
-) -> anyhow::Result<()> {
-    defer(&interaction, com.clone()).await?;
+pub async fn action(interaction: Interaction, command: HelpCommand) -> anyhow::Result<()> {
+    defer(&interaction).await?;
 
     let embed = EmbedBuilder::new().color(colors::PRIMARY);
 
@@ -210,7 +206,8 @@ pub async fn action(
             )
         ));
 
-    com.http
+    STATE
+        .http
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
         .embeds(Some(&[embed.validate()?.build()]))?
