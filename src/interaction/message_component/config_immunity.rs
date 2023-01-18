@@ -11,7 +11,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
-use crate::{Com, APPLICATION_ID};
+use crate::{State, APPLICATION_ID};
 
 pub const SELECT_CUSTOM_ID: ConfigImmunityCustomId = ConfigImmunityCustomId {
     general: "cfg_im_gen_select",
@@ -120,7 +120,7 @@ pub async fn action(
     og_interaction_id: Id<InteractionMarker>,
     role_id: Option<Id<RoleMarker>>,
     kind: ConfigImmunityType,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     use ConfigImmunityType::{General, Random};
 

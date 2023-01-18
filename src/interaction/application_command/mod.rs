@@ -25,7 +25,7 @@ use crate::interaction::application_command::config::ConfigCommand;
 use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
-use crate::{Com, APPLICATION_ID};
+use crate::{State, APPLICATION_ID};
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),
@@ -138,7 +138,7 @@ pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), Twi
 
 pub async fn handle_application_command(
     interaction: Interaction,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     match ApplicationCommand::try_from(&interaction)? {
         ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command, com).await?,
@@ -153,7 +153,7 @@ pub async fn handle_application_command(
 
 async fn defer(
     interaction: &Interaction,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> Result<Response<EmptyBody>, twilight_http::Error> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -172,7 +172,7 @@ async fn defer(
 async fn update_defer(
     interaction: &Interaction,
     msg: &str,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<Response<Message>> {
     Ok(com
         .http

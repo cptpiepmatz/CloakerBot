@@ -94,7 +94,7 @@ pub enum Event {
     RandomCheck
 }
 
-pub struct Com {
+pub struct State {
     db: Surreal<Db>,
     http: HttpClient,
     shard: Shard,
@@ -142,7 +142,7 @@ async fn main() {
         .await
         .expect("set ns and db");
 
-    let com = Arc::new(Com {
+    let com = Arc::new(State {
         db,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         shard,
@@ -166,8 +166,8 @@ async fn main() {
     }
 }
 
-async fn handle_event(event: Event, com: Arc<Com>) {
-    async fn run(event: Event, com: Arc<Com>) -> anyhow::Result<()> {
+async fn handle_event(event: Event, com: Arc<State>) {
+    async fn run(event: Event, com: Arc<State>) -> anyhow::Result<()> {
         match event {
             Event::Discord(event) => {
                 com.event_cache.update(&event);
@@ -200,7 +200,7 @@ async fn handle_event(event: Event, com: Arc<Com>) {
     run(event, com).await.unwrap();
 }
 
-pub async fn user_is_bot(user_id: Id<UserMarker>, com: Arc<Com>) -> anyhow::Result<bool> {
+pub async fn user_is_bot(user_id: Id<UserMarker>, com: Arc<State>) -> anyhow::Result<bool> {
     if let Some(user) = com.event_cache.user(user_id) {
         return Ok(user.bot);
     }

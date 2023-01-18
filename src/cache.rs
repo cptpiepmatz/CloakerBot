@@ -10,7 +10,7 @@ pub mod http {
     use twilight_model::id::Id;
     use twilight_model::user::User;
 
-    use crate::Com;
+    use crate::State;
 
     #[derive(Debug, Default)]
     pub struct Cache {
@@ -26,7 +26,7 @@ pub mod http {
         pub async fn fetch_user(
             &self,
             user_id: Id<UserMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Ref<Id<UserMarker>, User>> {
             if let Some(user) = self.users.get(&user_id) {
                 return Ok(user);
@@ -42,7 +42,7 @@ pub mod http {
             &self,
             guild_id: Id<GuildMarker>,
             user_id: Id<UserMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Ref<(Id<GuildMarker>, Id<UserMarker>), Member>> {
             if let Some(member) = self.members.get(&(guild_id, user_id)) {
                 return Ok(member);
@@ -67,7 +67,7 @@ pub mod http {
             &self,
             guild_id: Id<GuildMarker>,
             role_id: Id<RoleMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Option<Ref<Id<RoleMarker>, Role>>> {
             if let Some(role) = self.roles.get(&role_id) {
                 return Ok(Some(role));
@@ -85,7 +85,7 @@ pub mod http {
             &self,
             guild_id: Id<GuildMarker>,
             channel_id: Id<ChannelMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Option<Ref<Id<ChannelMarker>, Channel>>> {
             if let Some(channel) = self.channels.get(&channel_id) {
                 return Ok(Some(channel));
@@ -103,7 +103,7 @@ pub mod http {
         pub async fn fetch_guild(
             &self,
             guild_id: Id<GuildMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Ref<Id<GuildMarker>, Guild>> {
             if let Some(guild) = self.guilds.get(&guild_id) {
                 return Ok(guild);
@@ -118,7 +118,7 @@ pub mod http {
         pub async fn fetch_guild_channels(
             &self,
             guild_id: Id<GuildMarker>,
-            com: Arc<Com>
+            com: Arc<State>
         ) -> anyhow::Result<Ref<Id<GuildMarker>, Vec<Channel>>> {
             if let Some(channels) = self.guild_channels.get(&guild_id) {
                 return Ok(channels);

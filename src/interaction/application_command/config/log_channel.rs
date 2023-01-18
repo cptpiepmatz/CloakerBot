@@ -13,7 +13,7 @@ use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::{Com, BOT_USER_ID};
+use crate::{State, BOT_USER_ID};
 
 pub const NAME: &str = "log-channel";
 const DESCRIPTION: &str = "Define your log channel.";
@@ -64,7 +64,7 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     LogChannelSubCommand { channel_id }: LogChannelSubCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
 

@@ -11,7 +11,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
-use crate::{db, Com, APPLICATION_ID};
+use crate::{db, State, APPLICATION_ID};
 
 pub const SELECT_CUSTOM_ID: &str = "cfg_dz_select";
 pub const BUTTON_CUSTOM_ID: &str = "cfg_dz_button";
@@ -88,7 +88,7 @@ pub async fn action(
     interaction: Interaction,
     og_interaction_id: Id<InteractionMarker>,
     channels: Vec<Id<ChannelMarker>>,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let og_interaction = match com.tracked_interactions.remove(&og_interaction_id) {
         Some((_, interaction)) => interaction,

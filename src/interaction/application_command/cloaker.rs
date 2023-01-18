@@ -17,7 +17,7 @@ use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::takedown::TakedownType;
-use crate::{user_is_bot, Com, Event, BOT_USER_ID};
+use crate::{user_is_bot, Event, State, BOT_USER_ID};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
@@ -108,7 +108,7 @@ impl Error for CloakerActionError {}
 pub async fn action(
     interaction: Interaction,
     command: CloakerCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let target_id = command.target_id;
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;

@@ -15,7 +15,7 @@ use crate::assets::colors;
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, TryFromInteractionError
 };
-use crate::{Com, APPLICATION_ID};
+use crate::{State, APPLICATION_ID};
 
 pub enum HelpCommand {
     All,
@@ -118,7 +118,7 @@ pub fn chat_input() -> Command {
 pub async fn action(
     interaction: Interaction,
     command: HelpCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     defer(&interaction, com.clone()).await?;
 

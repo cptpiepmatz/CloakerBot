@@ -19,7 +19,7 @@ use twilight_util::builder::command::CommandBuilder;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::{defer, TryFromInteractionError};
-use crate::{db, Com};
+use crate::{db, State};
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
@@ -94,7 +94,7 @@ impl Error for ConfigActionError {}
 pub async fn action(
     interaction: Interaction,
     command: ConfigCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     defer(&interaction, com.clone()).await?;

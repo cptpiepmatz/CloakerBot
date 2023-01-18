@@ -11,7 +11,7 @@ use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::Com;
+use crate::State;
 
 pub const NAME: &str = "target-bots";
 const DESCRIPTION: &str = "Configure if the bot should target bots.";
@@ -60,7 +60,7 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     TargetBotsSubCommand { allow }: TargetBotsSubCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
 

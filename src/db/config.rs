@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
 
-use crate::Com;
+use crate::State;
 
 pub const TABLE_NAME: &str = "config";
 
@@ -31,13 +31,13 @@ pub struct GuildConfigImmunity {
 }
 
 impl GuildConfig {
-    pub async fn fetch(guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<GuildConfig> {
+    pub async fn fetch(guild_id: Id<GuildMarker>, com: Arc<State>) -> anyhow::Result<GuildConfig> {
         let db_key = (TABLE_NAME, guild_id.get());
         let config_db: Option<GuildConfig> = com.db.select(db_key).await?;
         Ok(config_db.unwrap_or_default())
     }
 
-    pub async fn save(self, guild_id: Id<GuildMarker>, com: Arc<Com>) -> anyhow::Result<()> {
+    pub async fn save(self, guild_id: Id<GuildMarker>, com: Arc<State>) -> anyhow::Result<()> {
         let _: Option<GuildConfig> = com
             .db
             .update((TABLE_NAME, guild_id.get()))

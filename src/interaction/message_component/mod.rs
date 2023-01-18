@@ -14,7 +14,7 @@ use crate::interaction::message_component::config_danger_zones::{
 use crate::interaction::message_component::config_immunity::{
     ConfigImmunityButton, ConfigImmunitySelect, ConfigImmunityType
 };
-use crate::Com;
+use crate::State;
 
 enum MessageComponent {
     ConfigDangerZonesSelect(ConfigDangerZonesSelect),
@@ -109,7 +109,7 @@ impl Error for TryFromInteractionError {}
 
 pub async fn handle_message_component(
     interaction: Interaction,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     match MessageComponent::try_from(&interaction)? {
         MessageComponent::ConfigDangerZonesSelect(ConfigDangerZonesSelect {

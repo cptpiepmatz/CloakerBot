@@ -6,12 +6,12 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::permissions::fetch_in_channel_permissions;
-use crate::{db, Com, BOT_USER_ID};
+use crate::{db, State, BOT_USER_ID};
 
 /// fetch a channel for logging, if no channel is found, return `None`
 pub async fn fetch_log_channel(
     guild_id: Id<GuildMarker>,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<Option<Id<ChannelMarker>>> {
     let guild_config: Option<GuildConfig> = com
         .db

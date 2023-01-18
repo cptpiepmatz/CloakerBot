@@ -15,7 +15,7 @@ use twilight_util::builder::command::SubCommandBuilder;
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component;
-use crate::{Com, APPLICATION_ID};
+use crate::{State, APPLICATION_ID};
 
 pub const NAME: &str = "danger-zones";
 const DESCRIPTION: &str = "Define your danger zones.";
@@ -44,7 +44,7 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     _: DangerZonesSubCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let config = GuildConfig::fetch(guild_id, com.clone()).await?;
 

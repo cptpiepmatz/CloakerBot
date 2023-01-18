@@ -18,7 +18,7 @@ use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component;
 use crate::interaction::message_component::config_immunity::{BUTTON_CUSTOM_ID, SELECT_CUSTOM_ID};
-use crate::{Com, APPLICATION_ID};
+use crate::{State, APPLICATION_ID};
 
 pub const NAME: &str = "immunity";
 const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -94,7 +94,7 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     command: ImmunitySubCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     use ImmunitySubCommand::{General, Random};
 

@@ -11,7 +11,7 @@ use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandB
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::Com;
+use crate::State;
 
 pub const NAME: &str = "random";
 const DESCRIPTION: &str = "Configure random takedown behavior.";
@@ -98,7 +98,7 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     RandomSubCommand { enable, min, max }: RandomSubCommand,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
 

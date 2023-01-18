@@ -12,7 +12,7 @@ use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::sync::TaggedMutexGuard;
-use crate::{Com, Event, BOT_USER_ID, GUILD_VOICE_MUTEX};
+use crate::{Event, State, BOT_USER_ID, GUILD_VOICE_MUTEX};
 
 // the tagged mutex guards implicitly this map
 // only one takedown may be initialized at the same type per guild,
@@ -42,7 +42,7 @@ pub async fn handle_takedown_init(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     kind: TakedownType,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let guard = GUILD_VOICE_MUTEX.lock(guild_id).await;
 
@@ -84,7 +84,7 @@ pub async fn handle_takedown_init(
 
 pub async fn handle_takedown_strike(
     guild_id: Id<GuildMarker>,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<()> {
     let Some((_, plan)) = com.planned_takedowns.remove(&guild_id) else {
         // someone else handled this

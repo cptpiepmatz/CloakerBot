@@ -7,7 +7,7 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMar
 use twilight_model::id::Id;
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::Com;
+use crate::State;
 
 #[derive(Debug)]
 pub enum PermSearchError {
@@ -34,7 +34,7 @@ pub async fn fetch_in_channel_permissions(
     user_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
-    com: Arc<Com>
+    com: Arc<State>
 ) -> anyhow::Result<Permissions> {
     // get role ids
     let role_ids = {
