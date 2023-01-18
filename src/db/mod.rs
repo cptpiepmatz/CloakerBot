@@ -40,7 +40,7 @@ pub trait DataStoreEntry:
 
     fn db_key(key: Self::Key) -> (String, Id);
 
-    async fn select(key: Self::Key) -> anyhow::Result<Self> {
+    async fn fetch(key: Self::Key) -> anyhow::Result<Self> {
         if let Some(value) = Self::cache_get(&key) {
             return Ok(value);
         }
@@ -49,7 +49,7 @@ pub trait DataStoreEntry:
         Ok(from_db.unwrap_or_default())
     }
 
-    async fn update(self, key: Self::Key) -> anyhow::Result<Option<Self>> {
+    async fn store(self, key: Self::Key) -> anyhow::Result<Option<Self>> {
         Self::cache_set(key.clone(), Some(self.clone()));
         let db = &STATE.ds.db;
         let from_db: Option<Self> = db.update(Self::db_key(key)).content(self).await?;

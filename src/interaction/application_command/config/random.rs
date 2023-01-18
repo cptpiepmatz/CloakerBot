@@ -97,12 +97,12 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     RandomSubCommand { enable, min, max }: RandomSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::select(guild_id).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     match (enable, min, max) {
         (Some(false), _, _) => {
             config.random.enabled = false;
-            config.update(guild_id).await?;
+            config.store(guild_id).await?;
             let reply = "**🛠️ *Disabled* random takedowns on this server.**";
             super::super::update_defer(&interaction, reply).await?;
         }
@@ -128,7 +128,7 @@ pub async fn action(
                 min,
                 max
             };
-            config.update(guild_id).await?;
+            config.store(guild_id).await?;
             let reply = format!(
                 concat!(
                     "**🛠️ ",

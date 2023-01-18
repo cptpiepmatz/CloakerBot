@@ -14,7 +14,7 @@ pub async fn user_is_valid_target(
         target_bots,
         immunity,
         ..
-    } = GuildConfig::select(guild_id).await?;
+    } = GuildConfig::fetch(guild_id).await?;
 
     // user might be bot
     if !target_bots && crate::user_is_bot(target_id).await? {

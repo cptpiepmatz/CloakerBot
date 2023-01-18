@@ -45,7 +45,7 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     _: DangerZonesSubCommand
 ) -> anyhow::Result<()> {
-    let config = GuildConfig::select(guild_id).await?;
+    let config = GuildConfig::fetch(guild_id).await?;
 
     let content = match config.danger_zones.is_empty() {
         true => "**🛠️ *No* danger zones are currently set.**".to_owned(),

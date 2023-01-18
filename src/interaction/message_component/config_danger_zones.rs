@@ -99,7 +99,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let mut config = GuildConfig::select(guild_id).await?;
+    let mut config = GuildConfig::fetch(guild_id).await?;
 
     let reply = match channels.is_empty() {
         true => "**🛠️ All danger zones *removed*.**".to_string(),
@@ -113,7 +113,7 @@ pub async fn action(
     };
 
     config.danger_zones = channels;
-    config.update(guild_id).await?;
+    config.store(guild_id).await?;
 
     let payload = json!({
         "content": reply,
