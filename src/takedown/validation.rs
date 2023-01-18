@@ -1,9 +1,10 @@
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::oauth::scope::BOT;
 
 use crate::db::config::GuildConfig;
 use crate::db::DataStoreEntry;
-use crate::STATE;
+use crate::{BOT_USER_ID, STATE};
 
 pub async fn user_is_valid_target(
     guild_id: Id<GuildMarker>,
@@ -15,8 +16,10 @@ pub async fn user_is_valid_target(
         immunity,
         ..
     } = GuildConfig::fetch(guild_id).await?;
+    if target_id == BOT_USER_ID {
+        return Ok(false);
+    }
 
-    // user might be bot
     if !target_bots && crate::user_is_bot(target_id).await? {
         return Ok(false);
     }

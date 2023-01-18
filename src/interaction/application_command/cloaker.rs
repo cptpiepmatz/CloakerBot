@@ -17,7 +17,7 @@ use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::takedown::{TakedownResolved, TakedownType};
-use crate::{user_is_bot, Event, APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::{takedown, user_is_bot, Event, APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
@@ -114,6 +114,16 @@ pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow
         .ok_or(CloakerActionError::NoUser)?;
     defer(&interaction).await?;
 
+    // check if the target is the bot itself
+    if target_id == BOT_USER_ID {
+        update_defer(
+            &interaction,
+            replies::select(&replies::COMMAND_TAKEDOWN_SELF)
+        )
+        .await?;
+        return Ok(());
+    }
+
     // check if target is in voice channel
     let Some(voice_channel_id) = STATE.event_cache.voice_state(target_id, guild_id).map(|vs| vs.channel_id()) else {
         update_defer(&interaction,  replies::select(&replies::NO_CHANNEL)).await?;
@@ -128,9 +138,8 @@ pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow
         return Ok(());
     }
 
-    // check if target is bot
-    if user_is_bot(target_id).await? {
-        // TODO: add db check
+    // check if the user is a valid target
+    if !takedown::validation::user_is_valid_target(guild_id, target_id, false).await? {
         update_defer(&interaction, replies::select(&replies::INVALID_MEMBER)).await?;
         return Ok(());
     }
