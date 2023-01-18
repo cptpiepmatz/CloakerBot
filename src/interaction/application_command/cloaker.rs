@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
+use tokio::sync::oneshot;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -15,8 +16,8 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
-use crate::takedown::TakedownType;
-use crate::{user_is_bot, Event, BOT_USER_ID, STATE};
+use crate::takedown::{TakedownResolved, TakedownType};
+use crate::{user_is_bot, Event, APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug)]
 pub struct CloakerCommand {
@@ -134,6 +135,7 @@ pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow
         return Ok(());
     }
 
+    let (tx, rx) = oneshot::channel();
     STATE
         .event_sender
         .send(Event::TakedownInit {
@@ -141,9 +143,22 @@ pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow
             guild_id,
             kind: TakedownType::User {
                 initiator_id,
-                interaction
+                resolve: tx
             }
         })
+        .await?;
+
+    let resolve = rx.await?;
+    let content = match resolve {
+        TakedownResolved::Success => replies::select(&replies::TAKEDOWN_SUCCESSFUL),
+        TakedownResolved::Fail => todo!(),
+        TakedownResolved::Counter { .. } => todo!()
+    };
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .update_response(&interaction.token)
+        .content(Some(content))?
         .await?;
 
     Ok(())

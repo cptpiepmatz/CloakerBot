@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use dashmap::DashMap;
 use rand::Rng;
+use tokio::sync::oneshot;
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
 use twilight_lavalink::model::outgoing::{Play, Stop, Volume};
@@ -30,10 +31,17 @@ pub struct TakedownPlan {
 pub enum TakedownType {
     User {
         initiator_id: Id<UserMarker>,
-        interaction: Interaction
+        resolve: oneshot::Sender<TakedownResolved>
     },
     Random,
     DangerZone
+}
+
+#[derive(Debug)]
+pub enum TakedownResolved {
+    Success,
+    Fail,
+    Counter { by: Id<UserMarker> }
 }
 
 const WULULULU_VOLUME: i64 = 40;
@@ -146,13 +154,8 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         .command(&UpdateVoiceState::new(guild_id, None, false, false))
         .await?;
 
-    if let TakedownType::User { interaction, .. } = kind {
-        STATE
-            .http
-            .interaction(APPLICATION_ID)
-            .update_response(&interaction.token)
-            .content(Some(replies::select(&replies::TAKEDOWN_SUCCESSFUL)))?
-            .await?;
+    if let TakedownType::User { resolve, .. } = kind {
+        let _ = resolve.send(TakedownResolved::Success);
     }
 
     Ok(())
