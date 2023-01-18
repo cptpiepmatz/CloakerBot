@@ -1,5 +1,4 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
 use serde_json::json;
 use twilight_mention::Mention;
@@ -11,7 +10,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
-use crate::{State, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 pub const SELECT_CUSTOM_ID: ConfigImmunityCustomId = ConfigImmunityCustomId {
     general: "cfg_im_gen_select",

@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-use std::sync::Arc;
 
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
@@ -17,7 +16,7 @@ use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::takedown::TakedownType;
-use crate::{user_is_bot, Event, State, BOT_USER_ID, STATE};
+use crate::{user_is_bot, Event, BOT_USER_ID, STATE};
 
 #[derive(Debug)]
 pub struct CloakerCommand {

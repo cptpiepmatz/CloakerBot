@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
@@ -13,7 +11,7 @@ use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::{State, BOT_USER_ID};
+use crate::BOT_USER_ID;
 
 pub const NAME: &str = "log-channel";
 const DESCRIPTION: &str = "Define your log channel.";

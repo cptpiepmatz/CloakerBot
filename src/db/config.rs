@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
 
-use crate::{State, STATE};
+use crate::STATE;
 
 pub const TABLE_NAME: &str = "config";
 

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
@@ -11,7 +9,6 @@ use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::State;
 
 pub const NAME: &str = "target-bots";
 const DESCRIPTION: &str = "Configure if the bot should target bots.";

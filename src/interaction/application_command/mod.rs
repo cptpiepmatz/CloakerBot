@@ -6,7 +6,6 @@ mod ranks;
 
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-use std::sync::Arc;
 
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
@@ -25,7 +24,7 @@ use crate::interaction::application_command::config::ConfigCommand;
 use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
-use crate::{State, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),

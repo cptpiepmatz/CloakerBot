@@ -3,7 +3,6 @@ pub mod config_immunity;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::sync::Arc;
 
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::component::ComponentType;
@@ -14,7 +13,6 @@ use crate::interaction::message_component::config_danger_zones::{
 use crate::interaction::message_component::config_immunity::{
     ConfigImmunityButton, ConfigImmunitySelect, ConfigImmunityType
 };
-use crate::State;
 
 enum MessageComponent {
     ConfigDangerZonesSelect(ConfigDangerZonesSelect),

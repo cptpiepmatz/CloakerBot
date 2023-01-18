@@ -1,7 +1,5 @@
 pub mod http {
 
-    use std::sync::Arc;
-
     use dashmap::mapref::one::Ref;
     use dashmap::DashMap;
     use twilight_model::channel::Channel;
@@ -10,7 +8,7 @@ pub mod http {
     use twilight_model::id::Id;
     use twilight_model::user::User;
 
-    use crate::{State, STATE};
+    use crate::STATE;
 
     #[derive(Debug, Default)]
     pub struct Cache {

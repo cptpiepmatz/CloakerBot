@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::json;
@@ -15,7 +14,7 @@ use twilight_util::builder::command::SubCommandBuilder;
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component;
-use crate::{State, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "danger-zones";
 const DESCRIPTION: &str = "Define your danger zones.";

@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::json;
@@ -9,16 +8,14 @@ use twilight_model::application::interaction::application_command::{
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ButtonStyle, ComponentType};
-use twilight_model::channel::ChannelType;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::interaction::message_component;
 use crate::interaction::message_component::config_immunity::{BUTTON_CUSTOM_ID, SELECT_CUSTOM_ID};
-use crate::{State, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "immunity";
 const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -49,7 +46,7 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
                             })
                         }
                     },
-                    n => {
+                    _n => {
                         return Err(TryFromInteractionError::IncorrectFieldType {
                             command,
                             field: "type".into(),

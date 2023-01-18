@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use dashmap::DashMap;
@@ -12,7 +11,7 @@ use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::sync::TaggedMutexGuard;
-use crate::{Event, State, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 // the tagged mutex guards implicitly this map
 // only one takedown may be initialized at the same type per guild,

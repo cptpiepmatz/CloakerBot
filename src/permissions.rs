@@ -1,13 +1,12 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::sync::Arc;
 
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::permission_calculator::PermissionCalculator;
 
-use crate::{State, STATE};
+use crate::STATE;
 
 #[derive(Debug)]
 pub enum PermSearchError {

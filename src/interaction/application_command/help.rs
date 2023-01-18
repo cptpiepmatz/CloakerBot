@@ -1,5 +1,4 @@
 use std::ops::Deref;
-use std::sync::Arc;
 
 use const_format::{concatcp, formatcp};
 use lazy_static::lazy_static;
@@ -15,7 +14,7 @@ use crate::assets::colors;
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, TryFromInteractionError
 };
-use crate::{State, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 pub enum HelpCommand {
     All,

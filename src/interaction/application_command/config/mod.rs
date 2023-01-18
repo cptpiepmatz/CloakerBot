@@ -6,20 +6,15 @@ pub mod target_bots;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use std::sync::Arc;
 
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::id::marker::GuildMarker;
-use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::db::config::GuildConfig;
 use crate::interaction::application_command::{defer, TryFromInteractionError};
-use crate::{db, State};
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";

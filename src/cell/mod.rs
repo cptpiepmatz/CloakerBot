@@ -15,7 +15,7 @@ impl<T> InitCell<T> {
     pub fn init(cell: &InitCell<T>, value: T) {
         let inner = unsafe { &mut *cell.value.get() };
         match inner {
-            Some(v) => panic!("already initialized"),
+            Some(_v) => panic!("already initialized"),
             None => inner.insert(value)
         };
     }
