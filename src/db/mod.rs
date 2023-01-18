@@ -1,18 +1,10 @@
 pub mod config;
 
-use std::future::{Future, IntoFuture};
-use std::marker::PhantomData;
-use std::pin::Pin;
-
 use async_trait::async_trait;
-use dashmap::DashMap;
-use futures::future::Map;
-use futures::FutureExt;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use surrealdb::engine::local::{Db, Mem};
-use surrealdb::method::Delete;
-use surrealdb::sql::{Id, Output};
+use surrealdb::sql::Id;
 use surrealdb::Surreal;
 
 use crate::STATE;

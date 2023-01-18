@@ -4,7 +4,7 @@ use std::process::Command;
 use dashmap::DashMap;
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
-use surrealdb::engine::local::{Db, Mem};
+use surrealdb::engine::local::Mem;
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::ReceiverStream;

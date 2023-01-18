@@ -5,7 +5,7 @@ use twilight_model::id::Id;
 use crate::db::config::GuildConfig;
 use crate::db::DataStoreEntry;
 use crate::permissions::fetch_in_channel_permissions;
-use crate::{db, BOT_USER_ID, STATE};
+use crate::{BOT_USER_ID, STATE};
 
 /// fetch a channel for logging, if no channel is found, return `None`
 pub async fn fetch_log_channel(

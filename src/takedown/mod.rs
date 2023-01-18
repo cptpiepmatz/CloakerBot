@@ -8,14 +8,12 @@ use tokio::sync::oneshot;
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
 use twilight_lavalink::model::outgoing::{Play, Stop, Volume};
-use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
-use crate::assets::replies;
 use crate::sync::TaggedMutexGuard;
-use crate::{Event, APPLICATION_ID, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 const WULULULU_VOLUME: i64 = 40;
 
