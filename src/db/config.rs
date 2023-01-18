@@ -1,3 +1,5 @@
+use dashmap::DashMap;
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
@@ -6,6 +8,10 @@ use crate::db::{DataStore, DataStoreEntry};
 use crate::STATE;
 
 pub const TABLE_NAME: &str = "config";
+
+lazy_static! {
+    static ref CACHE: DashMap<Id<GuildMarker>, GuildConfig> = DashMap::new();
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GuildConfig {
@@ -31,7 +37,21 @@ pub struct GuildConfigImmunity {
 
 impl DataStoreEntry for GuildConfig {
     type Key = Id<GuildMarker>;
-    type Output = GuildConfig;
+
+    fn cache_get(key: &Self::Key) -> Option<Self> {
+        CACHE.get(key).map(|r| r.clone())
+    }
+
+    fn cache_set(key: Self::Key, value: Option<Self>) {
+        match value {
+            Some(v) => {
+                CACHE.insert(key, v);
+            }
+            None => {
+                CACHE.remove(&key);
+            }
+        }
+    }
 
     fn db_key(key: Self::Key) -> (String, surrealdb::sql::Id) {
         (TABLE_NAME.into(), key.get().into())
