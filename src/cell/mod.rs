@@ -33,6 +33,8 @@ impl<T> Deref for InitCell<T> {
     }
 }
 
+unsafe impl<T> Sync for InitCell<T> where T: Sync + Send {}
+
 #[cfg(test)]
 mod tests {
     use std::ops::Deref;

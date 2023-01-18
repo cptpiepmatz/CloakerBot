@@ -74,7 +74,7 @@ const EVENT_CACHE_RESOURCE_TYPES: ResourceType = ResourceType::VOICE_STATE
     .union(ResourceType::USER)
     .union(ResourceType::GUILD);
 
-const STATE: InitCell<State> = InitCell::new();
+static STATE: InitCell<State> = InitCell::new();
 
 #[derive(Debug)]
 pub enum Event {
