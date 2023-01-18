@@ -3,6 +3,7 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
+use crate::db::DataStoreEntry;
 use crate::permissions::fetch_in_channel_permissions;
 use crate::{db, BOT_USER_ID, STATE};
 
@@ -10,15 +11,7 @@ use crate::{db, BOT_USER_ID, STATE};
 pub async fn fetch_log_channel(
     guild_id: Id<GuildMarker>
 ) -> anyhow::Result<Option<Id<ChannelMarker>>> {
-    let guild_config: Option<GuildConfig> = STATE
-        .db
-        .select((db::config::TABLE_NAME, guild_id.get()))
-        .await?;
-    if let Some(GuildConfig {
-        log_channel: Some(log_channel_id),
-        ..
-    }) = guild_config
-    {
+    if let Some(log_channel_id) = GuildConfig::select(guild_id).await?.log_channel {
         let channel_perms =
             fetch_in_channel_permissions(BOT_USER_ID, guild_id, log_channel_id).await?;
         if channel_perms.contains(Permissions::SEND_MESSAGES) {

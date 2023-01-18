@@ -20,6 +20,7 @@ use twilight_model::id::Id;
 
 use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
+use crate::db::DataStore;
 use crate::interaction::{application_command, handle_interaction};
 use crate::preparation::file_extract::extract_files;
 use crate::preparation::java::find_java_executable;
@@ -97,7 +98,7 @@ pub enum Event {
 }
 
 pub struct State {
-    db: Surreal<Db>,
+    ds: DataStore,
     http: HttpClient,
     shard: Shard,
     lavalink: Lavalink,
@@ -138,6 +139,7 @@ async fn main() {
 
     let (event_sender, events) = tokio::sync::mpsc::channel::<Event>(100);
 
+    let ds = DataStore::open().await.expect("create db");
     let db = Surreal::new::<Mem>(()).await.expect("create db");
     db.use_ns("cptpiepmatz")
         .use_db("cloaker_bot")
@@ -145,7 +147,7 @@ async fn main() {
         .expect("set ns and db");
 
     InitCell::init(&STATE, State {
-        db,
+        ds,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         shard,
         lavalink,

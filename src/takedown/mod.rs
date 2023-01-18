@@ -1,3 +1,5 @@
+mod validation;
+
 use std::time::Duration;
 
 use dashmap::DashMap;
@@ -14,6 +16,8 @@ use twilight_model::id::Id;
 use crate::assets::replies;
 use crate::sync::TaggedMutexGuard;
 use crate::{Event, APPLICATION_ID, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+
+const WULULULU_VOLUME: i64 = 40;
 
 // the tagged mutex guards implicitly this map
 // only one takedown may be initialized at the same type per guild,
@@ -43,8 +47,6 @@ pub enum TakedownResolved {
     Fail,
     Counter { by: Id<UserMarker> }
 }
-
-const WULULULU_VOLUME: i64 = 40;
 
 pub async fn handle_takedown_init(
     target_id: Id<UserMarker>,

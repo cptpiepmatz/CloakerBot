@@ -9,6 +9,7 @@ use twilight_model::id::marker::{InteractionMarker, RoleMarker};
 use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
+use crate::db::DataStoreEntry;
 use crate::interaction::message_component::TryFromInteractionError;
 use crate::{APPLICATION_ID, STATE};
 
@@ -132,7 +133,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let mut config = GuildConfig::fetch(guild_id).await?;
+    let mut config = GuildConfig::select(guild_id).await?;
 
     let reply = match (&kind, role_id) {
         (General, None) => "**🛠️ Removed immune role for *all* takedowns.**".into(),
@@ -151,7 +152,7 @@ pub async fn action(
         General => config.immunity.general = role_id,
         Random => config.immunity.random = role_id
     }
-    config.save(guild_id).await?;
+    config.update(guild_id).await?;
 
     let payload = json!({
         "content": reply,

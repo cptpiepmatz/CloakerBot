@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
 
+use crate::db::{DataStore, DataStoreEntry};
 use crate::STATE;
 
 pub const TABLE_NAME: &str = "config";
@@ -28,21 +29,12 @@ pub struct GuildConfigImmunity {
     pub random: Option<Id<RoleMarker>>
 }
 
-impl GuildConfig {
-    pub async fn fetch(guild_id: Id<GuildMarker>) -> anyhow::Result<GuildConfig> {
-        let db_key = (TABLE_NAME, guild_id.get());
-        let config_db: Option<GuildConfig> = STATE.db.select(db_key).await?;
-        Ok(config_db.unwrap_or_default())
-    }
+impl DataStoreEntry for GuildConfig {
+    type Key = Id<GuildMarker>;
+    type Output = GuildConfig;
 
-    pub async fn save(self, guild_id: Id<GuildMarker>) -> anyhow::Result<()> {
-        let _: Option<GuildConfig> = STATE
-            .db
-            .update((TABLE_NAME, guild_id.get()))
-            .content(self)
-            .await?;
-
-        Ok(())
+    fn db_key(key: Self::Key) -> (String, surrealdb::sql::Id) {
+        (TABLE_NAME.into(), key.get().into())
     }
 }
 

@@ -25,7 +25,7 @@ impl<T> Deref for InitCell<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        let inner = unsafe { &mut *self.value.get() };
+        let inner = unsafe { &*self.value.get() };
         match inner {
             Some(v) => v,
             None => panic!("not initialized")

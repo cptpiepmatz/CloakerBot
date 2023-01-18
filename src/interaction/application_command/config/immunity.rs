@@ -13,6 +13,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
+use crate::db::DataStoreEntry;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component::config_immunity::{BUTTON_CUSTOM_ID, SELECT_CUSTOM_ID};
 use crate::{APPLICATION_ID, STATE};
@@ -94,7 +95,7 @@ pub async fn action(
 ) -> anyhow::Result<()> {
     use ImmunitySubCommand::{General, Random};
 
-    let config = GuildConfig::fetch(guild_id).await?;
+    let config = GuildConfig::select(guild_id).await?;
     let role_id = match command {
         General => config.immunity.general,
         Random => config.immunity.random

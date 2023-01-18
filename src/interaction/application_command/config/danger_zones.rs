@@ -12,6 +12,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::db::config::GuildConfig;
+use crate::db::DataStoreEntry;
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::interaction::message_component;
 use crate::{APPLICATION_ID, STATE};
@@ -44,7 +45,7 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     _: DangerZonesSubCommand
 ) -> anyhow::Result<()> {
-    let config = GuildConfig::fetch(guild_id).await?;
+    let config = GuildConfig::select(guild_id).await?;
 
     let content = match config.danger_zones.is_empty() {
         true => "**🛠️ *No* danger zones are currently set.**".to_owned(),

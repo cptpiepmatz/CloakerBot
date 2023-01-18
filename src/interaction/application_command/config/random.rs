@@ -8,6 +8,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
+use crate::db::DataStoreEntry;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "random";
@@ -96,12 +97,12 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     RandomSubCommand { enable, min, max }: RandomSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id).await?;
+    let mut config = GuildConfig::select(guild_id).await?;
 
     match (enable, min, max) {
         (Some(false), _, _) => {
             config.random.enabled = false;
-            config.save(guild_id).await?;
+            config.update(guild_id).await?;
             let reply = "**🛠️ *Disabled* random takedowns on this server.**";
             super::super::update_defer(&interaction, reply).await?;
         }
@@ -127,7 +128,7 @@ pub async fn action(
                 min,
                 max
             };
-            config.save(guild_id).await?;
+            config.update(guild_id).await?;
             let reply = format!(
                 concat!(
                     "**🛠️ ",
