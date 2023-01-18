@@ -31,6 +31,7 @@ use crate::takedown::{
 
 mod assets;
 mod cache;
+mod cell;
 mod db;
 mod embedded_files;
 mod interaction;
