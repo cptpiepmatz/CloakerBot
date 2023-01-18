@@ -10,8 +10,9 @@ use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::assets::replies;
 use crate::sync::TaggedMutexGuard;
-use crate::{Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{Event, APPLICATION_ID, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 // the tagged mutex guards implicitly this map
 // only one takedown may be initialized at the same type per guild,
@@ -63,7 +64,12 @@ pub async fn handle_takedown_init(
 
     let player = STATE.lavalink.player(guild_id).await?;
     player.send(Volume::from((guild_id, WULULULU_VOLUME)))?;
-    player.send(Play::from((guild_id, &STATE.sounds.wululululu.0)))?;
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    player.send({
+        let mut wululululu_play = Play::from((guild_id, &STATE.sounds.wululululu.0));
+        wululululu_play.no_replace = true;
+        wululululu_play
+    })?;
 
     STATE.planned_takedowns.insert(guild_id, TakedownPlan {
         target_id,
@@ -92,7 +98,7 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
     let TakedownPlan {
         target_id,
         guard: _guard,
-        ..
+        kind
     } = plan;
 
     let channel_id_from_cache = |c_ref: Reference<_, CachedVoiceState>| c_ref.channel_id();
@@ -139,6 +145,15 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         .shard
         .command(&UpdateVoiceState::new(guild_id, None, false, false))
         .await?;
+
+    if let TakedownType::User { interaction, .. } = kind {
+        STATE
+            .http
+            .interaction(APPLICATION_ID)
+            .update_response(&interaction.token)
+            .content(Some(replies::select(&replies::TAKEDOWN_SUCCESSFUL)))?
+            .await?;
+    }
 
     Ok(())
 }
