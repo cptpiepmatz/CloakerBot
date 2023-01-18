@@ -1,9 +1,5 @@
-mod config_danger_zones;
-
-pub mod custom_id {
-    pub const CONFIG_DANGER_ZONES_SELECT: &str = super::config_danger_zones::SELECT_CUSTOM_ID;
-    pub const CONFIG_DANGER_ZONES_BUTTON: &str = super::config_danger_zones::BUTTON_CUSTOM_ID;
-}
+pub mod config_danger_zones;
+pub mod config_immunity;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -15,11 +11,16 @@ use twilight_model::channel::message::component::ComponentType;
 use crate::interaction::message_component::config_danger_zones::{
     ConfigDangerZonesButton, ConfigDangerZonesSelect
 };
+use crate::interaction::message_component::config_immunity::{
+    ConfigImmunityButton, ConfigImmunitySelect, ConfigImmunityType
+};
 use crate::Com;
 
 enum MessageComponent {
     ConfigDangerZonesSelect(ConfigDangerZonesSelect),
-    ConfigDangerZonesButton(ConfigDangerZonesButton)
+    ConfigDangerZonesButton(ConfigDangerZonesButton),
+    ConfigImmunitySelect(ConfigImmunitySelect),
+    ConfigImmunityButton(ConfigImmunityButton)
 }
 
 impl TryFrom<&Interaction> for MessageComponent {
@@ -38,6 +39,26 @@ impl TryFrom<&Interaction> for MessageComponent {
             (Some(config_danger_zones::BUTTON_CUSTOM_ID), Some(og_id)) => Ok(
                 Self::ConfigDangerZonesButton(ConfigDangerZonesButton::try_from((data, og_id))?)
             ),
+            (Some(id), Some(og_id)) if id == config_immunity::SELECT_CUSTOM_ID.general => {
+                Ok(Self::ConfigImmunitySelect(ConfigImmunitySelect::try_from(
+                    (data, og_id, ConfigImmunityType::General)
+                )?))
+            }
+            (Some(id), Some(og_id)) if id == config_immunity::SELECT_CUSTOM_ID.random => {
+                Ok(Self::ConfigImmunitySelect(ConfigImmunitySelect::try_from(
+                    (data, og_id, ConfigImmunityType::Random)
+                )?))
+            }
+            (Some(id), Some(og_id)) if id == config_immunity::BUTTON_CUSTOM_ID.general => {
+                Ok(Self::ConfigImmunityButton(ConfigImmunityButton::try_from(
+                    (data, og_id, ConfigImmunityType::General)
+                )?))
+            }
+            (Some(id), Some(og_id)) if id == config_immunity::BUTTON_CUSTOM_ID.random => {
+                Ok(Self::ConfigImmunityButton(ConfigImmunityButton::try_from(
+                    (data, og_id, ConfigImmunityType::Random)
+                )?))
+            }
             _ => Err(TryFromInteractionError::UnknownCustomId {
                 custom_id: String::from(&data.custom_id)
             })
@@ -97,7 +118,16 @@ pub async fn handle_message_component(
         }) => config_danger_zones::action(interaction, og_interaction_id, channels, com).await?,
         MessageComponent::ConfigDangerZonesButton(ConfigDangerZonesButton {
             og_interaction_id
-        }) => config_danger_zones::action(interaction, og_interaction_id, Vec::new(), com).await?
+        }) => config_danger_zones::action(interaction, og_interaction_id, Vec::new(), com).await?,
+        MessageComponent::ConfigImmunitySelect(ConfigImmunitySelect {
+            og_interaction_id,
+            kind,
+            role
+        }) => config_immunity::action(interaction, og_interaction_id, role, kind, com).await?,
+        MessageComponent::ConfigImmunityButton(ConfigImmunityButton {
+            og_interaction_id,
+            kind
+        }) => config_immunity::action(interaction, og_interaction_id, None, kind, com).await?
     }
 
     Ok(())

@@ -6,7 +6,7 @@ use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::component::ButtonStyle;
+use twilight_model::channel::message::component::{ButtonStyle, ComponentType};
 use twilight_model::channel::ChannelType;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
@@ -14,9 +14,7 @@ use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::db::config::GuildConfig;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::interaction::message_component::custom_id::{
-    CONFIG_DANGER_ZONES_BUTTON, CONFIG_DANGER_ZONES_SELECT
-};
+use crate::interaction::message_component;
 use crate::{Com, APPLICATION_ID};
 
 pub const NAME: &str = "danger-zones";
@@ -66,11 +64,15 @@ pub async fn action(
         "content": content,
         "components": [
             {
-                "type": 1,
+                "type": ComponentType::ActionRow,
                 "components": [{
                     // select menu for channel select
                     "type": 8,
-                    "custom_id": format!("{}#{}", CONFIG_DANGER_ZONES_SELECT, interaction.id),
+                    "custom_id": format!(
+                        "{}#{}",
+                        message_component::config_danger_zones::SELECT_CUSTOM_ID,
+                        interaction.id
+                    ),
                     "channel_types": [ChannelType::GuildVoice],
                     "min_values": 0,
                     "max_values": 25,
@@ -78,11 +80,15 @@ pub async fn action(
                 }]
             },
             {
-                "type": 1,
+                "type": ComponentType::ActionRow,
                 "components": [{
                     // button to remove all channels
-                    "type": 2,
-                    "custom_id": format!("{}#{}", CONFIG_DANGER_ZONES_BUTTON, interaction.id),
+                    "type": ComponentType::Button,
+                    "custom_id": format!(
+                        "{}#{}",
+                        message_component::config_danger_zones::BUTTON_CUSTOM_ID,
+                        interaction.id
+                    ),
                     "label": "Delete Danger Zones",
                     "style": ButtonStyle::Danger,
                     "emoji": {

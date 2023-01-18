@@ -1,4 +1,5 @@
 pub mod danger_zones;
+pub mod immunity;
 pub mod log_channel;
 pub mod random;
 pub mod target_bots;
@@ -27,7 +28,8 @@ pub enum ConfigCommand {
     DangerZones(danger_zones::DangerZonesSubCommand),
     LogChannel(log_channel::LogChannelSubCommand),
     Random(random::RandomSubCommand),
-    TargetBots(target_bots::TargetBotsSubCommand)
+    TargetBots(target_bots::TargetBotsSubCommand),
+    Immunity(immunity::ImmunitySubCommand)
 }
 
 impl TryFrom<&CommandData> for ConfigCommand {
@@ -55,6 +57,9 @@ impl TryFrom<&CommandData> for ConfigCommand {
             random::NAME => Ok(ConfigCommand::Random(random::RandomSubCommand::try_from(
                 options
             )?)),
+            immunity::NAME => Ok(ConfigCommand::Immunity(
+                immunity::ImmunitySubCommand::try_from(options)?
+            )),
             n => Err(TryFromInteractionError::UnknownCommandName {
                 name: format!("{NAME} {}", n)
             })
@@ -69,6 +74,7 @@ pub fn chat_input() -> Command {
         .option(danger_zones::chat_input())
         .option(target_bots::chat_input())
         .option(random::chat_input())
+        .option(immunity::chat_input())
         .build()
 }
 
@@ -105,6 +111,9 @@ pub async fn action(
         }
         ConfigCommand::Random(sub_cmd) => {
             random::action(interaction, guild_id, sub_cmd, com).await?
+        }
+        ConfigCommand::Immunity(sub_cmd) => {
+            immunity::action(interaction, guild_id, sub_cmd, com).await?
         }
     }
 

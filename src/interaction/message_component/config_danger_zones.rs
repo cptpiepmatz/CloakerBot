@@ -13,9 +13,16 @@ use crate::db::config::GuildConfig;
 use crate::interaction::message_component::TryFromInteractionError;
 use crate::{db, Com, APPLICATION_ID};
 
+pub const SELECT_CUSTOM_ID: &str = "cfg_dz_select";
+pub const BUTTON_CUSTOM_ID: &str = "cfg_dz_button";
+
 pub struct ConfigDangerZonesSelect {
     pub og_interaction_id: Id<InteractionMarker>,
     pub channels: Vec<Id<ChannelMarker>>
+}
+
+pub struct ConfigDangerZonesButton {
+    pub og_interaction_id: Id<InteractionMarker>
 }
 
 impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesSelect {
@@ -29,7 +36,7 @@ impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesSele
             kind => {
                 return Err(TryFromInteractionError::IncorrectType {
                     custom_id: SELECT_CUSTOM_ID.to_owned(),
-                    expected: ComponentType::SelectMenu,
+                    expected: ComponentType::Unknown(8),
                     actual: kind
                 })
             }
@@ -44,14 +51,10 @@ impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesSele
             channels: data
                 .values
                 .iter()
-                .map(|id| Id::from_str(id).expect("validated by discord"))
+                .map(|id| Id::from_str(id).expect("validated by Discord"))
                 .collect()
         })
     }
-}
-
-pub struct ConfigDangerZonesButton {
-    pub og_interaction_id: Id<InteractionMarker>
 }
 
 impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesButton {
@@ -81,9 +84,6 @@ impl TryFrom<(&MessageComponentInteractionData, &str)> for ConfigDangerZonesButt
     }
 }
 
-pub const SELECT_CUSTOM_ID: &str = "cfg_dz_select";
-pub const BUTTON_CUSTOM_ID: &str = "cfg_dz_button";
-
 pub async fn action(
     interaction: Interaction,
     og_interaction_id: Id<InteractionMarker>,
@@ -100,11 +100,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let config: Option<GuildConfig> = com
-        .db
-        .select((db::config::TABLE_NAME, guild_id.get()))
-        .await?;
-    let mut config: GuildConfig = config.unwrap_or_default();
+    let mut config = GuildConfig::fetch(guild_id, com.clone()).await?;
 
     let reply = match channels.is_empty() {
         true => "**🛠️ All danger zones *removed*.**".to_string(),
@@ -118,11 +114,7 @@ pub async fn action(
     };
 
     config.danger_zones = channels;
-    let _: Option<GuildConfig> = com
-        .db
-        .update((db::config::TABLE_NAME, guild_id.get()))
-        .content(config)
-        .await?;
+    config.save(guild_id, com.clone()).await?;
 
     let payload = json!({
         "content": reply,
