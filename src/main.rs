@@ -1,5 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
+use std::time::Duration;
 
 use dashmap::DashMap;
 use futures::stream::StreamExt;
@@ -7,7 +8,7 @@ use lazy_static::lazy_static;
 use surrealdb::engine::local::Mem;
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
-use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
 use twilight_gateway::Shard;
 use twilight_http::Client as HttpClient;
@@ -26,6 +27,7 @@ use crate::preparation::file_extract::extract_files;
 use crate::preparation::java::find_java_executable;
 use crate::sounds::{load_sounds, LoadedSounds};
 use crate::sync::TaggedMutex;
+use crate::takedown::random::handle_random_check;
 use crate::takedown::{
     handle_takedown_init, handle_takedown_strike, PlannedTakedowns, TakedownType
 };
@@ -160,8 +162,12 @@ async fn main() {
     });
 
     let mut events = futures::stream::select(
-        discord_events.map(Event::Discord),
-        ReceiverStream::new(events)
+        futures::stream::select(
+            discord_events.map(Event::Discord),
+            ReceiverStream::new(events)
+        ),
+        IntervalStream::new(tokio::time::interval(Duration::from_secs(15)))
+            .map(|_| Event::RandomCheck)
     );
 
     while let Some(event) = events.next().await {
@@ -173,20 +179,8 @@ async fn main() {
 async fn handle_event(event: Event) {
     async fn run(event: Event) -> anyhow::Result<()> {
         match event {
-            Event::Discord(event) => {
-                STATE.event_cache.update(&event);
-                STATE.lavalink.process(&event).await?;
-                match event {
-                    DiscordEvent::ShardConnected(_) => {
-                        println!("Connected");
-                    }
-                    DiscordEvent::InteractionCreate(interaction_create) => {
-                        let interaction = (*interaction_create).0;
-                        handle_interaction(interaction).await?;
-                    }
-                    _ => {}
-                }
-            }
+            Event::Discord(event) => handle_discord_event(event).await?,
+            Event::RandomCheck => handle_random_check().await?,
             Event::TakedownInit {
                 target_id,
                 guild_id,
@@ -194,14 +188,30 @@ async fn handle_event(event: Event) {
             } => {
                 handle_takedown_init(target_id, guild_id, kind).await?;
             }
-            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id).await?,
-            _ => {}
+            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id).await?
         };
 
         Ok(())
     }
 
     run(event).await.unwrap();
+}
+
+pub async fn handle_discord_event(event: DiscordEvent) -> anyhow::Result<()> {
+    STATE.event_cache.update(&event);
+    STATE.lavalink.process(&event).await?;
+    match event {
+        DiscordEvent::ShardConnected(_) => {
+            println!("Connected");
+        }
+        DiscordEvent::InteractionCreate(interaction_create) => {
+            let interaction = (*interaction_create).0;
+            handle_interaction(interaction).await?;
+        }
+        _ => {}
+    }
+
+    Ok(())
 }
 
 pub async fn user_is_bot(user_id: Id<UserMarker>) -> anyhow::Result<bool> {

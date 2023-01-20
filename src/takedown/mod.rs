@@ -1,3 +1,4 @@
+pub mod random;
 pub mod validation;
 
 use std::time::Duration;
@@ -12,8 +13,9 @@ use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::log::LogMessage;
 use crate::sync::TaggedMutexGuard;
-use crate::{Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 const WULULULU_VOLUME: i64 = 40;
 
@@ -35,7 +37,9 @@ pub enum TakedownType {
         initiator_id: Id<UserMarker>,
         resolve: oneshot::Sender<TakedownResolved>
     },
-    Random,
+    Random {
+        resolve: oneshot::Sender<TakedownResolved>
+    },
     DangerZone
 }
 
@@ -154,8 +158,39 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         .command(&UpdateVoiceState::new(guild_id, None, false, false))
         .await?;
 
-    if let TakedownType::User { resolve, .. } = kind {
-        let _ = resolve.send(TakedownResolved::Success);
+    match kind {
+        TakedownType::User {
+            initiator_id,
+            resolve
+        } => {
+            let _ = resolve.send(TakedownResolved::Success);
+            if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
+                log::log_message(guild_id, channel_id, LogMessage::UserTakedownStrike {
+                    target_id,
+                    initiator_id
+                })
+                .await?;
+            }
+        }
+        TakedownType::Random { resolve } => {
+            let _ = resolve.send(TakedownResolved::Success);
+            if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
+                log::log_message(guild_id, channel_id, LogMessage::RandomTakedownStrike {
+                    target_id,
+                    next: random::fetch_next_check(guild_id).await?
+                })
+                .await?;
+            }
+        }
+        TakedownType::DangerZone => {
+            if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
+                log::log_message(guild_id, channel_id, LogMessage::DangerZoneTakedownStrike {
+                    target_id,
+                    channel_id
+                })
+                .await?;
+            }
+        }
     }
 
     Ok(())

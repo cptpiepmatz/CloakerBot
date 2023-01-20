@@ -1,15 +1,20 @@
+use twilight_mention::timestamp::{Timestamp, TimestampStyle};
+use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::MessageFlags;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
+use crate::db::random::GuildRandom;
 use crate::db::DataStoreEntry;
 use crate::interaction::application_command::TryFromInteractionError;
+use crate::{takedown, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
 const DESCRIPTION: &str = "Configure random takedown behavior.";
@@ -102,7 +107,7 @@ pub async fn action(
     match (enable, min, max) {
         (Some(false), _, _) => {
             config.random.enabled = false;
-            config.store(guild_id).await?;
+            config.clone().store(guild_id).await?;
             let reply = "**🛠️ *Disabled* random takedowns on this server.**";
             super::super::update_defer(&interaction, reply).await?;
         }
@@ -128,7 +133,7 @@ pub async fn action(
                 min,
                 max
             };
-            config.store(guild_id).await?;
+            config.clone().store(guild_id).await?;
             let reply = format!(
                 concat!(
                     "**🛠️ ",
@@ -138,6 +143,33 @@ pub async fn action(
                 min, max
             );
             super::super::update_defer(&interaction, &reply).await?;
+        }
+    }
+
+    match config.random.enabled {
+        true => {
+            let next = takedown::random::fetch_next_check(guild_id).await?;
+            let mut random = GuildRandom::fetch(guild_id).await?;
+            random.next = next;
+            random.store(guild_id).await?;
+
+            STATE
+                .http
+                .interaction(APPLICATION_ID)
+                .create_followup(&interaction.token)
+                .flags(MessageFlags::EPHEMERAL)
+                .content(
+                    format!(
+                        "⏰ Next random takedown will be {}.",
+                        Timestamp::new(next.timestamp() as u64, Some(TimestampStyle::RelativeTime))
+                            .mention()
+                    )
+                    .as_str()
+                )?
+                .await?;
+        }
+        false => {
+            GuildRandom::delete(guild_id).await?;
         }
     }
 

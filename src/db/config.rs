@@ -14,6 +14,9 @@ lazy_static! {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GuildConfig {
+    #[serde(skip_serializing)]
+    #[serde(deserialize_with = "super::deserialize_guild_id")]
+    pub id: Id<GuildMarker>,
     pub log_channel: Option<Id<ChannelMarker>>,
     pub danger_zones: Vec<Id<ChannelMarker>>,
     pub target_bots: bool,
@@ -52,14 +55,19 @@ impl DataStoreEntry for GuildConfig {
         }
     }
 
-    fn db_key(key: Self::Key) -> (String, surrealdb::sql::Id) {
-        (TABLE_NAME.into(), key.get().into())
+    fn table_name() -> String {
+        TABLE_NAME.into()
+    }
+
+    fn key(key: Self::Key) -> surrealdb::sql::Id {
+        key.get().into()
     }
 }
 
 impl Default for GuildConfig {
     fn default() -> Self {
         GuildConfig {
+            id: Id::new(1),
             log_channel: None,
             danger_zones: Vec::new(),
             target_bots: true,
