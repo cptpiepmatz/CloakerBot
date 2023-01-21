@@ -1,5 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
+use std::sync::Arc;
 use std::time::Duration;
 
 use dashmap::DashMap;
@@ -10,7 +11,7 @@ use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
-use twilight_gateway::Shard;
+use twilight_gateway::{Cluster, Shard};
 use twilight_http::Client as HttpClient;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
@@ -95,7 +96,7 @@ pub enum Event {
 pub struct State {
     ds: DataStore,
     http: HttpClient,
-    shard: Shard,
+    cluster: Arc<Cluster>,
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
@@ -111,8 +112,11 @@ async fn main() {
         .await
         .expect("set commands");
 
-    let (shard, discord_events) = Shard::new(DISCORD_TOKEN.trim().to_owned(), INTENTS);
-    shard.start().await.expect("shard is necessary");
+    let (cluster, discord_events) = Cluster::new(DISCORD_TOKEN.trim().to_owned(), INTENTS)
+        .await
+        .expect("could not create cluster");
+    let cluster = Arc::new(cluster);
+    cluster.up().await;
 
     let cache = EventCache::builder()
         .resource_types(EVENT_CACHE_RESOURCE_TYPES)
@@ -130,7 +134,7 @@ async fn main() {
     InitCell::init(&STATE, State {
         ds,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
-        shard,
+        cluster,
         event_sender,
         event_cache: cache,
         http_cache: HttpCache::default(),
@@ -140,7 +144,7 @@ async fn main() {
 
     let mut events = futures::stream::select(
         futures::stream::select(
-            discord_events.map(Event::Discord),
+            discord_events.map(|(_, event)| Event::Discord(event)),
             ReceiverStream::new(events)
         ),
         IntervalStream::new(tokio::time::interval(Duration::from_secs(15)))

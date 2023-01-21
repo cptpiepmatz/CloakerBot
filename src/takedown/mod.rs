@@ -63,15 +63,15 @@ pub async fn handle_takedown_init(
     };
     let channel_id = voice_state.channel_id();
 
-    STATE
-        .shard
-        .command(&UpdateVoiceState::new(
-            guild_id,
-            Some(channel_id),
-            true,
-            false
-        ))
-        .await?;
+    // STATE
+    //     .shard
+    //     .command(&UpdateVoiceState::new(
+    //         guild_id,
+    //         Some(channel_id),
+    //         true,
+    //         false
+    //     ))
+    //     .await?;
 
     // let player = STATE.lavalink.player(guild_id).await?;
     // player.send(Volume::from((guild_id, WULULULU_VOLUME)))?;
@@ -152,10 +152,10 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
     // player.send(Play::from((guild_id, track)))?;
 
     // tokio::time::sleep(*length + Duration::from_millis(100)).await;
-    STATE
-        .shard
-        .command(&UpdateVoiceState::new(guild_id, None, false, false))
-        .await?;
+    // STATE
+    //     .shard
+    //     .command(&UpdateVoiceState::new(guild_id, None, false, false))
+    //     .await?;
 
     match kind {
         TakedownType::User {
