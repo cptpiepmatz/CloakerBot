@@ -8,7 +8,6 @@ use rand::Rng;
 use tokio::sync::oneshot;
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
-use twilight_lavalink::model::outgoing::{Play, Stop, Volume};
 use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
@@ -74,14 +73,14 @@ pub async fn handle_takedown_init(
         ))
         .await?;
 
-    let player = STATE.lavalink.player(guild_id).await?;
-    player.send(Volume::from((guild_id, WULULULU_VOLUME)))?;
+    // let player = STATE.lavalink.player(guild_id).await?;
+    // player.send(Volume::from((guild_id, WULULULU_VOLUME)))?;
     tokio::time::sleep(Duration::from_millis(200)).await;
-    player.send({
-        let mut wululululu_play = Play::from((guild_id, &STATE.sounds.wululululu.0));
-        wululululu_play.no_replace = true;
-        wululululu_play
-    })?;
+    // player.send({
+    //     let mut wululululu_play = Play::from((guild_id,
+    // &STATE.sounds.wululululu.0));     wululululu_play.no_replace = true;
+    //     wululululu_play
+    // })?;
 
     STATE.planned_takedowns.insert(guild_id, TakedownPlan {
         target_id,
@@ -90,9 +89,9 @@ pub async fn handle_takedown_init(
     });
 
     let factor = rand::thread_rng().gen_range(0.6..0.8);
-    let play_duration = STATE.sounds.wululululu.1.mul_f64(factor);
+    // let play_duration = STATE.sounds.wululululu.1.mul_f64(factor);
 
-    tokio::time::sleep(play_duration).await;
+    // tokio::time::sleep(play_duration).await;
     STATE
         .event_sender
         .send(Event::TakedownStrike { guild_id })
@@ -132,8 +131,8 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         _ => {}
     }
 
-    let player = STATE.lavalink.player(guild_id).await?;
-    player.send(Stop::new(guild_id))?;
+    // let player = STATE.lavalink.player(guild_id).await?;
+    // player.send(Stop::new(guild_id))?;
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     let vc_disconnect = STATE
@@ -143,16 +142,16 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         .await;
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    let sounds = &STATE.sounds;
-    let sounds = match vc_disconnect {
-        Ok(_) => &sounds.takedowns,
-        Err(_) => &sounds.fails
-    };
-    let sound_index = rand::thread_rng().gen_range(0..sounds.len());
-    let (track, length) = &sounds[sound_index];
-    player.send(Play::from((guild_id, track)))?;
+    // let sounds = &STATE.sounds;
+    // let sounds = match vc_disconnect {
+    //     Ok(_) => &sounds.takedowns,
+    //     Err(_) => &sounds.fails
+    // };
+    // let sound_index = rand::thread_rng().gen_range(0..sounds.len());
+    // let (track, length) = &sounds[sound_index];
+    // player.send(Play::from((guild_id, track)))?;
 
-    tokio::time::sleep(*length + Duration::from_millis(100)).await;
+    // tokio::time::sleep(*length + Duration::from_millis(100)).await;
     STATE
         .shard
         .command(&UpdateVoiceState::new(guild_id, None, false, false))

@@ -4,16 +4,5 @@ dev.token
 /.idea
 Thumbs.db
 
-# ignored working directory to test self-extraction
-/working
-
-# ignore files extracted by running application in root
-/sounds
-/logs
-application.yml
-
-# dynamically download file via build script
-Lavalink.jar
-
 # Added by cargo
 /target

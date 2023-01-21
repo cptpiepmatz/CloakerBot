@@ -12,7 +12,6 @@ use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
 use twilight_gateway::Shard;
 use twilight_http::Client as HttpClient;
-use twilight_lavalink::Lavalink;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::Intents;
@@ -23,9 +22,6 @@ use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
 use crate::db::DataStore;
 use crate::interaction::{application_command, handle_interaction};
-use crate::preparation::file_extract::extract_files;
-use crate::preparation::java::find_java_executable;
-use crate::sounds::{load_sounds, LoadedSounds};
 use crate::sync::TaggedMutex;
 use crate::takedown::random::handle_random_check;
 use crate::takedown::{
@@ -36,12 +32,9 @@ mod assets;
 mod cache;
 mod cell;
 mod db;
-mod embedded_files;
 mod interaction;
 mod log;
 mod permissions;
-mod preparation;
-mod sounds;
 mod sync;
 mod takedown;
 
@@ -103,8 +96,6 @@ pub struct State {
     ds: DataStore,
     http: HttpClient,
     shard: Shard,
-    lavalink: Lavalink,
-    sounds: LoadedSounds,
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
@@ -114,18 +105,6 @@ pub struct State {
 
 #[tokio::main]
 async fn main() {
-    let java_exec = find_java_executable().unwrap();
-    extract_files().unwrap();
-    let _lavalink_process = Command::new(java_exec)
-        .arg("-jar")
-        .arg("Lavalink.jar")
-        .spawn()
-        .expect("spawn lavalink process");
-    let lavalink = Lavalink::new(BOT_USER_ID, 1);
-    lavalink.add(*LAVALINK_ADDR, LAVALINK_AUTH).await.unwrap();
-    let sounds = load_sounds().await.expect("load sounds into node");
-    println!("{sounds:#?}");
-
     // create http client and register commands
     let http_client = HttpClient::new(String::from(DISCORD_TOKEN.trim()));
     application_command::register_commands(&http_client.interaction(APPLICATION_ID))
@@ -152,8 +131,6 @@ async fn main() {
         ds,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         shard,
-        lavalink,
-        sounds,
         event_sender,
         event_cache: cache,
         http_cache: HttpCache::default(),
@@ -199,7 +176,7 @@ async fn handle_event(event: Event) {
 
 pub async fn handle_discord_event(event: DiscordEvent) -> anyhow::Result<()> {
     STATE.event_cache.update(&event);
-    STATE.lavalink.process(&event).await?;
+    //STATE.lavalink.process(&event).await?;
     match event {
         DiscordEvent::ShardConnected(_) => {
             println!("Connected");
