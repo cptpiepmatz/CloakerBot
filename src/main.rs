@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::process::Command;
 use std::sync::Arc;
@@ -21,6 +22,7 @@ use twilight_model::gateway::Intents;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, InteractionMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::cache::event::EVENT_CACHE_RESOURCE_TYPES;
 use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
 use crate::db::DataStore;
@@ -56,9 +58,6 @@ const APPLICATION_ID: Id<ApplicationMarker> = Id::new(772259037580361729);
 const BOT_USER_ID: Id<UserMarker> = APPLICATION_ID.cast();
 
 lazy_static! {
-    // TODO: make this const when https://github.com/rust-lang/rust/issues/82485 lands
-    static ref LAVALINK_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2333);
-
     static ref GUILD_VOICE_MUTEX: TaggedMutex<Id<GuildMarker>> = TaggedMutex::new();
 }
 
@@ -66,13 +65,6 @@ const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_VOICE_STATES)
     .union(Intents::GUILD_MESSAGES)
     .union(Intents::GUILD_INTEGRATIONS);
-
-const EVENT_CACHE_RESOURCE_TYPES: ResourceType = ResourceType::VOICE_STATE
-    .union(ResourceType::CHANNEL)
-    .union(ResourceType::MEMBER)
-    .union(ResourceType::ROLE)
-    .union(ResourceType::USER)
-    .union(ResourceType::GUILD);
 
 static STATE: InitCell<State> = InitCell::new();
 
@@ -99,7 +91,6 @@ pub enum Event {
 pub struct State {
     ds: DataStore,
     http: HttpClient,
-    cluster: Arc<Cluster>,
     songbird: Songbird,
     sounds: Sounds,
     event_sender: Sender<Event>,
@@ -110,46 +101,40 @@ pub struct State {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     // create http client and register commands
-    let http_client = HttpClient::new(String::from(DISCORD_TOKEN.trim()));
-    application_command::register_commands(&http_client.interaction(APPLICATION_ID))
-        .await
-        .expect("set commands");
+    let http = HttpClient::new(String::from(DISCORD_TOKEN.trim()));
+    let interaction_client = &http.interaction(APPLICATION_ID);
+    application_command::register_commands(interaction_client).await?;
 
-    let (cluster, discord_events) = Cluster::new(DISCORD_TOKEN.trim().to_owned(), INTENTS)
-        .await
-        .expect("could not create cluster");
-    let cluster = Arc::new(cluster);
+    let (cluster, discord_events) = Cluster::new(DISCORD_TOKEN.trim().into(), INTENTS).await?;
     cluster.up().await;
 
-    let songbird = Songbird::twilight(cluster.clone(), BOT_USER_ID);
-    let sounds = Sounds::prepare().await.expect("preparing sounds failed");
+    let songbird = Songbird::twilight(Arc::new(cluster), BOT_USER_ID);
+    let sounds = Sounds::prepare().await?;
 
-    let cache = EventCache::builder()
-        .resource_types(EVENT_CACHE_RESOURCE_TYPES)
-        .build();
+    let event_cache = cache::event::build_cache();
+    let http_cache = HttpCache::default();
 
     let (event_sender, events) = tokio::sync::mpsc::channel::<Event>(100);
 
-    let ds = DataStore::open().await.expect("create db");
-    let db = Surreal::new::<Mem>(()).await.expect("create db");
-    db.use_ns("cptpiepmatz")
-        .use_db("cloaker_bot")
-        .await
-        .expect("set ns and db");
+    let ds = DataStore::open().await?;
+    let db = Surreal::new::<Mem>(()).await?;
+    db.use_ns(db::NAMESPACE).use_db(db::NAME).await?;
+
+    let planned_takedowns = DashMap::default();
+    let tracked_interactions = DashMap::default();
 
     InitCell::init(&STATE, State {
         ds,
-        http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
-        cluster,
+        http,
         songbird,
         sounds,
         event_sender,
-        event_cache: cache,
-        http_cache: HttpCache::default(),
-        planned_takedowns: DashMap::default(),
-        tracked_interactions: DashMap::default()
+        event_cache,
+        http_cache,
+        planned_takedowns,
+        tracked_interactions
     });
 
     let mut events = futures::stream::select(
@@ -165,6 +150,8 @@ async fn main() {
         // TODO: add some error handling here
         tokio::spawn(handle_event(event));
     }
+
+    unreachable!()
 }
 
 async fn handle_event(event: Event) {

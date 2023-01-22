@@ -12,6 +12,9 @@ use twilight_model::id::marker::GuildMarker;
 
 use crate::STATE;
 
+pub const NAMESPACE: &str = "cptpiepmatz";
+pub const NAME: &str = "cloaker_bot";
+
 pub struct DataStore {
     db: Surreal<Db>
 }
