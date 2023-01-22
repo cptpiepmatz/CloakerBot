@@ -45,9 +45,7 @@ pub async fn fetch_in_channel_permissions(
                 .fetch_member(guild_id, user_id)
                 .await?
                 .roles
-                .iter()
-                .cloned()
-                .collect()
+                .to_vec()
         }
     };
 
