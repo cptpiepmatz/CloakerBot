@@ -95,7 +95,7 @@ pub async fn action(
 ) -> anyhow::Result<()> {
     use ImmunitySubCommand::{General, Random};
 
-    let config = GuildConfig::fetch(guild_id).await?;
+    let config = GuildConfig::fetch_or_default(guild_id).await?;
     let role_id = match command {
         General => config.immunity.general,
         Random => config.immunity.random

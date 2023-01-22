@@ -10,7 +10,7 @@ use twilight_model::id::Id;
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::db::random::GuildRandom;
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 use crate::log::LogMessage;
 use crate::takedown::TakedownType;
 use crate::{log, takedown, Event, STATE};
@@ -38,14 +38,20 @@ pub async fn handle_random_check() -> anyhow::Result<()> {
 }
 
 pub async fn handle_random_check_guild(guild_id: Id<GuildMarker>) -> anyhow::Result<()> {
-    let config = GuildConfig::fetch(guild_id).await?;
+    let config = GuildConfig::fetch_or_default(guild_id).await?;
     if config.random.enabled {
         let res = execute_random_takedown(guild_id).await?;
 
         let next = fetch_next_check(guild_id).await?;
-        let mut random = GuildRandom::fetch(guild_id).await?;
-        random.next = next;
-        random.store(guild_id).await?;
+        match GuildRandom::fetch(guild_id).await? {
+            None => GuildRandom { id: guild_id, next },
+            Some(mut random) => {
+                random.next = next;
+                random
+            }
+        }
+        .store(guild_id)
+        .await?;
 
         if let RandomTakedownExecution::Skipped = res {
             if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
@@ -98,7 +104,7 @@ pub async fn execute_random_takedown(
 }
 
 pub async fn fetch_next_check(guild_id: Id<GuildMarker>) -> anyhow::Result<DateTime<Utc>> {
-    let config = GuildConfig::fetch(guild_id).await?;
+    let config = GuildConfig::fetch_or_default(guild_id).await?;
     let GuildConfigRandom { min, max, .. } = config.random;
     let [min, max] = match min.total_cmp(&max) {
         Ordering::Less | Ordering::Equal => [min, max],

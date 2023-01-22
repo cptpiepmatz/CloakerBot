@@ -28,8 +28,8 @@ impl DataStore {
 }
 
 #[async_trait]
-pub trait DataStoreEntry:
-    Default + Clone + Send + Sync + Sized + Serialize + DeserializeOwned
+pub trait OptionalDataStoreEntry:
+    Clone + Send + Sync + Sized + Serialize + DeserializeOwned
 {
     type Key: Send + Clone;
 
@@ -39,13 +39,13 @@ pub trait DataStoreEntry:
     fn table_name() -> String;
     fn key(key: Self::Key) -> Id;
 
-    async fn fetch(key: Self::Key) -> anyhow::Result<Self> {
+    async fn fetch(key: Self::Key) -> anyhow::Result<Option<Self>> {
         if let Some(value) = Self::cache_get(&key) {
-            return Ok(value);
+            return Ok(Some(value));
         }
         let db = &STATE.ds.db;
         let from_db: Option<Self> = db.select((Self::table_name(), Self::key(key))).await?;
-        Ok(from_db.unwrap_or_default())
+        Ok(from_db)
     }
 
     async fn fetch_all() -> anyhow::Result<Vec<Self>> {
@@ -69,6 +69,13 @@ pub trait DataStoreEntry:
         let db = &STATE.ds.db;
         db.delete((Self::table_name(), Self::key(key))).await?;
         Ok(())
+    }
+}
+
+#[async_trait]
+pub trait DataStoreEntry: Default + OptionalDataStoreEntry {
+    async fn fetch_or_default(key: Self::Key) -> anyhow::Result<Self> {
+        Ok(Self::fetch(key).await?.unwrap_or_default())
     }
 }
 

@@ -10,7 +10,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 
 use crate::db::config::GuildConfig;
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::BOT_USER_ID;
 
@@ -64,7 +64,7 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     LogChannelSubCommand { channel_id }: LogChannelSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id).await?;
+    let mut config = GuildConfig::fetch_or_default(guild_id).await?;
 
     match (channel_id, config.log_channel) {
         (None, None) => {

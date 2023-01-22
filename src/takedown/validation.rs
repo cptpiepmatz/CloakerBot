@@ -14,7 +14,7 @@ pub async fn user_is_valid_target(
         target_bots,
         immunity,
         ..
-    } = GuildConfig::fetch(guild_id).await?;
+    } = GuildConfig::fetch_or_default(guild_id).await?;
     if target_id == BOT_USER_ID {
         return Ok(false);
     }

@@ -12,7 +12,7 @@ use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandB
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::db::random::GuildRandom;
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 use crate::interaction::application_command::TryFromInteractionError;
 use crate::{takedown, APPLICATION_ID, STATE};
 
@@ -102,7 +102,7 @@ pub async fn action(
     guild_id: Id<GuildMarker>,
     RandomSubCommand { enable, min, max }: RandomSubCommand
 ) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch(guild_id).await?;
+    let mut config = GuildConfig::fetch_or_default(guild_id).await?;
 
     match (enable, min, max) {
         (Some(false), _, _) => {
@@ -149,9 +149,15 @@ pub async fn action(
     match config.random.enabled {
         true => {
             let next = takedown::random::fetch_next_check(guild_id).await?;
-            let mut random = GuildRandom::fetch(guild_id).await?;
-            random.next = next;
-            random.store(guild_id).await?;
+            match GuildRandom::fetch(guild_id).await? {
+                None => GuildRandom { id: guild_id, next },
+                Some(mut random) => {
+                    random.next = next;
+                    random
+                }
+            }
+            .store(guild_id)
+            .await?;
 
             STATE
                 .http

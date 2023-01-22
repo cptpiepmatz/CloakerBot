@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 
 pub const TABLE_NAME: &str = "random";
 
@@ -17,7 +17,7 @@ pub struct GuildRandom {
     pub next: DateTime<Utc>
 }
 
-impl DataStoreEntry for GuildRandom {
+impl OptionalDataStoreEntry for GuildRandom {
     type Key = Id<GuildMarker>;
 
     fn cache_get(_: &Self::Key) -> Option<Self> {
@@ -32,14 +32,5 @@ impl DataStoreEntry for GuildRandom {
 
     fn key(key: Self::Key) -> surrealdb::sql::Id {
         key.get().into()
-    }
-}
-
-impl Default for GuildRandom {
-    fn default() -> Self {
-        Self {
-            id: Id::new(1),
-            next: DateTime::from(SystemTime::now()) + chrono::Duration::hours(4)
-        }
     }
 }

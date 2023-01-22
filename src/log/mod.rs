@@ -46,7 +46,7 @@ pub enum LogMessage {
 pub async fn fetch_log_channel(
     guild_id: Id<GuildMarker>
 ) -> anyhow::Result<Option<Id<ChannelMarker>>> {
-    if let Some(log_channel_id) = GuildConfig::fetch(guild_id).await?.log_channel {
+    if let Some(log_channel_id) = GuildConfig::fetch_or_default(guild_id).await?.log_channel {
         let channel_perms =
             fetch_in_channel_permissions(BOT_USER_ID, guild_id, log_channel_id).await?;
         if channel_perms.contains(Permissions::SEND_MESSAGES) {

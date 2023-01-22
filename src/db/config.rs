@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
 
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 
 pub const TABLE_NAME: &str = "config";
 
@@ -37,7 +37,7 @@ pub struct GuildConfigImmunity {
     pub random: Option<Id<RoleMarker>>
 }
 
-impl DataStoreEntry for GuildConfig {
+impl OptionalDataStoreEntry for GuildConfig {
     type Key = Id<GuildMarker>;
 
     fn cache_get(key: &Self::Key) -> Option<Self> {
@@ -63,6 +63,8 @@ impl DataStoreEntry for GuildConfig {
         key.get().into()
     }
 }
+
+impl DataStoreEntry for GuildConfig {}
 
 impl Default for GuildConfig {
     fn default() -> Self {

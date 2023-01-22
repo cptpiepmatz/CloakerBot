@@ -9,7 +9,7 @@ use twilight_model::id::marker::{ChannelMarker, InteractionMarker};
 use twilight_model::id::Id;
 
 use crate::db::config::GuildConfig;
-use crate::db::DataStoreEntry;
+use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
 use crate::interaction::message_component::TryFromInteractionError;
 use crate::{APPLICATION_ID, STATE};
 
@@ -99,7 +99,7 @@ pub async fn action(
         return Ok(())
     };
 
-    let mut config = GuildConfig::fetch(guild_id).await?;
+    let mut config = GuildConfig::fetch_or_default(guild_id).await?;
 
     let reply = match channels.is_empty() {
         true => "**🛠️ All danger zones *removed*.**".to_string(),
