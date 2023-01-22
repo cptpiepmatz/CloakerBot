@@ -189,8 +189,8 @@ async fn handle_event(event: Event) {
 }
 
 pub async fn handle_discord_event(event: DiscordEvent) -> anyhow::Result<()> {
+    STATE.songbird.process(&event).await; // must be first!
     STATE.event_cache.update(&event);
-    //STATE.lavalink.process(&event).await?;
     match event {
         DiscordEvent::ShardConnected(_) => {
             println!("Connected");
