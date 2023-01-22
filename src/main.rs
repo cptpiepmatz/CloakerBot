@@ -8,6 +8,7 @@ mod permissions;
 mod sounds;
 mod sync;
 mod takedown;
+mod voice;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -26,12 +27,16 @@ use twilight_http::Client as HttpClient;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::Intents;
-use twilight_model::id::marker::{ApplicationMarker, GuildMarker, InteractionMarker, UserMarker};
+use twilight_model::id::marker::{
+    ApplicationMarker, ChannelMarker, GuildMarker, InteractionMarker, UserMarker
+};
 use twilight_model::id::Id;
+use twilight_model::voice::VoiceState;
 
 use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
-use crate::db::DataStore;
+use crate::db::config::GuildConfig;
+use crate::db::{DataStore, DataStoreEntry};
 use crate::interaction::application_command;
 use crate::sounds::Sounds;
 use crate::sync::TaggedMutex;
@@ -77,7 +82,14 @@ pub enum Event {
     TakedownStrike { guild_id: Id<GuildMarker> },
 
     /// check if random takedowns should be queued
-    RandomCheck
+    RandomCheck,
+
+    /// when a user joined a danger zone
+    DangerZoneJoin {
+        target_id: Id<UserMarker>,
+        guild_id: Id<GuildMarker>,
+        channel_id: Id<ChannelMarker>
+    }
 }
 
 pub struct State {
@@ -157,6 +169,11 @@ async fn handle_event(event: Event) {
                 kind
             } => takedown::handle_takedown_init(g, t, kind).await?,
             Event::TakedownStrike { guild_id: g } => takedown::handle_takedown_strike(g).await?,
+            Event::DangerZoneJoin {
+                guild_id: g,
+                channel_id: c,
+                target_id: t
+            } => takedown::danger_zone::handle_danger_zone_join(g, c, t).await?
         };
 
         Ok(())
@@ -175,6 +192,10 @@ pub async fn handle_discord_event(event: DiscordEvent) -> anyhow::Result<()> {
         DiscordEvent::InteractionCreate(interaction_create) => {
             let interaction = (*interaction_create).0;
             interaction::handle_interaction(interaction).await?;
+        }
+        DiscordEvent::VoiceStateUpdate(voice_state_update) => {
+            let voice_state = (*voice_state_update).0;
+            voice::handle_voice_state(voice_state).await?;
         }
         _ => {}
     }
