@@ -5,14 +5,14 @@ use std::time::SystemTime;
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use tokio::sync::oneshot;
-use twilight_model::id::marker::{GuildMarker, UserMarker};
+use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 
 use crate::db::config::{GuildConfig, GuildConfigRandom};
 use crate::db::random::GuildRandom;
 use crate::db::DataStoreEntry;
 use crate::log::LogMessage;
-use crate::takedown::{TakedownResolved, TakedownType};
+use crate::takedown::TakedownType;
 use crate::{log, takedown, Event, STATE};
 
 pub enum RandomTakedownExecution {
@@ -93,7 +93,7 @@ pub async fn execute_random_takedown(
         })
         .await?;
 
-    let resolved = rx.await?;
+    let _resolved = rx.await?;
     Ok(RandomTakedownExecution::CarriedOut)
 }
 

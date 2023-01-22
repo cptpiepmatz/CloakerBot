@@ -3,9 +3,8 @@ use std::time::Duration;
 
 use lazy_static::lazy_static;
 use rand::Rng;
-use songbird::input::cached::{CodecCacheError, Decompressed};
-use songbird::input::{Input, LiveInput, MakePlayableError};
-use surrealdb::sql::Operator::Dec;
+use songbird::input::cached::Decompressed;
+use songbird::input::Input;
 use symphonia::core::codecs::CodecRegistry;
 use symphonia::core::probe::Probe;
 use wav::Header;

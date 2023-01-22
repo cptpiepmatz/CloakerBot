@@ -17,7 +17,7 @@ use crate::assets::replies;
 use crate::interaction::application_command::{defer, update_defer, TryFromInteractionError};
 use crate::permissions::fetch_in_channel_permissions;
 use crate::takedown::{TakedownResolved, TakedownType};
-use crate::{takedown, user_is_bot, Event, APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::{takedown, Event, APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug)]
 pub struct CloakerCommand {

@@ -1,20 +1,16 @@
-use std::error::Error;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
 use dashmap::DashMap;
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
-use songbird::input::Input;
 use songbird::Songbird;
 use surrealdb::engine::local::Mem;
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
-use twilight_cache_inmemory::{InMemoryCache as EventCache, ResourceType};
-use twilight_gateway::{Cluster, Shard};
+use twilight_cache_inmemory::InMemoryCache as EventCache;
+use twilight_gateway::Cluster;
 use twilight_http::Client as HttpClient;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::gateway::event::Event as DiscordEvent;
@@ -22,7 +18,6 @@ use twilight_model::gateway::Intents;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, InteractionMarker, UserMarker};
 use twilight_model::id::Id;
 
-use crate::cache::event::EVENT_CACHE_RESOURCE_TYPES;
 use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
 use crate::db::DataStore;

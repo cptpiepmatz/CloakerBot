@@ -1,6 +1,4 @@
 use std::error::Error;
-use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use twilight_mention::timestamp::{Timestamp, TimestampStyle};
@@ -8,10 +6,9 @@ use twilight_mention::Mention;
 use twilight_model::guild::Permissions;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::embed::{EmbedAuthorBuilder, EmbedBuilder, ImageSource};
+use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::assets::colors;
-use crate::cache::twilight::member::RefCachedMember;
 use crate::db::config::GuildConfig;
 use crate::db::DataStoreEntry;
 use crate::permissions::fetch_in_channel_permissions;
@@ -122,7 +119,7 @@ pub async fn fetch_log_channel(
 }
 
 pub async fn log_message(
-    guild_id: Id<GuildMarker>,
+    _guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>,
     message: LogMessage
 ) -> anyhow::Result<()> {

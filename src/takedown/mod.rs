@@ -1,29 +1,20 @@
 pub mod random;
 pub mod validation;
 
-use std::cell::RefCell;
-use std::ops::{Deref, DerefMut};
-use std::sync::{Arc, MutexGuard};
 use std::time::Duration;
 
 use dashmap::DashMap;
 use rand::Rng;
-use songbird::input::core::codecs::CodecRegistry;
-use songbird::input::core::probe::Probe;
-use songbird::input::Input;
 use songbird::tracks::Track;
-use songbird::Call;
 use tokio::sync::oneshot;
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
-use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
-use crate::assets::sounds;
 use crate::log::LogMessage;
 use crate::sync::TaggedMutexGuard;
-use crate::{assets, log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 const WULULULU_VOLUME: f32 = 0.3;
 const TAKEDOWN_VOLUME: f32 = 0.5;
