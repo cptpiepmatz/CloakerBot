@@ -157,11 +157,11 @@ pub async fn action(interaction: Interaction, command: CloakerCommand) -> anyhow
         })
         .await?;
 
-    let resolve = rx.await?;
+    let resolve = rx.await;
     let content = match resolve {
-        TakedownResolved::Success => replies::select(&replies::TAKEDOWN_SUCCESSFUL),
-        TakedownResolved::Fail => todo!(),
-        TakedownResolved::Counter { .. } => todo!()
+        Ok(TakedownResolved::Success) => replies::select(&replies::TAKEDOWN_SUCCESSFUL),
+        Ok(TakedownResolved::Counter { .. }) => todo!(),
+        Ok(TakedownResolved::Fail) | Err(_) => replies::select(&replies::FAILED_TAKEDOWN)
     };
     STATE
         .http

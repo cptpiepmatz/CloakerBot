@@ -1,10 +1,7 @@
 // macro for including sound assets
 macro_rules! sa {
     ($name:ident, $file:literal) => {
-        pub const $name: (&str, &[u8]) = (
-            $file,
-            include_bytes!(concat!("../../assets/sounds/", $file))
-        );
+        pub const $name: &[u8] = include_bytes!(concat!("../../assets/sounds/", $file));
     };
 }
 
@@ -24,7 +21,7 @@ pub mod fails {
     sa!(PAIN13, "fails/pain13.wav");
     sa!(PAIN14, "fails/pain14.wav");
 
-    pub const ALL: &[(&str, &[u8])] = &[
+    pub const ALL: &[&[u8]] = &[
         PAIN1, PAIN2, PAIN3, PAIN4, PAIN5, PAIN6, PAIN7, PAIN8, PAIN9, PAIN10, PAIN11, PAIN12,
         PAIN13, PAIN14
     ];
@@ -104,7 +101,7 @@ pub mod takedowns {
         "takedowns/you got what was coming.wav"
     );
 
-    pub const ALL: &[(&str, &[u8])] = &[
+    pub const ALL: &[&[u8]] = &[
         BEAT_THE_SHIT,
         BETTER_LATE_THAN_NEVER,
         CHECK_YOUR_CORNERS,
@@ -147,7 +144,4 @@ pub mod takedowns {
     ];
 }
 
-pub const WULULULULU: (&str, &[u8]) = (
-    "WULULULULU.wav",
-    include_bytes!("../../assets/sounds/WULULULULU.wav")
-);
+sa!(WULULULULU, "WULULULULU.wav");

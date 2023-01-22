@@ -6,6 +6,8 @@ use std::time::Duration;
 use dashmap::DashMap;
 use futures::stream::StreamExt;
 use lazy_static::lazy_static;
+use songbird::input::Input;
+use songbird::Songbird;
 use surrealdb::engine::local::Mem;
 use surrealdb::Surreal;
 use tokio::sync::mpsc::Sender;
@@ -23,6 +25,7 @@ use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
 use crate::db::DataStore;
 use crate::interaction::{application_command, handle_interaction};
+use crate::sounds::Sounds;
 use crate::sync::TaggedMutex;
 use crate::takedown::random::handle_random_check;
 use crate::takedown::{
@@ -36,6 +39,7 @@ mod db;
 mod interaction;
 mod log;
 mod permissions;
+mod sounds;
 mod sync;
 mod takedown;
 
@@ -57,7 +61,6 @@ lazy_static! {
 
     static ref GUILD_VOICE_MUTEX: TaggedMutex<Id<GuildMarker>> = TaggedMutex::new();
 }
-const LAVALINK_AUTH: &str = "youshallnotpass";
 
 const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_VOICE_STATES)
@@ -97,6 +100,8 @@ pub struct State {
     ds: DataStore,
     http: HttpClient,
     cluster: Arc<Cluster>,
+    songbird: Songbird,
+    sounds: Sounds,
     event_sender: Sender<Event>,
     event_cache: EventCache,
     http_cache: HttpCache,
@@ -118,6 +123,9 @@ async fn main() {
     let cluster = Arc::new(cluster);
     cluster.up().await;
 
+    let songbird = Songbird::twilight(cluster.clone(), BOT_USER_ID);
+    let sounds = Sounds::prepare().await.expect("preparing sounds failed");
+
     let cache = EventCache::builder()
         .resource_types(EVENT_CACHE_RESOURCE_TYPES)
         .build();
@@ -135,6 +143,8 @@ async fn main() {
         ds,
         http: HttpClient::new(String::from(DISCORD_TOKEN.trim())),
         cluster,
+        songbird,
+        sounds,
         event_sender,
         event_cache: cache,
         http_cache: HttpCache::default(),

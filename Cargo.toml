@@ -44,6 +44,10 @@ uuid = "1"
 rand = "0.8"
 async-trait = "0.1"
 
+# audio processing
+symphonia = "0.5"
+wav = "1"
+
 # songbird for audio
 [dependencies.songbird]
 git = "https://github.com/serenity-rs/songbird.git"

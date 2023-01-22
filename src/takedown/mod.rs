@@ -1,10 +1,18 @@
 pub mod random;
 pub mod validation;
 
+use std::cell::RefCell;
+use std::ops::{Deref, DerefMut};
+use std::sync::{Arc, MutexGuard};
 use std::time::Duration;
 
 use dashmap::DashMap;
 use rand::Rng;
+use songbird::input::core::codecs::CodecRegistry;
+use songbird::input::core::probe::Probe;
+use songbird::input::Input;
+use songbird::tracks::Track;
+use songbird::Call;
 use tokio::sync::oneshot;
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
@@ -12,11 +20,14 @@ use twilight_model::gateway::payload::outgoing::UpdateVoiceState;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::assets::sounds;
 use crate::log::LogMessage;
 use crate::sync::TaggedMutexGuard;
-use crate::{log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{assets, log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
-const WULULULU_VOLUME: i64 = 40;
+const WULULULU_VOLUME: f32 = 0.3;
+const TAKEDOWN_VOLUME: f32 = 0.5;
+const FAIL_VOLUME: f32 = 1.0;
 
 // the tagged mutex guards implicitly this map
 // only one takedown may be initialized at the same type per guild,
@@ -63,24 +74,11 @@ pub async fn handle_takedown_init(
     };
     let channel_id = voice_state.channel_id();
 
-    // STATE
-    //     .shard
-    //     .command(&UpdateVoiceState::new(
-    //         guild_id,
-    //         Some(channel_id),
-    //         true,
-    //         false
-    //     ))
-    //     .await?;
-
-    // let player = STATE.lavalink.player(guild_id).await?;
-    // player.send(Volume::from((guild_id, WULULULU_VOLUME)))?;
+    let call = STATE.songbird.join(guild_id, channel_id).await?;
+    let mut call = call.lock().await;
     tokio::time::sleep(Duration::from_millis(200)).await;
-    // player.send({
-    //     let mut wululululu_play = Play::from((guild_id,
-    // &STATE.sounds.wululululu.0));     wululululu_play.no_replace = true;
-    //     wululululu_play
-    // })?;
+    let wulululu = Track::new(STATE.sounds.wululululu.data.clone().into()).volume(WULULULU_VOLUME);
+    call.play_only(wulululu);
 
     STATE.planned_takedowns.insert(guild_id, TakedownPlan {
         target_id,
@@ -89,13 +87,17 @@ pub async fn handle_takedown_init(
     });
 
     let factor = rand::thread_rng().gen_range(0.6..0.8);
-    // let play_duration = STATE.sounds.wululululu.1.mul_f64(factor);
+    let play_duration = STATE.sounds.wululululu.duration.mul_f64(factor);
 
-    // tokio::time::sleep(play_duration).await;
-    STATE
+    tokio::time::sleep(play_duration).await;
+    if (STATE
         .event_sender
         .send(Event::TakedownStrike { guild_id })
-        .await?;
+        .await)
+        .is_err()
+    {
+        call.leave().await?;
+    }
 
     Ok(())
 }
@@ -105,6 +107,12 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         // someone else handled this
         return Ok(());
     };
+
+    let Some(call) = STATE.songbird.get(guild_id) else {
+        // no call available, we're out
+        return Ok(())
+    };
+    let mut call = call.lock().await;
 
     let TakedownPlan {
         target_id,
@@ -121,49 +129,53 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
         .event_cache
         .voice_state(target_id, guild_id)
         .map(channel_id_from_cache);
-    match (bot_channel_id, target_channel_id) {
-        // at least one of the parties no longer in voice
-        (None, _) | (_, None) => return Ok(()),
 
-        // unequal channels, they fled or bot got moved
-        (Some(b), Some(c)) if b != c => return Ok(()),
-
-        _ => {}
-    }
-
-    // let player = STATE.lavalink.player(guild_id).await?;
-    // player.send(Stop::new(guild_id))?;
+    call.stop();
     tokio::time::sleep(Duration::from_millis(200)).await;
 
-    let vc_disconnect = STATE
-        .http
-        .update_guild_member(guild_id, target_id)
-        .channel_id(None)
-        .await;
+    let takedown_successful = match (bot_channel_id, target_channel_id) {
+        // bot no longer in channel
+        (None, _) => return Ok(()),
+
+        // target fled
+        (_, None) => false,
+
+        // unequal channels, they fled or bot got moved
+        (Some(b), Some(t)) if b != t => false,
+
+        (Some(_), Some(_)) => STATE
+            .http
+            .update_guild_member(guild_id, target_id)
+            .channel_id(None)
+            .await
+            .is_ok()
+    };
+
     tokio::time::sleep(Duration::from_millis(500)).await;
 
-    // let sounds = &STATE.sounds;
-    // let sounds = match vc_disconnect {
-    //     Ok(_) => &sounds.takedowns,
-    //     Err(_) => &sounds.fails
-    // };
-    // let sound_index = rand::thread_rng().gen_range(0..sounds.len());
-    // let (track, length) = &sounds[sound_index];
-    // player.send(Play::from((guild_id, track)))?;
+    let (sound, volume_factor) = match takedown_successful {
+        true => (STATE.sounds.select_takedown(), TAKEDOWN_VOLUME),
+        false => (STATE.sounds.select_fail(), FAIL_VOLUME)
+    };
+    let track = Track::new(sound.data.clone().into()).volume(volume_factor);
+    call.play_only(track);
 
-    // tokio::time::sleep(*length + Duration::from_millis(100)).await;
-    // STATE
-    //     .shard
-    //     .command(&UpdateVoiceState::new(guild_id, None, false, false))
-    //     .await?;
+    tokio::time::sleep(sound.duration + Duration::from_millis(100)).await;
+    call.leave().await?;
 
+    let resolved = match takedown_successful {
+        true => TakedownResolved::Success,
+        false => TakedownResolved::Fail
+    };
     match kind {
         TakedownType::User {
             initiator_id,
             resolve
         } => {
-            let _ = resolve.send(TakedownResolved::Success);
-            if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
+            let _ = resolve.send(resolved);
+            if let (Some(channel_id), true) =
+                (log::fetch_log_channel(guild_id).await?, takedown_successful)
+            {
                 log::log_message(guild_id, channel_id, LogMessage::UserTakedownStrike {
                     target_id,
                     initiator_id
@@ -172,8 +184,10 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
             }
         }
         TakedownType::Random { resolve } => {
-            let _ = resolve.send(TakedownResolved::Success);
-            if let Some(channel_id) = log::fetch_log_channel(guild_id).await? {
+            let _ = resolve.send(resolved);
+            if let (Some(channel_id), true) =
+                (log::fetch_log_channel(guild_id).await?, takedown_successful)
+            {
                 log::log_message(guild_id, channel_id, LogMessage::RandomTakedownStrike {
                     target_id,
                     next: random::fetch_next_check(guild_id).await?
