@@ -1,3 +1,14 @@
+mod assets;
+mod cache;
+mod cell;
+mod db;
+mod interaction;
+mod log;
+mod permissions;
+mod sounds;
+mod sync;
+mod takedown;
+
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -21,24 +32,10 @@ use twilight_model::id::Id;
 use crate::cache::http::Cache as HttpCache;
 use crate::cell::InitCell;
 use crate::db::DataStore;
-use crate::interaction::{application_command, handle_interaction};
+use crate::interaction::application_command;
 use crate::sounds::Sounds;
 use crate::sync::TaggedMutex;
-use crate::takedown::random::handle_random_check;
-use crate::takedown::{
-    handle_takedown_init, handle_takedown_strike, PlannedTakedowns, TakedownType
-};
-
-mod assets;
-mod cache;
-mod cell;
-mod db;
-mod interaction;
-mod log;
-mod permissions;
-mod sounds;
-mod sync;
-mod takedown;
+use crate::takedown::{PlannedTakedowns, TakedownType};
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");
@@ -153,15 +150,15 @@ async fn handle_event(event: Event) {
     async fn run(event: Event) -> anyhow::Result<()> {
         match event {
             Event::Discord(event) => handle_discord_event(event).await?,
-            Event::RandomCheck => handle_random_check().await?,
+            Event::RandomCheck => takedown::random::handle_random_check().await?,
             Event::TakedownInit {
                 target_id,
                 guild_id,
                 kind
             } => {
-                handle_takedown_init(target_id, guild_id, kind).await?;
+                takedown::handle_takedown_init(target_id, guild_id, kind).await?;
             }
-            Event::TakedownStrike { guild_id } => handle_takedown_strike(guild_id).await?
+            Event::TakedownStrike { guild_id } => takedown::handle_takedown_strike(guild_id).await?
         };
 
         Ok(())
@@ -179,7 +176,7 @@ pub async fn handle_discord_event(event: DiscordEvent) -> anyhow::Result<()> {
         }
         DiscordEvent::InteractionCreate(interaction_create) => {
             let interaction = (*interaction_create).0;
-            handle_interaction(interaction).await?;
+            interaction::handle_interaction(interaction).await?;
         }
         _ => {}
     }
