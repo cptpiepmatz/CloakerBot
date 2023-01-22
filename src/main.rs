@@ -152,13 +152,11 @@ async fn handle_event(event: Event) {
             Event::Discord(event) => handle_discord_event(event).await?,
             Event::RandomCheck => takedown::random::handle_random_check().await?,
             Event::TakedownInit {
-                target_id,
-                guild_id,
+                guild_id: g,
+                target_id: t,
                 kind
-            } => {
-                takedown::handle_takedown_init(target_id, guild_id, kind).await?;
-            }
-            Event::TakedownStrike { guild_id } => takedown::handle_takedown_strike(guild_id).await?
+            } => takedown::handle_takedown_init(g, t, kind).await?,
+            Event::TakedownStrike { guild_id: g } => takedown::handle_takedown_strike(g).await?,
         };
 
         Ok(())

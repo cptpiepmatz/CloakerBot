@@ -1,3 +1,4 @@
+pub mod danger_zone;
 pub mod random;
 pub mod validation;
 
@@ -52,8 +53,8 @@ pub enum TakedownResolved {
 }
 
 pub async fn handle_takedown_init(
-    target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
+    target_id: Id<UserMarker>,
     kind: TakedownType
 ) -> anyhow::Result<()> {
     let guard = GUILD_VOICE_MUTEX.lock(guild_id).await;
