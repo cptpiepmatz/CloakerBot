@@ -2,6 +2,7 @@ pub mod danger_zone;
 pub mod random;
 pub mod validation;
 
+use std::future::Future;
 use std::time::Duration;
 
 use dashmap::DashMap;
@@ -13,9 +14,11 @@ use twilight_cache_inmemory::Reference;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::db::takedown::{GuildTakedown, TakedownPair};
+use crate::db::OptionalDataStoreEntry;
 use crate::log::LogMessage;
 use crate::sync::TaggedMutexGuard;
-use crate::{log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
+use crate::{db, log, Event, BOT_USER_ID, GUILD_VOICE_MUTEX, STATE};
 
 const WULULULU_VOLUME: f32 = 0.3;
 const TAKEDOWN_VOLUME: f32 = 0.5;
@@ -155,10 +158,46 @@ pub async fn handle_takedown_strike(guild_id: Id<GuildMarker>) -> anyhow::Result
     tokio::time::sleep(sound.duration + Duration::from_millis(100)).await;
     call.leave().await?;
 
+    let db_key = match &kind {
+        TakedownType::User { initiator_id, .. } => TakedownPair {
+            guild: guild_id,
+            target: target_id,
+            kind: db::takedown::TakedownType::User(*initiator_id),
+            countered: false
+        },
+        TakedownType::Random { .. } => TakedownPair {
+            guild: guild_id,
+            target: target_id,
+            kind: db::takedown::TakedownType::Random,
+            countered: false
+        },
+        TakedownType::DangerZone => TakedownPair {
+            guild: guild_id,
+            target: target_id,
+            kind: db::takedown::TakedownType::DangerZone,
+            countered: false
+        }
+    };
+    match GuildTakedown::fetch(db_key.clone()).await? {
+        None => GuildTakedown {
+            guild: guild_id,
+            target: target_id,
+            kind: db_key.kind.clone(),
+            count: 1
+        },
+        Some(mut entry) => {
+            entry.count += 1;
+            entry
+        }
+    }
+    .store(db_key)
+    .await?;
+
     let resolved = match takedown_successful {
         true => TakedownResolved::Success,
         false => TakedownResolved::Fail
     };
+
     match kind {
         TakedownType::User {
             initiator_id,

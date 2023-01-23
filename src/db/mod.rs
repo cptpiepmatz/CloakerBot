@@ -1,5 +1,6 @@
 pub mod config;
 pub mod random;
+pub mod takedown;
 
 use async_trait::async_trait;
 use serde::de::{DeserializeOwned, Error, Unexpected};
