@@ -7,12 +7,11 @@ edition = "2021"
 [dependencies]
 
 # discord integration
-twilight-cache-inmemory = "0.14"
-twilight-gateway = "0.14"
-twilight-http = "0.14"
-twilight-model = "0.14"
-twilight-mention = "0.14"
-twilight-util = { version = "0.14", features = ["builder", "permission-calculator"] }
+twilight-cache-inmemory = "0.15.2"
+twilight-gateway = "0.15.2"
+twilight-http = "0.15.2"
+twilight-model = "0.15.2"
+twilight-mention = "0.15.1"
 
 # data serialization
 serde = { version = "1", features = ["derive"] }
@@ -20,57 +19,3 @@ serde_json = "1"
 
 # async
 tokio = { version = "1", features = ["full"] }
-tokio-stream = "0.1"
-futures = "0.3"
-dashmap = "5"
-parking_lot = "0.12"
-
-# image manipulation
-image = "0.24"
-
-# logging
-log = "0.4"
-
-# error handling
-anyhow = "1"
-
-# time calculation
-chrono = "0.4"
-
-# utility
-const_format = "0.2"
-lazy_static = "1"
-uuid = "1"
-rand = "0.8"
-async-trait = "0.1"
-
-# audio processing
-symphonia = "0.5"
-wav = "1"
-
-# songbird for audio
-[dependencies.songbird]
-git = "https://github.com/serenity-rs/songbird.git"
-rev = "b867ff653955c465ab0fe92de18969aaab0d9a11"
-default-features = false
-features = [
-    "driver",
-    "gateway",
-    "rustls",
-    "twilight"
-]
-
-# database
-[dependencies.surrealdb]
-git = "https://github.com/surrealdb/surrealdb.git"
-rev = "7fabf54593e25681c6d1180a8b803d4439f11f50"
-default-features = false
-features = [
-    "kv-mem",
-    "kv-rocksdb"
-]
-
-
-[build-dependencies]
-java-locator = "0.1"
-reqwest = { version = "0.11", features = ["blocking"] }
