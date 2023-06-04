@@ -7,6 +7,7 @@ pub mod target_bots;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+use tokio::runtime::Handle;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -14,6 +15,7 @@ use twilight_model::application::interaction::application_command::{
 use twilight_model::application::interaction::Interaction;
 use twilight_util::builder::command::CommandBuilder;
 
+use crate::impl_from_variant;
 use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
@@ -88,11 +90,11 @@ impl Display for ConfigActionError {
 
 impl Error for ConfigActionError {}
 
-impl From<ConfigActionError> for HandleApplicationCommandError {
-    fn from(value: ConfigActionError) -> Self {
-        HandleApplicationCommandError::ConfigAction(value)
-    }
-}
+impl_from_variant!(
+    ConfigActionError,
+    HandleApplicationCommandError,
+    ConfigAction
+);
 
 pub async fn action(
     interaction: &Interaction,

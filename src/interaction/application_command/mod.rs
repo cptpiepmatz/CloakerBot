@@ -19,7 +19,7 @@ use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
 use crate::interaction::HandleInteractionError;
-use crate::{APPLICATION_ID, STATE};
+use crate::{impl_from_variant, APPLICATION_ID, STATE};
 
 mod cloaker;
 mod config;
@@ -119,11 +119,11 @@ impl Display for TryFromInteractionError {
 
 impl Error for TryFromInteractionError {}
 
-impl From<TryFromInteractionError> for HandleApplicationCommandError {
-    fn from(value: TryFromInteractionError) -> Self {
-        HandleApplicationCommandError::TryFromInteraction(value)
-    }
-}
+impl_from_variant!(
+    TryFromInteractionError,
+    HandleApplicationCommandError,
+    TryFromInteraction
+);
 
 pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), TwilightHttpError> {
     // TODO: register commands globally instead
@@ -154,11 +154,11 @@ pub enum HandleApplicationCommandError {
     UpdateDefer(UpdateDeferError)
 }
 
-impl From<HandleApplicationCommandError> for HandleInteractionError {
-    fn from(value: HandleApplicationCommandError) -> Self {
-        HandleInteractionError::ApplicationCommand(value)
-    }
-}
+impl_from_variant!(
+    HandleApplicationCommandError,
+    HandleInteractionError,
+    ApplicationCommand
+);
 
 pub async fn handle_application_command(
     interaction: &Interaction
@@ -181,11 +181,7 @@ impl From<twilight_http::Error> for DeferError {
     }
 }
 
-impl From<DeferError> for HandleApplicationCommandError {
-    fn from(value: DeferError) -> Self {
-        HandleApplicationCommandError::Defer(value)
-    }
-}
+impl_from_variant!(DeferError, HandleApplicationCommandError, Defer);
 
 async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
     let response = InteractionResponse {
@@ -212,29 +208,10 @@ pub enum UpdateDeferError {
     EmbedValidation(EmbedValidationError)
 }
 
-impl From<twilight_http::Error> for UpdateDeferError {
-    fn from(value: TwilightHttpError) -> Self {
-        UpdateDeferError::Http(value)
-    }
-}
-
-impl From<MessageValidationError> for UpdateDeferError {
-    fn from(value: MessageValidationError) -> Self {
-        UpdateDeferError::MessageValidation(value)
-    }
-}
-
-impl From<EmbedValidationError> for UpdateDeferError {
-    fn from(value: EmbedValidationError) -> Self {
-        UpdateDeferError::EmbedValidation(value)
-    }
-}
-
-impl From<UpdateDeferError> for HandleApplicationCommandError {
-    fn from(value: UpdateDeferError) -> Self {
-        HandleApplicationCommandError::UpdateDefer(value)
-    }
-}
+impl_from_variant!(twilight_http::Error, UpdateDeferError, Http);
+impl_from_variant!(MessageValidationError, UpdateDeferError, MessageValidation);
+impl_from_variant!(EmbedValidationError, UpdateDeferError, EmbedValidation);
+impl_from_variant!(UpdateDeferError, HandleApplicationCommandError, UpdateDefer);
 
 async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), UpdateDeferError> {
     STATE

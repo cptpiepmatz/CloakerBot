@@ -11,6 +11,7 @@ use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
+use crate::impl_from_variant;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
@@ -101,11 +102,11 @@ impl Display for CloakerActionError {
 
 impl Error for CloakerActionError {}
 
-impl From<CloakerActionError> for HandleApplicationCommandError {
-    fn from(value: CloakerActionError) -> Self {
-        HandleApplicationCommandError::CloakerAction(value)
-    }
-}
+impl_from_variant!(
+    CloakerActionError,
+    HandleApplicationCommandError,
+    CloakerAction
+);
 
 pub async fn action(
     interaction: &Interaction,
