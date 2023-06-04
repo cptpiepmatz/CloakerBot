@@ -12,6 +12,8 @@ twilight-gateway = "0.15.2"
 twilight-http = "0.15.2"
 twilight-model = "0.15.2"
 twilight-mention = "0.15.1"
+twilight-util = { version = "0.15.2", features = ["builder"] }
+twilight-validate = "0.15.1"
 
 # data serialization
 serde = { version = "1", features = ["derive"] }
@@ -27,6 +29,7 @@ chrono = "0.4"
 
 # utility
 const_format = "0.2"
+lazy_static = "1" # TODO: replace when https://github.com/rust-lang/rust/issues/109736 lands
 
 # logging
 [dependencies.paris]
