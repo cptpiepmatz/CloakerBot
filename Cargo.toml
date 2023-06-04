@@ -25,6 +25,9 @@ futures = "0.3"
 # time management
 chrono = "0.4"
 
+# utility
+const_format = "0.2"
+
 # logging
 [dependencies.paris]
 version = "1"
