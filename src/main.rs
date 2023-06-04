@@ -15,6 +15,7 @@ use twilight_model::id::Id;
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::OnceLockExpect;
 
+mod assets;
 mod interaction;
 mod sync;
 mod util;
