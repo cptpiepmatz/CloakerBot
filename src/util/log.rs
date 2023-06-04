@@ -70,29 +70,3 @@ loggers!(
     ("WARN", warn, Warn, "yellow"),
     ("ERROR", error, Error, "red")
 );
-//
-// #[allow(unused_macros)]
-// macro_rules! log_prep {
-//     () => {
-//         use std::io::IsTerminal;
-//         let message = format!($($arg)*);
-//         let timestamp = chrono::offset::Utc::now();
-//     }
-// }
-//
-// #[macro_export]
-// macro_rules! log {
-//     ($($arg:tt)*) => {{
-//         log_prep!();
-//         match std::io::stdout().is_terminal() {
-//             true => paris::log!(
-//                 "<{}> [<blue>LOG</>] {message}",
-//                 timestamp.format("%H:%M:%S")
-//             ),
-//             false => paris::log!(
-//                 "<{}> [LOG] {message}",
-//                 timestamp.format("%Y-%m-%d %H:%M:%S")
-//             )
-//         }
-//     }};
-// }
