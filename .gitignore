@@ -1,8 +1,15 @@
+# IDE
+/.idea
+
+# Meta files
+Thumbs.db
+
+# Discord Secrets
 .token
 dev.token
-.ownerId
-/.idea
-Thumbs.db
+
+# Generated Data
+/data
 
 # Added by cargo
 /target
