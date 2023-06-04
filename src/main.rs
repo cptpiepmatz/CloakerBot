@@ -12,8 +12,10 @@ use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::marker::{ApplicationMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::OnceLockExpect;
 
+mod interaction;
 mod sync;
 mod util;
 
@@ -96,7 +98,9 @@ async fn handle_event(event: BotEvent) {
 }
 
 #[derive(Debug)]
-struct HandleDiscordEventError;
+enum HandleDiscordEventError {
+    Interaction(HandleInteractionError)
+}
 
 impl From<HandleDiscordEventError> for HandleEventError {
     fn from(value: HandleDiscordEventError) -> Self {
@@ -107,17 +111,21 @@ impl From<HandleDiscordEventError> for HandleEventError {
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
     match event {
         // log when ready
-        DiscordEvent::Ready(_) => {
-            info!("Bot is ready");
-            Ok(())
-        }
+        DiscordEvent::Ready(_) => info!("Bot is ready"),
 
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(_) => todo!(),
 
         // handle interactions
-        DiscordEvent::InteractionCreate(_) => todo!(),
+        DiscordEvent::InteractionCreate(interaction_create) => {
+            handle_interaction(&interaction_create)?
+        }
 
-        _ => Ok(())
+        // handle user joins a voice channel
+        DiscordEvent::VoiceStateUpdate(_) => todo!(),
+
+        _ => ()
     }
+
+    Ok(())
 }
