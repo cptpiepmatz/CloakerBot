@@ -146,6 +146,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "paris",
+ "rand",
  "serde",
  "serde_json",
  "tokio",
