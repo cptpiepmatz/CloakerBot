@@ -29,14 +29,14 @@ impl From<HandleInteractionError> for HandleDiscordEventError {
     }
 }
 
-pub fn handle_interaction(
+pub async fn handle_interaction(
     interaction_create: &InteractionCreate
 ) -> Result<(), HandleInteractionError> {
     let interaction: &Interaction = interaction_create;
     match interaction.kind {
         InteractionType::MessageComponent => handle_message_component(interaction)?,
 
-        InteractionType::ApplicationCommand => handle_application_command(interaction)?,
+        InteractionType::ApplicationCommand => handle_application_command(interaction).await?,
         InteractionType::ApplicationCommandAutocomplete => {
             handle_application_command_autocomplete(interaction)?
         }

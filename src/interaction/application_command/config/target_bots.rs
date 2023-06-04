@@ -7,8 +7,7 @@ use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 
-use crate::db::config::GuildConfig;
-use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "target-bots";
@@ -58,27 +57,6 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     TargetBotsSubCommand { allow }: TargetBotsSubCommand
-) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch_or_default(guild_id).await?;
-
-    match allow {
-        None => {
-            let reply = match config.target_bots {
-                true => "**🛠️ Taking down bots is *allowed* on this server.**",
-                false => "**🛠️ Taking down bots is *disallowed* on this server.**"
-            };
-            super::super::update_defer(&interaction, reply).await?;
-        }
-        Some(allow) => {
-            config.target_bots = allow;
-            config.store(guild_id).await?;
-            let reply = match allow {
-                true => "**🛠️ *Allowed* taking down bots on this server.**",
-                false => "**🛠️ *Disallowed* taking down bots on this server.**"
-            };
-            super::super::update_defer(&interaction, reply).await?;
-        }
-    }
-
-    Ok(())
+) -> Result<(), ConfigActionError> {
+    todo!()
 }

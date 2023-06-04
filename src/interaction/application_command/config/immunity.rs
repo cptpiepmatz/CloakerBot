@@ -1,22 +1,14 @@
-use std::time::Duration;
-
-use serde_json::json;
-use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::component::{ButtonStyle, ComponentType};
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
-use crate::db::config::GuildConfig;
-use crate::db::DataStoreEntry;
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::interaction::message_component::config_immunity::{BUTTON_CUSTOM_ID, SELECT_CUSTOM_ID};
-use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "immunity";
 const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -92,94 +84,6 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     command: ImmunitySubCommand
-) -> anyhow::Result<()> {
-    use ImmunitySubCommand::{General, Random};
-
-    let config = GuildConfig::fetch_or_default(guild_id).await?;
-    let role_id = match command {
-        General => config.immunity.general,
-        Random => config.immunity.random
-    };
-
-    let content = match (&command, role_id) {
-        (General, None) => "**🛠️ *No* role is marked to be immune to *all* takedowns.**".into(),
-        (Random, None) => "**🛠️ *No* role is marked to be immune to *random* takedowns.**".into(),
-        (General, Some(role_id)) => format!(
-            "**🛠️ Everyone with the role {} is immune to *all* takedowns.**",
-            role_id.mention()
-        ),
-        (Random, Some(role_id)) => format!(
-            "**🛠️ Everyone with the role {} is immune to *random* takedowns.**",
-            role_id.mention()
-        )
-    };
-
-    let (select_custom_id, button_custom_id) = match &command {
-        General => (SELECT_CUSTOM_ID.general, BUTTON_CUSTOM_ID.general),
-        Random => (SELECT_CUSTOM_ID.random, BUTTON_CUSTOM_ID.random)
-    };
-    let payload = json!({
-        "content": content,
-        "components": [
-            {
-                "type": ComponentType::ActionRow,
-                "components": [{
-                    // select menu for channel select
-                    "type": 6,
-                    "custom_id": format!("{}#{}", select_custom_id, interaction.id),
-                    "min_values": 0,
-                    "max_values": 1,
-                    "placeholder": "🛟 Select role to be immune."
-                }]
-            },
-            {
-                "type": ComponentType::ActionRow,
-                "components": [{
-                    // button to remove all channels
-                    "type": ComponentType::Button,
-                    "custom_id": format!("{}#{}", button_custom_id, interaction.id),
-                    "label": "Delete Immune Role",
-                    "style": ButtonStyle::Danger,
-                    "emoji": {
-                        "id": null,
-                        "name": "🗑️"
-                    }
-                }]
-            }
-        ]
-    });
-
-    STATE
-        .http
-        .interaction(APPLICATION_ID)
-        .update_response(&interaction.token)
-        .payload_json(payload.to_string().as_bytes())
-        .await?;
-
-    let interaction_id = interaction.id;
-    STATE
-        .tracked_interactions
-        .insert(interaction.id, interaction);
-
-    tokio::time::sleep(Duration::from_secs(3 * 60)).await;
-
-    if let Some((_, interaction)) = STATE.tracked_interactions.remove(&interaction_id) {
-        let payload = json!({
-            "content": format!(
-                "**⌛ Timed Out.**\nTry `/{} {}` again to modify immune roles.",
-                super::NAME,
-                NAME
-            ),
-            "components": []
-        });
-
-        STATE
-            .http
-            .interaction(APPLICATION_ID)
-            .update_response(&interaction.token)
-            .payload_json(payload.to_string().as_bytes())
-            .await?;
-    }
-
-    Ok(())
+) -> Result<(), ConfigActionError> {
+    todo!()
 }

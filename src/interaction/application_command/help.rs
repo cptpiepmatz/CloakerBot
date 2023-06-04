@@ -12,7 +12,8 @@ use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use crate::assets::colors;
 use crate::interaction::application_command::{
-    cloaker, config, counter, defer, ranks, TryFromInteractionError
+    cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
+    TryFromInteractionError
 };
 use crate::{APPLICATION_ID, STATE};
 
@@ -114,7 +115,12 @@ pub fn chat_input() -> Command {
         .build()
 }
 
-pub async fn action(interaction: Interaction, command: HelpCommand) -> anyhow::Result<()> {
+pub enum HelpActionError {}
+
+pub async fn action(
+    interaction: &Interaction,
+    command: HelpCommand
+) -> Result<(), HandleApplicationCommandError> {
     defer(&interaction).await?;
 
     let embed = EmbedBuilder::new().color(colors::PRIMARY);
@@ -205,12 +211,7 @@ pub async fn action(interaction: Interaction, command: HelpCommand) -> anyhow::R
             )
         ));
 
-    STATE
-        .http
-        .interaction(APPLICATION_ID)
-        .update_response(&interaction.token)
-        .embeds(Some(&[embed.validate()?.build()]))?
-        .await?;
+    update_defer_embeds(interaction, embed).await?;
 
     Ok(())
 }

@@ -1,30 +1,31 @@
-mod cloaker;
-mod config;
-mod counter;
-mod help;
-mod ranks;
-
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
-use twilight_http::response::marker::EmptyBody;
-use twilight_http::Response;
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
-use twilight_model::channel::Message;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
+use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_validate::embed::EmbedValidationError;
+use twilight_validate::message::MessageValidationError;
 
-use crate::interaction::application_command::cloaker::CloakerCommand;
-use crate::interaction::application_command::config::ConfigCommand;
+use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
+use crate::interaction::application_command::config::{ConfigActionError, ConfigCommand};
 use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
+use crate::interaction::HandleInteractionError;
 use crate::{APPLICATION_ID, STATE};
+
+mod cloaker;
+mod config;
+mod counter;
+mod help;
+mod ranks;
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),
@@ -118,7 +119,14 @@ impl Display for TryFromInteractionError {
 
 impl Error for TryFromInteractionError {}
 
+impl From<TryFromInteractionError> for HandleApplicationCommandError {
+    fn from(value: TryFromInteractionError) -> Self {
+        HandleApplicationCommandError::TryFromInteraction(value)
+    }
+}
+
 pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), TwilightHttpError> {
+    // TODO: register commands globally instead
     let _res = client
         .set_guild_commands(Id::new(581884294495207444), &[
             cloaker::chat_input(),
@@ -135,19 +143,51 @@ pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), Twi
     Ok(())
 }
 
-pub async fn handle_application_command(interaction: Interaction) -> anyhow::Result<()> {
-    match ApplicationCommand::try_from(&interaction)? {
-        ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command).await?,
-        ApplicationCommand::Config(command) => config::action(interaction, command).await?,
-        ApplicationCommand::Counter(_) => {}
-        ApplicationCommand::Help(command) => help::action(interaction, command).await?,
-        ApplicationCommand::Ranks(_) => {}
-    };
+#[derive(Debug)]
+pub enum HandleApplicationCommandError {
+    TryFromInteraction(TryFromInteractionError),
 
-    Ok(())
+    ConfigAction(ConfigActionError),
+    CloakerAction(CloakerActionError),
+
+    Defer(DeferError),
+    UpdateDefer(UpdateDeferError)
 }
 
-async fn defer(interaction: &Interaction) -> Result<Response<EmptyBody>, twilight_http::Error> {
+impl From<HandleApplicationCommandError> for HandleInteractionError {
+    fn from(value: HandleApplicationCommandError) -> Self {
+        HandleInteractionError::ApplicationCommand(value)
+    }
+}
+
+pub async fn handle_application_command(
+    interaction: &Interaction
+) -> Result<(), HandleApplicationCommandError> {
+    match ApplicationCommand::try_from(interaction)? {
+        ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command).await,
+        ApplicationCommand::Config(command) => config::action(interaction, command).await,
+        ApplicationCommand::Counter(_) => todo!(),
+        ApplicationCommand::Help(command) => help::action(interaction, command).await,
+        ApplicationCommand::Ranks(_) => todo!()
+    }
+}
+
+#[derive(Debug)]
+pub struct DeferError(twilight_http::Error);
+
+impl From<twilight_http::Error> for DeferError {
+    fn from(value: TwilightHttpError) -> Self {
+        DeferError(value)
+    }
+}
+
+impl From<DeferError> for HandleApplicationCommandError {
+    fn from(value: DeferError) -> Self {
+        HandleApplicationCommandError::Defer(value)
+    }
+}
+
+async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
         data: Some(
@@ -160,14 +200,63 @@ async fn defer(interaction: &Interaction) -> Result<Response<EmptyBody>, twiligh
         .http
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await
+        .await?;
+
+    Ok(())
 }
 
-async fn update_defer(interaction: &Interaction, msg: &str) -> anyhow::Result<Response<Message>> {
-    Ok(STATE
+#[derive(Debug)]
+pub enum UpdateDeferError {
+    Http(twilight_http::Error),
+    MessageValidation(MessageValidationError),
+    EmbedValidation(EmbedValidationError)
+}
+
+impl From<twilight_http::Error> for UpdateDeferError {
+    fn from(value: TwilightHttpError) -> Self {
+        UpdateDeferError::Http(value)
+    }
+}
+
+impl From<MessageValidationError> for UpdateDeferError {
+    fn from(value: MessageValidationError) -> Self {
+        UpdateDeferError::MessageValidation(value)
+    }
+}
+
+impl From<EmbedValidationError> for UpdateDeferError {
+    fn from(value: EmbedValidationError) -> Self {
+        UpdateDeferError::EmbedValidation(value)
+    }
+}
+
+impl From<UpdateDeferError> for HandleApplicationCommandError {
+    fn from(value: UpdateDeferError) -> Self {
+        HandleApplicationCommandError::UpdateDefer(value)
+    }
+}
+
+async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), UpdateDeferError> {
+    STATE
         .http
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
         .content(Some(msg))?
-        .await?)
+        .await?;
+
+    Ok(())
+}
+
+async fn update_defer_embeds(
+    interaction: &Interaction,
+    embed_builder: EmbedBuilder
+) -> Result<(), UpdateDeferError> {
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .update_response(&interaction.token)
+        .embeds(Some(&[embed_builder.validate()?.build()]))?
+        .await?;
+
+    Ok(())
 }

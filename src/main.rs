@@ -1,5 +1,5 @@
 use std::iter;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use futures::stream::{select, StreamExt};
@@ -7,6 +7,7 @@ use tokio_stream::wrappers::IntervalStream;
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
+use twilight_http::client::Client as HttpClient;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::marker::{ApplicationMarker, UserMarker};
@@ -42,7 +43,9 @@ const RANDOM_CHECK_INTERVAL_DURATION: Duration = Duration::from_secs(15);
 const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
-struct State {}
+struct State {
+    http: Arc<HttpClient>
+}
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
 
@@ -119,7 +122,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 
         // handle interactions
         DiscordEvent::InteractionCreate(interaction_create) => {
-            handle_interaction(&interaction_create)?
+            handle_interaction(&interaction_create).await?
         }
 
         // handle user joins a voice channel

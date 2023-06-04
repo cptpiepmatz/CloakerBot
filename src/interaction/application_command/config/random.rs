@@ -1,20 +1,14 @@
-use twilight_mention::timestamp::{Timestamp, TimestampStyle};
-use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::MessageFlags;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 
-use crate::db::config::{GuildConfig, GuildConfigRandom};
-use crate::db::random::GuildRandom;
-use crate::db::{DataStoreEntry, OptionalDataStoreEntry};
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
-use crate::{takedown, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
 const DESCRIPTION: &str = "Configure random takedown behavior.";
@@ -101,83 +95,6 @@ pub async fn action(
     interaction: Interaction,
     guild_id: Id<GuildMarker>,
     RandomSubCommand { enable, min, max }: RandomSubCommand
-) -> anyhow::Result<()> {
-    let mut config = GuildConfig::fetch_or_default(guild_id).await?;
-
-    match (enable, min, max) {
-        (Some(false), _, _) => {
-            config.random.enabled = false;
-            config.clone().store(guild_id).await?;
-            let reply = "**🛠️ *Disabled* random takedowns on this server.**";
-            super::super::update_defer(&interaction, reply).await?;
-        }
-        (None, None, None) => {
-            let reply = match config.random.enabled {
-                false => String::from("**🛠️ Random takedowns are *disabled* on this server.**"),
-                true => format!(
-                    concat!(
-                        "**🛠️ ",
-                        "Random takedowns are *enabled* on this server.**\n",
-                        "The time interval for random takedowns is set to {}-{}."
-                    ),
-                    config.random.min, config.random.max
-                )
-            };
-            super::super::update_defer(&interaction, &reply).await?;
-        }
-        (_, min, max) => {
-            let min = min.unwrap_or(config.random.min);
-            let max = max.unwrap_or(config.random.max);
-            config.random = GuildConfigRandom {
-                enabled: true,
-                min,
-                max
-            };
-            config.clone().store(guild_id).await?;
-            let reply = format!(
-                concat!(
-                    "**🛠️ ",
-                    "*Enabled* random takedowns on this server.**\n",
-                    "The time interval for random takedowns is set to {}-{}."
-                ),
-                min, max
-            );
-            super::super::update_defer(&interaction, &reply).await?;
-        }
-    }
-
-    match config.random.enabled {
-        true => {
-            let next = takedown::random::fetch_next_check(guild_id).await?;
-            match GuildRandom::fetch(guild_id).await? {
-                None => GuildRandom { id: guild_id, next },
-                Some(mut random) => {
-                    random.next = next;
-                    random
-                }
-            }
-            .store(guild_id)
-            .await?;
-
-            STATE
-                .http
-                .interaction(APPLICATION_ID)
-                .create_followup(&interaction.token)
-                .flags(MessageFlags::EPHEMERAL)
-                .content(
-                    format!(
-                        "⏰ Next random takedown will be {}.",
-                        Timestamp::new(next.timestamp() as u64, Some(TimestampStyle::RelativeTime))
-                            .mention()
-                    )
-                    .as_str()
-                )?
-                .await?;
-        }
-        false => {
-            GuildRandom::delete(guild_id).await?;
-        }
-    }
-
-    Ok(())
+) -> Result<(), ConfigActionError> {
+    todo!()
 }
