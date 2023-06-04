@@ -44,7 +44,7 @@ struct State {}
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
 
 #[derive(Debug)]
-enum Event {
+enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
     PersistData
@@ -54,14 +54,14 @@ enum Event {
 async fn main() {
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let discord_events =
-        ShardEventStream::new(iter::once(&mut shard)).map(|(_, event)| Event::Discord(event));
+        ShardEventStream::new(iter::once(&mut shard)).map(|(_, event)| BotEvent::Discord(event));
 
     let random_check_interval =
         IntervalStream::new(tokio::time::interval(RANDOM_CHECK_INTERVAL_DURATION))
-            .map(|_| Event::RandomCheck);
+            .map(|_| BotEvent::RandomCheck);
     let persist_data_interval =
         IntervalStream::new(tokio::time::interval(PERSIST_DATA_INTERVAL_DURATION))
-            .map(|_| Event::PersistData);
+            .map(|_| BotEvent::PersistData);
 
     let events = select(discord_events, random_check_interval);
     let mut events = select(events, persist_data_interval);
@@ -77,16 +77,16 @@ enum HandleEventError {
     Discord(HandleDiscordEventError)
 }
 
-async fn handle_event(event: Event) {
-    async fn run(event: Event) -> Result<(), HandleEventError> {
+async fn handle_event(event: BotEvent) {
+    async fn run(event: BotEvent) -> Result<(), HandleEventError> {
         match event {
-            Event::Discord(event) => match event {
+            BotEvent::Discord(event) => match event {
                 Ok(event) => handle_discord_event(event).await?,
                 Err(source) if source.is_fatal() => return Err(HandleEventError::Fatal),
                 Err(_) => ()
             },
-            Event::RandomCheck => todo!(),
-            Event::PersistData => todo!()
+            BotEvent::RandomCheck => todo!(),
+            BotEvent::PersistData => todo!()
         };
 
         Ok(())
@@ -105,5 +105,19 @@ impl From<HandleDiscordEventError> for HandleEventError {
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
-    todo!()
+    match event {
+        // log when ready
+        DiscordEvent::Ready(_) => {
+            info!("Bot is ready");
+            Ok(())
+        }
+
+        // clear persistent data from this guild
+        DiscordEvent::GuildDelete(_) => todo!(),
+
+        // handle interactions
+        DiscordEvent::InteractionCreate(_) => todo!(),
+
+        _ => Ok(())
+    }
 }
