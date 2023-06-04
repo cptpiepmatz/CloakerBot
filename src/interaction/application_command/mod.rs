@@ -2,6 +2,12 @@ use twilight_model::application::interaction::Interaction;
 
 use crate::interaction::HandleInteractionError;
 
+mod cloaker;
+mod config;
+mod counter;
+mod help;
+mod ranks;
+
 #[derive(Debug)]
 pub enum HandleApplicationCommandError {}
 
