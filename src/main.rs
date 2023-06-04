@@ -1,4 +1,5 @@
 use std::iter;
+use std::sync::Mutex;
 use std::time::Duration;
 
 use futures::stream::{select, StreamExt};
@@ -14,6 +15,7 @@ use twilight_model::id::Id;
 use crate::sync::OnceLockExpect;
 
 mod sync;
+mod util;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = include_str!("../dev.token");

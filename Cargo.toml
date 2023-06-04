@@ -21,3 +21,11 @@ serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
 futures = "0.3"
+
+# time management
+chrono = "0.4"
+
+# logging
+[dependencies.paris]
+version = "1"
+features = ["macros", "no_logger"]
