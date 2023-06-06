@@ -4,6 +4,9 @@ use twilight_util::builder::command::CommandBuilder;
 
 use crate::interaction::application_command::TryFromInteractionError;
 
+pub const NAME: &str = "counter";
+pub const DESCRIPTION: &str = "Counter an incoming takedown.";
+
 pub struct CounterCommand;
 
 impl TryFrom<&CommandData> for CounterCommand {
@@ -13,9 +16,6 @@ impl TryFrom<&CommandData> for CounterCommand {
         Ok(CounterCommand)
     }
 }
-
-pub const NAME: &str = "counter";
-const DESCRIPTION: &str = "Counter an incoming takedown.";
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)

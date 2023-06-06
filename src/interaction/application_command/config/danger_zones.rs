@@ -9,7 +9,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "danger-zones";
-const DESCRIPTION: &str = "Define your danger zones.";
+pub const DESCRIPTION: &str = "Define your danger zones.";
 
 pub struct DangerZonesSubCommand;
 

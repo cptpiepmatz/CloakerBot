@@ -17,6 +17,18 @@ use crate::interaction::application_command::{
 };
 use crate::{APPLICATION_ID, STATE};
 
+pub const NAME: &str = "help";
+pub const DESCRIPTION: &str = "Shows a help page.";
+pub const CHOICES: [&str; 7] = [
+    cloaker::NAME,
+    formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
+    formatcp!("{} {}", config::NAME, config::log_channel::NAME),
+    formatcp!("{} {}", config::NAME, config::target_bots::NAME),
+    formatcp!("{} {}", config::NAME, config::random::NAME),
+    counter::NAME,
+    ranks::NAME
+];
+
 pub enum HelpCommand {
     All,
     Cloaker,
@@ -77,18 +89,6 @@ impl TryFrom<&CommandData> for HelpCommand {
         }
     }
 }
-
-pub const NAME: &str = "help";
-const DESCRIPTION: &str = "Shows a help page.";
-const CHOICES: [&str; 7] = [
-    cloaker::NAME,
-    formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
-    formatcp!("{} {}", config::NAME, config::log_channel::NAME),
-    formatcp!("{} {}", config::NAME, config::target_bots::NAME),
-    formatcp!("{} {}", config::NAME, config::random::NAME),
-    counter::NAME,
-    ranks::NAME
-];
 
 lazy_static! {
     static ref CLOAKER_HELP_TEXT: String =

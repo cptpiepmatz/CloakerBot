@@ -11,7 +11,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "target-bots";
-const DESCRIPTION: &str = "Configure if the bot should target bots.";
+pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
 
 pub struct TargetBotsSubCommand {
     allow: Option<bool>

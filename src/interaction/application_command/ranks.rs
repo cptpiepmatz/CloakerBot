@@ -4,6 +4,9 @@ use twilight_util::builder::command::CommandBuilder;
 
 use crate::interaction::application_command::TryFromInteractionError;
 
+pub const NAME: &str = "ranks";
+pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
+
 #[derive(Debug)]
 pub struct RanksCommand;
 
@@ -14,9 +17,6 @@ impl TryFrom<&CommandData> for RanksCommand {
         Ok(RanksCommand)
     }
 }
-
-pub const NAME: &str = "ranks";
-const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)

@@ -11,7 +11,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "random";
-const DESCRIPTION: &str = "Configure random takedown behavior.";
+pub const DESCRIPTION: &str = "Configure random takedown behavior.";
 
 pub struct RandomSubCommand {
     enable: Option<bool>,

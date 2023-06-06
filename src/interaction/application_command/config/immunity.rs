@@ -11,7 +11,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "immunity";
-const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
+pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
 
 pub enum ImmunitySubCommand {
     General,

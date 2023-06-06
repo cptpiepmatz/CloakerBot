@@ -16,6 +16,9 @@ use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 
+pub const NAME: &str = "cloaker";
+pub const DESCRIPTION: &str = "Take down your friends!";
+
 #[derive(Debug)]
 pub struct CloakerCommand {
     target_id: Id<UserMarker>
@@ -57,9 +60,6 @@ impl TryFrom<&CommandData> for CloakerCommand {
         }
     }
 }
-
-pub const NAME: &str = "cloaker";
-const DESCRIPTION: &str = "Take down your friends!";
 
 fn permissions() -> Permissions {
     Permissions::ADMINISTRATOR | Permissions::MODERATE_MEMBERS | Permissions::MOVE_MEMBERS

@@ -11,7 +11,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::TryFromInteractionError;
 
 pub const NAME: &str = "log-channel";
-const DESCRIPTION: &str = "Define your log channel.";
+pub const DESCRIPTION: &str = "Define your log channel.";
 
 pub struct LogChannelSubCommand {
     channel_id: Option<Id<ChannelMarker>>
