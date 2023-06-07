@@ -3,7 +3,6 @@ name = "cloaker-bot"
 version = "3.0.0"
 edition = "2021"
 
-
 [dependencies]
 
 # discord integration
@@ -28,7 +27,7 @@ futures = "0.3"
 chrono = "0.4"
 
 # utility
-const_format = "0.2"
+const_format = { version = "0.2", features = ["rust_1_51"] }
 lazy_static = "1" # TODO: replace when https://github.com/rust-lang/rust/issues/109736 lands
 rand = "0.8"
 
