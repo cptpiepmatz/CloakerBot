@@ -16,6 +16,8 @@ mod application_command;
 mod application_command_autocomplete;
 mod message_component;
 
+pub use application_command::register_commands;
+
 #[derive(Debug)]
 pub enum HandleInteractionError {
     MessageComponent(HandleMessageComponentError),

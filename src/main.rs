@@ -2,12 +2,14 @@ use std::iter;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use const_format::str_replace;
 use futures::stream::{select, StreamExt};
 use tokio_stream::wrappers::IntervalStream;
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
 use twilight_http::client::Client as HttpClient;
+use twilight_model::application::interaction::application_command;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::marker::{ApplicationMarker, UserMarker};
@@ -22,9 +24,9 @@ mod sync;
 mod util;
 
 #[cfg(debug_assertions)]
-const DISCORD_TOKEN: &str = include_str!("../dev.token");
+const DISCORD_TOKEN: &str = trim!(include_str!("../dev.token"));
 #[cfg(not(debug_assertions))]
-const DISCORD_TOKEN: &str = include_str!("../.token");
+const DISCORD_TOKEN: &str = trim!(include_str!("../.token"));
 
 #[cfg(debug_assertions)]
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(604066644465287198);
@@ -58,6 +60,15 @@ enum BotEvent {
 
 #[tokio::main]
 async fn main() {
+    let http = Arc::new(HttpClient::new(DISCORD_TOKEN.to_owned()));
+    OnceLockExpect::set(&STATE, State { http });
+
+    interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
+        .await
+        .expect("registering commands is necessary");
+
+    return;
+
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let discord_events =
         ShardEventStream::new(iter::once(&mut shard)).map(|(_, event)| BotEvent::Discord(event));
@@ -106,11 +117,7 @@ enum HandleDiscordEventError {
     Interaction(HandleInteractionError)
 }
 
-impl From<HandleDiscordEventError> for HandleEventError {
-    fn from(value: HandleDiscordEventError) -> Self {
-        HandleEventError::Discord(value)
-    }
-}
+impl_from_variant!(HandleDiscordEventError, HandleEventError, Discord);
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
     match event {
