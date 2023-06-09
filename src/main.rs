@@ -22,6 +22,7 @@ mod assets;
 mod interaction;
 mod sync;
 mod util;
+mod data;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = trim!(include_str!("../dev.token"));

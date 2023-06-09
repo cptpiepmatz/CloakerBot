@@ -28,7 +28,6 @@ chrono = "0.4"
 
 # utility
 const_format = { version = "0.2", features = ["rust_1_51"] }
-lazy_static = "1" # TODO: replace when https://github.com/rust-lang/rust/issues/109736 lands
 rand = "0.8"
 
 # logging

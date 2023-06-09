@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
-use const_format::{concatcp, formatcp};
-use lazy_static::lazy_static;
+use const_format::{concatcp, formatcp, str_replace};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
@@ -15,7 +14,7 @@ use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
-use crate::{APPLICATION_ID, STATE};
+use crate::{trim, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
@@ -90,20 +89,34 @@ impl TryFrom<&CommandData> for HelpCommand {
     }
 }
 
-lazy_static! {
-    static ref CLOAKER_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/cloaker.md"));
-    static ref CONFIG_DANGER_ZONES_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/config_danger_zones.md"));
-    static ref CONFIG_LOG_CHANNEL_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/config_log_channel.md"));
-    static ref CONFIG_TARGET_BOTS_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/config_target_bots.md"));
-    static ref CONFIG_RANDOM_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/config_random.md"));
-    static ref COUNTER_HELP_TEXT: String =
-        prepare_md(include_str!("../../../assets/help/counter.md"));
+macro_rules! prepare_md {
+    ($in:expr) => {
+        str_replace!(
+            str_replace!(
+                str_replace!(
+                    str_replace!(str_replace!(trim!($in), "\r\n", "\n"), "\n\n\n", "<br><br>"),
+                    "\n\n",
+                    "<br>"
+                ),
+                "\n",
+                " "
+            ),
+            "<br>",
+            "\n"
+        )
+    };
 }
+
+const CLOAKER_HELP_TEXT: &str = prepare_md!(include_str!("../../../assets/help/cloaker.md"));
+const CONFIG_DANGER_ZONES_HELP_TEXT: &str =
+    prepare_md!(include_str!("../../../assets/help/config_danger_zones.md"));
+const CONFIG_LOG_CHANNEL_HELP_TEXT: &str =
+    prepare_md!(include_str!("../../../assets/help/config_log_channel.md"));
+const CONFIG_TARGET_BOTS_HELP_TEXT: &str =
+    prepare_md!(include_str!("../../../assets/help/config_target_bots.md"));
+const CONFIG_RANDOM_HELP_TEXT: &str =
+    prepare_md!(include_str!("../../../assets/help/config_random.md"));
+const COUNTER_HELP_TEXT: &str = prepare_md!(include_str!("../../../assets/help/counter.md"));
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
@@ -158,7 +171,7 @@ pub async fn action(
 
         HelpCommand::Cloaker => embed
             .title(format!("🔎 Help for /{}", cloaker::NAME))
-            .description(CLOAKER_HELP_TEXT.deref()),
+            .description(CLOAKER_HELP_TEXT),
 
         HelpCommand::Config(ConfigHelpCommand::DangerZones) => embed
             .title(format!(
@@ -166,7 +179,7 @@ pub async fn action(
                 config::NAME,
                 config::danger_zones::NAME
             ))
-            .description(CONFIG_DANGER_ZONES_HELP_TEXT.deref()),
+            .description(CONFIG_DANGER_ZONES_HELP_TEXT),
 
         HelpCommand::Config(ConfigHelpCommand::LogChannel) => embed
             .title(format!(
@@ -174,7 +187,7 @@ pub async fn action(
                 config::NAME,
                 config::log_channel::NAME
             ))
-            .description(CONFIG_LOG_CHANNEL_HELP_TEXT.deref()),
+            .description(CONFIG_LOG_CHANNEL_HELP_TEXT),
 
         HelpCommand::Config(ConfigHelpCommand::TargetBots) => embed
             .title(format!(
@@ -182,7 +195,7 @@ pub async fn action(
                 config::NAME,
                 config::target_bots::NAME
             ))
-            .description(CONFIG_TARGET_BOTS_HELP_TEXT.deref()),
+            .description(CONFIG_TARGET_BOTS_HELP_TEXT),
 
         HelpCommand::Config(ConfigHelpCommand::Random) => embed
             .title(format!(
@@ -190,11 +203,11 @@ pub async fn action(
                 config::NAME,
                 config::random::NAME
             ))
-            .description(CONFIG_RANDOM_HELP_TEXT.deref()),
+            .description(CONFIG_RANDOM_HELP_TEXT),
 
         HelpCommand::Counter => embed
             .title(format!("🔎 Help for /{}", counter::NAME))
-            .description(COUNTER_HELP_TEXT.deref()),
+            .description(COUNTER_HELP_TEXT),
 
         HelpCommand::Ranks => todo!()
     };
@@ -214,13 +227,4 @@ pub async fn action(
     update_defer_embeds(interaction, embed).await?;
 
     Ok(())
-}
-
-fn prepare_md(md: &str) -> String {
-    md.trim()
-        .replace("\r\n", "\n")
-        .replace("\n\n\n", "<br><br>")
-        .replace("\n\n", "<br>")
-        .replace('\n', " ")
-        .replace("<br>", "\n")
 }
