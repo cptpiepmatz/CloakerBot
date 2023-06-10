@@ -32,9 +32,8 @@ pub fn chat_input() -> CommandOption {
 }
 
 pub async fn action(
-    interaction: Interaction,
-    guild_id: Id<GuildMarker>,
-    _: DangerZonesSubCommand
+    interaction: &Interaction,
+    command: DangerZonesSubCommand
 ) -> Result<(), ConfigActionError> {
     todo!()
 }

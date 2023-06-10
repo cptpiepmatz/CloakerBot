@@ -100,5 +100,13 @@ pub async fn action(
     interaction: &Interaction,
     command: ConfigCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    todo!()
+    match command {
+        ConfigCommand::DangerZones(cmd) => danger_zones::action(interaction, cmd).await?,
+        ConfigCommand::LogChannel(cmd) => log_channel::action(interaction, cmd).await?,
+        ConfigCommand::Random(cmd) => random::action(interaction, cmd).await?,
+        ConfigCommand::TargetBots(cmd) => target_bots::action(interaction, cmd).await?,
+        ConfigCommand::Immunity(cmd) => immunity::action(interaction, cmd).await?
+    };
+
+    Ok(())
 }

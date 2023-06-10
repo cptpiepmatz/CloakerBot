@@ -74,13 +74,6 @@ async fn main() {
             .unwrap_or_default()
     });
 
-    {
-        let guild_id: Id<GuildMarker> = Id::new(581884294495207444);
-        let mut guild_configs = STATE.guild_configs.write().await;
-        let guild_config = guild_configs.entry(guild_id).or_default();
-        guild_config.target_bots = true.into();
-    }
-
     interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
         .await
         .expect("registering commands is necessary");

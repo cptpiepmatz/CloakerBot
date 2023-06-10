@@ -92,8 +92,7 @@ pub fn chat_input() -> CommandOption {
 }
 
 pub async fn action(
-    interaction: Interaction,
-    guild_id: Id<GuildMarker>,
+    interaction: &Interaction,
     RandomSubCommand { enable, min, max }: RandomSubCommand
 ) -> Result<(), ConfigActionError> {
     todo!()
