@@ -19,7 +19,8 @@ use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
 use crate::interaction::HandleInteractionError;
-use crate::{impl_from_variant, APPLICATION_ID, STATE};
+use crate::util::impl_from_variant::impl_from_variant;
+use crate::{APPLICATION_ID, STATE};
 
 mod cloaker;
 mod config;
@@ -151,7 +152,9 @@ pub enum HandleApplicationCommandError {
     CloakerAction(CloakerActionError),
 
     Defer(DeferError),
-    UpdateDefer(UpdateDeferError)
+    UpdateDefer(UpdateDeferError),
+
+    Http(twilight_http::Error)
 }
 
 impl_from_variant!(
@@ -159,6 +162,8 @@ impl_from_variant!(
     HandleInteractionError,
     ApplicationCommand
 );
+
+impl_from_variant!(twilight_http::Error, HandleApplicationCommandError, Http);
 
 pub async fn handle_application_command(
     interaction: &Interaction

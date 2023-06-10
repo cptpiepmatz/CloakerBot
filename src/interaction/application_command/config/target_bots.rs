@@ -3,12 +3,18 @@ use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::Embed;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
+use twilight_util::builder::embed::EmbedBuilder;
+use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::data::config::GuildConfig;
 use crate::interaction::application_command::config::ConfigActionError;
-use crate::interaction::application_command::TryFromInteractionError;
+use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError};
+use crate::{APPLICATION_ID, assets, STATE};
 
 pub const NAME: &str = "target-bots";
 pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
@@ -56,6 +62,60 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: &Interaction,
     TargetBotsSubCommand { allow }: TargetBotsSubCommand
-) -> Result<(), ConfigActionError> {
-    todo!()
+) -> Result<(), HandleApplicationCommandError> {
+    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    let mut guild_configs = STATE.guild_configs.write().await;
+    let mut config = guild_configs.entry(guild_id).or_default().target_bots;
+
+    let (serious_res, snarky_res) = match (allow, config) {
+        // No update is set, only retrieving info
+        (None, None) => (
+            "Targeting bots is currently unset. (default: `allowed`)",
+            "I don't care if you're a bot or not!"
+        ),
+        (None, Some(true)) => (
+            "Targeting bots is allowed.",
+            "I will dropkick even your roomba!"
+        ),
+        (None, Some(false)) => (
+            "Targeting bots is forbidden.",
+            "Fine, I won't kick your radio."
+        ),
+
+        // Allow taking down bots
+        (Some(true), None) => (
+            "Targeting bots is allowed. Previously unset.",
+            "You feel bad for me? I don't even know if you're alive!"
+        ),
+        (Some(true), Some(true)) => (
+            "Targeting bots is still allowed.",
+            "I will even take down MEE6!"
+        ),
+        (Some(true), Some(false)) => (
+            "Targeting bots is now allowed. Previously allowed.",
+            "Now the days of your digital friends are counted, loser!"
+        ),
+
+        // Disallow taking down bots
+        (Some(false), None) => ("Targeting bots is forbidden. Previously unset.", "Boring!"),
+        (Some(false), Some(true)) => (
+            "Targeting bots is now forbidden. Previously allowed.",
+            "Do you miss your digital friends, loser?!"
+        ),
+        (Some(false), Some(false)) => ("Targeting bots is still forbidden.", "Are you scared?!")
+    };
+
+    if let Some(update) = allow {
+        config.replace(update);
+    }
+
+    let embed = EmbedBuilder::new().title(serious_res).description(snarky_res).color(assets::colors::PRIMARY).build();
+    let response_data = InteractionResponseDataBuilder::new().embeds([embed]).build();
+
+    STATE.http.interaction(APPLICATION_ID).create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+        kind: InteractionResponseType::ChannelMessageWithSource,
+        data: response_data.into(),
+    }).await?;
+
+    Ok(())
 }

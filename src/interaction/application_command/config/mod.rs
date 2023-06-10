@@ -15,10 +15,10 @@ use twilight_model::application::interaction::application_command::{
 use twilight_model::application::interaction::Interaction;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::impl_from_variant;
 use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";

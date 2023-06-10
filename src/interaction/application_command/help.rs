@@ -14,7 +14,8 @@ use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
-use crate::{trim, APPLICATION_ID, STATE};
+use crate::util::trim::trim;
+use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";

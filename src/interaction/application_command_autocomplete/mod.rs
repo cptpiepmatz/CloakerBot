@@ -1,7 +1,7 @@
 use twilight_model::application::interaction::Interaction;
 
-use crate::impl_from_variant;
 use crate::interaction::HandleInteractionError;
+use crate::util::impl_from_variant::impl_from_variant;
 
 #[derive(Debug)]
 pub enum HandleApplicationCommandAutocompleteError {}

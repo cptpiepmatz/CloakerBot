@@ -34,7 +34,6 @@ pub fn log_level() -> LogLevel {
 macro_rules! loggers {
     ($(($name:literal, $macro:ident, $level:ident, $color:literal)),*) => {
         $(
-            #[macro_export]
             macro_rules! $macro {
                 ($msg:expr) => {{
                     use std::io::IsTerminal;
@@ -67,6 +66,8 @@ loggers!(
     ("DEBUG", debug, Debug, "cyan"),
     ("LOG", log, Info, "blue"),
     ("INFO", info, Info, "green"),
-    ("WARN", warn, Warn, "yellow"),
+    ("WARN", warn_macro, Warn, "yellow"),
     ("ERROR", error, Error, "red")
 );
+
+pub(crate) use {debug, error, info, log, warn_macro as warn};

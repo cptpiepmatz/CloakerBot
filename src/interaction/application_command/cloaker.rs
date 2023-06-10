@@ -11,10 +11,10 @@ use twilight_model::id::marker::UserMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
-use crate::impl_from_variant;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";

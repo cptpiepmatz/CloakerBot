@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! impl_from_variant {
     ($from:ty, $into:ty, $variant:ident $(,$($generic:ident),*)?) => {
         impl$(<$($generic)*>)? From<$from> for $into {
@@ -8,3 +7,5 @@ macro_rules! impl_from_variant {
         }
     };
 }
+
+pub(crate) use impl_from_variant;
