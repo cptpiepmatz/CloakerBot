@@ -1,6 +1,7 @@
-use std::iter;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::{io, iter};
 
 use const_format::str_replace;
 use futures::stream::{select, StreamExt};
@@ -12,17 +13,19 @@ use twilight_http::client::Client as HttpClient;
 use twilight_model::application::interaction::application_command;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
-use twilight_model::id::marker::{ApplicationMarker, UserMarker};
+use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
+use crate::data::config::GuildConfig;
+use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::OnceLockExpect;
 
 mod assets;
+pub mod data;
 mod interaction;
 mod sync;
 mod util;
-mod data;
 
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = trim!(include_str!("../dev.token"));
@@ -47,7 +50,8 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
-    http: Arc<HttpClient>
+    http: Arc<HttpClient>,
+    guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -62,13 +66,24 @@ enum BotEvent {
 #[tokio::main]
 async fn main() {
     let http = Arc::new(HttpClient::new(DISCORD_TOKEN.to_owned()));
-    OnceLockExpect::set(&STATE, State { http });
+    OnceLockExpect::set(&STATE, State {
+        http,
+        guild_configs: PersistentData::load()
+            .await
+            .expect("load should work")
+            .unwrap_or_default()
+    });
+
+    {
+        let guild_id: Id<GuildMarker> = Id::new(581884294495207444);
+        let mut guild_configs = STATE.guild_configs.write().await;
+        let guild_config = guild_configs.entry(guild_id).or_default();
+        guild_config.target_bots = true.into();
+    }
 
     interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
         .await
         .expect("registering commands is necessary");
-
-    return;
 
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let discord_events =
@@ -92,7 +107,8 @@ async fn main() {
 #[derive(Debug)]
 enum HandleEventError {
     Fatal,
-    Discord(HandleDiscordEventError)
+    Discord(HandleDiscordEventError),
+    Persist(io::Error)
 }
 
 async fn handle_event(event: BotEvent) {
@@ -103,8 +119,8 @@ async fn handle_event(event: BotEvent) {
                 Err(source) if source.is_fatal() => return Err(HandleEventError::Fatal),
                 Err(_) => ()
             },
-            BotEvent::RandomCheck => todo!(),
-            BotEvent::PersistData => todo!()
+            BotEvent::RandomCheck => (), // TODO: handle random checks
+            BotEvent::PersistData => handle_persist_data().await?
         };
 
         Ok(())

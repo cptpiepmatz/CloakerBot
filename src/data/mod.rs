@@ -14,7 +14,7 @@ pub struct PersistentData<T> {
 
 use persist::Persist;
 
-use crate::impl_from_variant;
+use crate::{impl_from_variant, STATE};
 
 mod persist {
     // public interfaces require public types, this makes the `Persist` trait public
@@ -105,3 +105,11 @@ pub enum LoadPersistentDataError {
 
 impl_from_variant!(serde_json::Error, LoadPersistentDataError, SerdeJson);
 impl_from_variant!(io::Error, LoadPersistentDataError, Io);
+
+impl_from_variant!(io::Error, super::HandleEventError, Persist);
+
+pub async fn handle_persist_data() -> io::Result<()> {
+    STATE.guild_configs.store().await?;
+
+    Ok(())
+}
