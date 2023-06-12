@@ -3,7 +3,8 @@ use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::Embed;
+use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle};
+use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
@@ -13,8 +14,11 @@ use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::data::config::GuildConfig;
 use crate::interaction::application_command::config::ConfigActionError;
-use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError};
-use crate::{APPLICATION_ID, assets, STATE};
+use crate::interaction::application_command::{
+    HandleApplicationCommandError, TryFromInteractionError
+};
+use crate::interaction::message_component;
+use crate::{assets, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "target-bots";
 pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
@@ -65,9 +69,9 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let mut guild_configs = STATE.guild_configs.write().await;
-    let mut config = guild_configs.entry(guild_id).or_default().target_bots;
+    let mut config = &mut guild_configs.entry(guild_id).or_default().target_bots;
 
-    let (serious_res, snarky_res) = match (allow, config) {
+    let (serious_res, snarky_res) = match (allow, &config) {
         // No update is set, only retrieving info
         (None, None) => (
             "Targeting bots is currently unset. (default: `allowed`)",
@@ -109,13 +113,34 @@ pub async fn action(
         config.replace(update);
     }
 
-    let embed = EmbedBuilder::new().title(serious_res).description(snarky_res).color(assets::colors::PRIMARY).build();
-    let response_data = InteractionResponseDataBuilder::new().embeds([embed]).build();
+    let embed = EmbedBuilder::new()
+        .title(serious_res)
+        .description(snarky_res)
+        .color(assets::colors::PRIMARY)
+        .build();
+    let button = message_component::button::config::component(
+        message_component::button::config::ConfigUnsetButton::TargetBots
+    );
+    let response_data = InteractionResponseDataBuilder::new()
+        .embeds([embed])
+        .flags(MessageFlags::EPHEMERAL)
+        .components([Component::ActionRow(ActionRow {
+            components: vec![button]
+        })])
+        .build();
 
-    STATE.http.interaction(APPLICATION_ID).create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
-        kind: InteractionResponseType::ChannelMessageWithSource,
-        data: response_data.into(),
-    }).await?;
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .create_response(
+            interaction.id,
+            interaction.token.as_str(),
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: response_data.into()
+            }
+        )
+        .await?;
 
     Ok(())
 }

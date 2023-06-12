@@ -36,7 +36,7 @@ pub async fn handle_interaction(
 ) -> Result<(), HandleInteractionError> {
     let interaction: &Interaction = interaction_create;
     match interaction.kind {
-        InteractionType::MessageComponent => handle_message_component(interaction)?,
+        InteractionType::MessageComponent => handle_message_component(interaction).await?,
 
         InteractionType::ApplicationCommand => handle_application_command(interaction).await?,
         InteractionType::ApplicationCommandAutocomplete => {
