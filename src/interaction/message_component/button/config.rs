@@ -43,7 +43,7 @@ impl ToString for ConfigUnsetButton {
 }
 
 impl TryFrom<MessageComponentCustomId> for ConfigUnsetButton {
-    type Error = ConfigActionError;
+    type Error = ConfigButtonActionError;
 
     fn try_from(value: MessageComponentCustomId) -> Result<Self, Self::Error> {
         use ConfigUnsetButton::*;
@@ -55,7 +55,7 @@ impl TryFrom<MessageComponentCustomId> for ConfigUnsetButton {
             ConfigUnsetLogChannel => LogChannel,
             ConfigUnsetRandom => Random,
             ConfigUnsetTargetBots => TargetBots,
-            c_id => return Err(ConfigActionError::UnexpectedCustomId(c_id))
+            c_id => return Err(ConfigButtonActionError::UnexpectedCustomId(c_id))
         })
     }
 }
@@ -74,18 +74,24 @@ pub fn component(variant: ConfigUnsetButton) -> Component {
 }
 
 #[derive(Debug)]
-pub enum ConfigActionError {
+pub enum ConfigButtonActionError {
     NotInGuild,
     UnexpectedCustomId(MessageComponentCustomId)
 }
 
-impl_from_variant!(ConfigActionError, HandleMessageComponentError, ConfigAction);
+impl_from_variant!(
+    ConfigButtonActionError,
+    HandleMessageComponentError,
+    ConfigButtonAction
+);
 
 pub async fn action(
     interaction: &Interaction,
     custom_id: MessageComponentCustomId
 ) -> Result<(), HandleMessageComponentError> {
-    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    let guild_id = interaction
+        .guild_id
+        .ok_or(ConfigButtonActionError::NotInGuild)?;
     let mut guild_configs = STATE.guild_configs.write().await;
     let guild_config = guild_configs.entry(guild_id).or_default();
 
