@@ -1,14 +1,28 @@
+use std::env::var;
+
+use serde_json::json;
+use twilight_http::request::application::interaction::CreateResponse;
+use twilight_http::request::RequestBuilder;
+use twilight_http::routing::Route;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::component::{ActionRow, ComponentType};
+use twilight_model::channel::message::{Component, MessageFlags};
+use twilight_model::http::interaction::InteractionResponseType;
 use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
 use crate::interaction::application_command::config::ConfigActionError;
-use crate::interaction::application_command::TryFromInteractionError;
+use crate::interaction::application_command::{
+    HandleApplicationCommandError, TryFromInteractionError
+};
+use crate::interaction::message_component;
+use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
+use crate::STATE;
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -83,6 +97,48 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: &Interaction,
     command: ImmunitySubCommand
-) -> Result<(), ConfigActionError> {
-    todo!()
+) -> Result<(), HandleApplicationCommandError> {
+    let variant = match command {
+        ImmunitySubCommand::General => ImmunitySelect::General,
+        ImmunitySubCommand::Random => ImmunitySelect::Random
+    };
+    let role_select = message_component::role_select::immunity::component(variant);
+    let button = message_component::button::config::component(match variant {
+        ImmunitySelect::General => {
+            message_component::button::config::ConfigUnsetButton::ImmunityGeneral
+        }
+        ImmunitySelect::Random => {
+            message_component::button::config::ConfigUnsetButton::ImmunityRandom
+        }
+    });
+
+    let payload = json!({
+        "type": InteractionResponseType::ChannelMessageWithSource,
+        "data": {
+            "flags": MessageFlags::EPHEMERAL,
+            "components": [
+                {
+                    "type": ComponentType::ActionRow,
+                    "components": [role_select]
+                },
+                {
+                    "type": ComponentType::ActionRow,
+                    "components": [button]
+                }
+            ]
+        }
+    });
+
+    let request = RequestBuilder::new(&Route::InteractionCallback {
+        interaction_id: interaction.id.into(),
+        interaction_token: interaction.token.as_str()
+    })
+    .json(&payload)
+    .expect("payload is serializable")
+    .use_authorization_token(true)
+    .build();
+
+    STATE.http.request::<CreateResponse<'_>>(request).await?;
+
+    Ok(())
 }

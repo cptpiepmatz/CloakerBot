@@ -1,0 +1,152 @@
+use std::env::var;
+use std::num::ParseIntError;
+
+use serde_json::{json, Value};
+use twilight_mention::Mention;
+use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
+use twilight_model::application::interaction::{Interaction, InteractionData};
+use twilight_model::channel::message::component::{Button, ButtonStyle};
+use twilight_model::channel::message::embed::EmbedField;
+use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
+use twilight_model::channel::ChannelType;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
+use twilight_model::id::marker::{ChannelMarker, RoleMarker};
+use twilight_model::id::Id;
+use twilight_util::builder::embed::EmbedBuilder;
+use twilight_util::builder::InteractionResponseDataBuilder;
+
+use crate::interaction::message_component::custom_id::{
+    MessageComponentCustomId, ParseMessageComponentCustomIdError
+};
+use crate::interaction::message_component::HandleMessageComponentError;
+use crate::util::impl_from_variant::impl_from_variant;
+use crate::{assets, APPLICATION_ID, STATE};
+
+#[derive(Debug, Copy, Clone)]
+pub enum ImmunitySelect {
+    General,
+    Random
+}
+
+impl ToString for ImmunitySelect {
+    fn to_string(&self) -> String {
+        use ImmunitySelect::*;
+        use MessageComponentCustomId::*;
+        (match self {
+            General => ImmunityGeneralSelect,
+            Random => ImmunityRandomSelect
+        })
+        .to_string()
+    }
+}
+
+impl TryFrom<MessageComponentCustomId> for ImmunitySelect {
+    type Error = ImmunitySelectActionError;
+
+    fn try_from(value: MessageComponentCustomId) -> Result<Self, Self::Error> {
+        use ImmunitySelect::*;
+        use MessageComponentCustomId::*;
+        Ok(match value {
+            ImmunityGeneralSelect => General,
+            ImmunityRandomSelect => Random,
+            c_id => return Err(ImmunitySelectActionError::UnexpectedCustomId(c_id))
+        })
+    }
+}
+
+pub fn component(variant: ImmunitySelect) -> Value {
+    // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
+    json!({
+        // select menu for channel select
+        "type": 6,
+        "custom_id": variant.to_string(),
+        "min_values": 0,
+        "max_values": 25,
+        "placeholder": "🛡️ Select roles to be immune."
+    })
+}
+
+#[derive(Debug)]
+pub enum ImmunitySelectActionError {
+    NotInGuild,
+    UnexpectedCustomId(MessageComponentCustomId),
+    InvalidValues(Vec<String>)
+}
+
+impl_from_variant!(
+    ImmunitySelectActionError,
+    HandleMessageComponentError,
+    ImmunitySelectAction
+);
+
+pub async fn action(
+    interaction: &Interaction,
+    custom_id: MessageComponentCustomId,
+    data: &MessageComponentInteractionData
+) -> Result<(), HandleMessageComponentError> {
+    let guild_id = interaction
+        .guild_id
+        .ok_or(ImmunitySelectActionError::NotInGuild)?;
+
+    let variant = ImmunitySelect::try_from(custom_id)?;
+
+    type RoleId = Id<RoleMarker>;
+    let roles: Result<Vec<RoleId>, _> = data.values.iter().map(|v| v.parse::<RoleId>()).collect();
+    let roles = roles.map_err(|_| ImmunitySelectActionError::InvalidValues(data.values.clone()))?;
+
+    let mut guild_configs = STATE.guild_configs.write().await;
+    let guild_config = guild_configs.entry(guild_id).or_default();
+    match variant {
+        ImmunitySelect::General => guild_config.immunity.general = roles.clone(),
+        ImmunitySelect::Random => guild_config.immunity.random = roles.clone()
+    }
+
+    let embed_builder = EmbedBuilder::new().color(assets::colors::PRIMARY);
+    let embed: Embed;
+    if roles.is_empty() {
+        embed = embed_builder
+            .title(match variant {
+                ImmunitySelect::General => "No roles selected for general immunity.",
+                ImmunitySelect::Random => "No roles selected for random immunity."
+            })
+            .description("I get all of you!.")
+            .build();
+    }
+    else {
+        let mut roles_field_content = String::new();
+        for role in roles {
+            roles_field_content.push_str(format!("{}\n", role.mention()).as_str());
+        }
+        embed = embed_builder
+            .title(match variant {
+                ImmunitySelect::General => "Set roles to be immune to all takedowns.",
+                ImmunitySelect::Random => "Set roles to be immune to random takedowns."
+            })
+            .description("Okay, these are losers.")
+            .field(EmbedField {
+                inline: false,
+                name: "Roles".to_string(),
+                value: roles_field_content
+            })
+            .build();
+    }
+
+    let data = InteractionResponseDataBuilder::new()
+        .flags(MessageFlags::EPHEMERAL)
+        .embeds([embed])
+        .build();
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .create_response(
+            interaction.id,
+            interaction.token.as_str(),
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(data)
+            }
+        )
+        .await?;
+
+    Ok(())
+}

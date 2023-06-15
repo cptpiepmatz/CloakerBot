@@ -1,16 +1,16 @@
-use std::str::FromStr;
-
 use twilight_model::application::interaction::{Interaction, InteractionData};
 
 use crate::interaction::message_component::button::config::ConfigButtonActionError;
 use crate::interaction::message_component::channel_select::danger_zones::DangerZonesSelectActionError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
+use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
 use crate::interaction::HandleInteractionError;
 use crate::util::impl_from_variant::impl_from_variant;
 
 pub mod button;
 pub mod channel_select;
 mod custom_id;
+pub mod role_select;
 
 #[derive(Debug)]
 pub enum HandleMessageComponentError {
@@ -19,6 +19,7 @@ pub enum HandleMessageComponentError {
 
     ConfigButtonAction(ConfigButtonActionError),
     DangerZonesSelectAction(DangerZonesSelectActionError),
+    ImmunitySelectAction(ImmunitySelectActionError),
 
     Http(twilight_http::Error)
 }
@@ -48,6 +49,9 @@ pub async fn handle_message_component(
         ConfigUnsetRandom |
         ConfigUnsetTargetBots => button::config::action(interaction, custom_id).await,
 
-        DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await
+        DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await,
+        ImmunityGeneralSelect | ImmunityRandomSelect => {
+            role_select::immunity::action(interaction, custom_id, data).await
+        }
     }
 }

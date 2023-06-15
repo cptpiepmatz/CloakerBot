@@ -13,7 +13,9 @@ pub enum MessageComponentCustomId {
     ConfigUnsetRandom,
     ConfigUnsetTargetBots,
 
-    DangerZonesSelect
+    DangerZonesSelect,
+    ImmunityGeneralSelect,
+    ImmunityRandomSelect,
 }
 
 const CONFIG_UNSET_DANGER_ZONES: &str = "config_unset_danger_zones";
@@ -24,6 +26,8 @@ const CONFIG_UNSET_RANDOM: &str = "config_unset_random";
 const CONFIG_UNSET_TARGET_BOTS: &str = "config_unset_target_bots";
 
 const DANGER_ZONES_SELECT: &str = "danger_zones_select";
+const IMMUNITY_GENERAL_SELECT: &str = "immunity_general_select";
+const IMMUNITY_RANDOM_SELECT: &str = "immunity_random_select";
 
 impl ToString for MessageComponentCustomId {
     fn to_string(&self) -> String {
@@ -36,7 +40,9 @@ impl ToString for MessageComponentCustomId {
             ConfigUnsetRandom => CONFIG_UNSET_RANDOM,
             ConfigUnsetTargetBots => CONFIG_UNSET_TARGET_BOTS,
 
-            DangerZonesSelect => DANGER_ZONES_SELECT
+            DangerZonesSelect => DANGER_ZONES_SELECT,
+            ImmunityGeneralSelect => IMMUNITY_GENERAL_SELECT,
+            ImmunityRandomSelect => IMMUNITY_RANDOM_SELECT
         })
     }
 }
@@ -59,6 +65,8 @@ impl FromStr for MessageComponentCustomId {
             CONFIG_UNSET_TARGET_BOTS => Ok(ConfigUnsetTargetBots),
 
             DANGER_ZONES_SELECT => Ok(DangerZonesSelect),
+            IMMUNITY_GENERAL_SELECT => Ok(ImmunityGeneralSelect),
+            IMMUNITY_RANDOM_SELECT => Ok(ImmunityRandomSelect),
 
             _ => Err(ParseMessageComponentCustomIdError {
                 unmatched: s.to_owned()

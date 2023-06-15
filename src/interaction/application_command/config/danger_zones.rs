@@ -8,12 +8,8 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
-use twilight_model::id::marker::GuildMarker;
-use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
-use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
