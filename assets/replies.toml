@@ -1,0 +1,15 @@
+[interaction.config.danger_zones]
+set = """
+## 🗑️ Unset Danger Zones
+No danger zones are set now.
+
+> {}
+"""
+
+unset = """
+## 📌 Configured Danger Zones
+Set the following channels as danger zones:
+{}
+
+> {}
+"""

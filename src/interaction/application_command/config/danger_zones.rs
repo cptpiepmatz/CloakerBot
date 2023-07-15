@@ -1,20 +1,26 @@
+use std::ops::Deref;
+
 use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
+use twilight_mention::fmt::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
+use twilight_model::id::marker::CommandMarker;
+use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::message_component;
-use crate::{APPLICATION_ID, STATE};
+use crate::interaction::{application_command, message_component};
+use crate::sync::OnceLockExpect;
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";
 pub const DESCRIPTION: &str = "Define your danger zones.";
@@ -41,7 +47,7 @@ pub fn chat_input() -> CommandOption {
 
 pub async fn action(
     interaction: &Interaction,
-    command: DangerZonesSubCommand
+    _command: DangerZonesSubCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let channel_select = message_component::channel_select::danger_zones::component();
     let button = message_component::button::config::component(
@@ -52,6 +58,18 @@ pub async fn action(
         "type": InteractionResponseType::ChannelMessageWithSource,
         "data": {
             "flags": MessageFlags::EPHEMERAL,
+            "content": format!("
+## 🛠️ Configure Danger Zones
+Select danger zones to be observed by the {}.
+For more info use {}.
+            ",
+                BOT_USER_ID.mention(),
+                format!(
+                    "</{}:{}>",
+                    application_command::help::NAME,
+                    OnceLockExpect::deref(&application_command::help::ID)
+                )
+            ),
             "components": [
                 {
                     "type": ComponentType::ActionRow,

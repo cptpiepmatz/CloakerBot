@@ -21,6 +21,10 @@ use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::impl_from_variant::impl_from_variant;
 use crate::{assets, APPLICATION_ID, STATE};
 
+const CLOAKER_QUOTE_CHANNELS: &str =
+    "Welcome to the arena of your demise, where pain becomes your only companion.";
+const CLOAKER_QUOTE_NO_CHANNELS: &str = "No longer my turf, but don’t mistake absence for safety.";
+
 pub fn component() -> Value {
     // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
     json!({
@@ -63,33 +67,36 @@ pub async fn action(
     let guild_config = guild_configs.entry(guild_id).or_default();
     guild_config.danger_zones = channels.clone();
 
-    let embed_builder = EmbedBuilder::new().color(assets::colors::PRIMARY);
-    let mut embed: Embed;
-    if channels.is_empty() {
-        embed = embed_builder
-            .title("No channel set as danger zones.")
-            .description("Don't think you're safe in there.")
-            .build();
-    }
-    else {
-        let mut channels_field_content = String::new();
-        for channel in channels {
-            channels_field_content.push_str(format!("{}\n", channel.mention()).as_str());
-        }
-        embed = embed_builder
-            .title("Set channels as danger zones.")
-            .description("I will have my fun in there!")
-            .field(EmbedField {
-                inline: false,
-                name: "Channels".to_string(),
-                value: channels_field_content
-            })
-            .build();
-    }
+    let content = match channels.is_empty() {
+        true => format!(
+            "
+## 🗑️ Unset Danger Zones
+No danger zones are set now.
+
+> {}
+            ",
+            CLOAKER_QUOTE_NO_CHANNELS
+        ),
+        false => format!(
+            "
+## 📌 Configured Danger Zones
+Set the following channels as danger zones:
+{}
+
+> {}
+        ",
+            channels
+                .iter()
+                .map(|c_id| format!("- {}", c_id.mention()))
+                .collect::<Vec<String>>()
+                .join("\n"),
+            CLOAKER_QUOTE_CHANNELS
+        )
+    };
 
     let data = InteractionResponseDataBuilder::new()
         .flags(MessageFlags::EPHEMERAL)
-        .embeds([embed])
+        .content(content)
         .build();
     STATE
         .http

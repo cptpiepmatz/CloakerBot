@@ -8,7 +8,7 @@ use twilight_model::channel::message::component::ActionRow;
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::channel::ChannelType;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{ChannelMarker, GuildMarker};
+use twilight_model::id::marker::{ChannelMarker, CommandMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
@@ -18,10 +18,14 @@ use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::message_component;
+use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "log-channel";
 pub const DESCRIPTION: &str = "Define your log channel.";
+
+pub const CLOAKER_QUOTE_LOG_CHANNEL: &str =
+    "I'd rather eat glass than report in, but hey, let’s not disappoint the bureaucracy.";
 
 pub struct LogChannelSubCommand {
     channel: Option<InteractionChannel>

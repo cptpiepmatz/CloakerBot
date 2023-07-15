@@ -6,6 +6,8 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::id::Id;
+use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
@@ -16,6 +18,7 @@ use crate::interaction::application_command::{
 };
 use crate::util::trim::trim;
 use crate::{APPLICATION_ID, STATE};
+use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
@@ -28,6 +31,7 @@ pub const CHOICES: [&str; 7] = [
     counter::NAME,
     ranks::NAME
 ];
+pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
 
 pub enum HelpCommand {
     All,

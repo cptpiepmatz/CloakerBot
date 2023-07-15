@@ -12,7 +12,7 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
-use twilight_model::id::marker::GuildMarker;
+use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
@@ -22,6 +22,7 @@ use crate::interaction::application_command::{
 };
 use crate::interaction::message_component;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
+use crate::sync::OnceLockExpect;
 use crate::STATE;
 
 pub const NAME: &str = "immunity";

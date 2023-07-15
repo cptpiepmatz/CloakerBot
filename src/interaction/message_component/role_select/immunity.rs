@@ -22,6 +22,9 @@ use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::impl_from_variant::impl_from_variant;
 use crate::{assets, APPLICATION_ID, STATE};
 
+const CLOAKER_QUOTE_ROLES: &str = "It's like they're wrapped in bubble wrap. Oh, how I want to pop those bubbles.";
+const CLOAKER_QUOTE_NO_ROLES: &str = "Welcome back to the arena. Your immunity vacation is officially over.";
+
 #[derive(Debug, Copy, Clone)]
 pub enum ImmunitySelect {
     General,

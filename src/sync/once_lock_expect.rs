@@ -9,14 +9,18 @@ impl<T> OnceLockExpect<T>
 where
     T: Debug
 {
+    pub const fn new() -> OnceLockExpect<T> {
+        OnceLockExpect(OnceLock::new())
+    }
+
     pub fn set(once: &Self, value: T) {
         once.0
             .set(value)
             .expect("set should only be used initially")
     }
 
-    pub const fn new() -> OnceLockExpect<T> {
-        OnceLockExpect(OnceLock::new())
+    pub fn is_initialized(once: &Self) -> bool {
+        once.0.get().is_some()
     }
 }
 

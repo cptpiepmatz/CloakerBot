@@ -7,17 +7,19 @@ use twilight_model::application::interaction::application_command::{
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::guild::Permissions;
-use twilight_model::id::marker::UserMarker;
+use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::sync::OnceLockExpect;
 use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
+pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
 
 #[derive(Debug)]
 pub struct CloakerCommand {

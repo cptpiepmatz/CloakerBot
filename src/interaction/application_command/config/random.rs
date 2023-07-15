@@ -3,15 +3,28 @@ use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::id::marker::GuildMarker;
+use twilight_model::channel::message::MessageFlags;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
+use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
+use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::interaction::application_command::config::ConfigActionError;
-use crate::interaction::application_command::TryFromInteractionError;
+use crate::interaction::application_command::ApplicationCommand::Config;
+use crate::interaction::application_command::{
+    HandleApplicationCommandError, TryFromInteractionError
+};
+use crate::sync::OnceLockExpect;
+use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
 pub const DESCRIPTION: &str = "Configure random takedown behavior.";
+
+pub const CLOAKER_QUOTE_TARGET_BOTS: &str =
+    "They just gave a tiger a free pass in a playground. Better run, kids!";
+pub const CLOAKER_QUOTE_NO_TARGET_BOTS: &str =
+    "No more free-for-all fireworks. The party-poopers have spoken.";
 
 pub struct RandomSubCommand {
     enable: Option<bool>,
@@ -94,6 +107,44 @@ pub fn chat_input() -> CommandOption {
 pub async fn action(
     interaction: &Interaction,
     RandomSubCommand { enable, min, max }: RandomSubCommand
-) -> Result<(), ConfigActionError> {
-    todo!()
+) -> Result<(), HandleApplicationCommandError> {
+    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    let mut guild_configs = STATE.guild_configs.write().await;
+    let guild_config = guild_configs.entry(guild_id).or_default();
+
+    let current = &guild_config.random.clone();
+
+    if let Some(enable) = enable {
+        guild_config.random.enabled = Some(enable);
+    }
+
+    if let Some(min) = min {
+        guild_config.random.min = Some(min);
+    }
+
+    if let Some(max) = max {
+        guild_config.random.max = Some(max);
+    }
+
+    let content = "updated";
+
+    let response_data = InteractionResponseDataBuilder::new()
+        .flags(MessageFlags::EPHEMERAL)
+        .content(content)
+        .build();
+
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .create_response(
+            interaction.id,
+            interaction.token.as_str(),
+            &InteractionResponse {
+                kind: InteractionResponseType::ChannelMessageWithSource,
+                data: Some(response_data)
+            }
+        )
+        .await?;
+
+    Ok(())
 }

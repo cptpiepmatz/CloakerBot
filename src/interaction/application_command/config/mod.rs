@@ -13,15 +13,19 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::id::marker::CommandMarker;
+use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::sync::OnceLockExpect;
 use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
+pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
 
 pub enum ConfigCommand {
     DangerZones(danger_zones::DangerZonesSubCommand),

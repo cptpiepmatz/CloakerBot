@@ -23,6 +23,11 @@ use crate::{assets, APPLICATION_ID, STATE};
 pub const NAME: &str = "target-bots";
 pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
 
+pub const CLOAKER_QUOTE_TARGET_BOTS: &str =
+    "So I've got to play nice with the tin cans, huh? Just don’t expect me to oil them up.";
+pub const CLOAKER_QUOTE_NO_TARGET_BOTS: &str =
+    "Tin cans are back on the menu! Let's see what these robots are really made of.";
+
 pub struct TargetBotsSubCommand {
     allow: Option<bool>
 }

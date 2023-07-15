@@ -1,11 +1,15 @@
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
+use twilight_model::id::Id;
+use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::interaction::application_command::TryFromInteractionError;
+use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "ranks";
 pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
+pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
 
 #[derive(Debug)]
 pub struct RanksCommand;

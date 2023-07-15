@@ -1,4 +1,7 @@
 use rand::Rng;
+use toml::Table;
+
+// pub static REPLIES: Table = toml::toml!(include_str!())
 
 pub fn select<'r>(replies: &[&'r str]) -> &'r str {
     let index = rand::thread_rng().gen_range(0..replies.len());

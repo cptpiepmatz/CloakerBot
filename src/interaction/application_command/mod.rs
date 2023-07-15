@@ -1,8 +1,11 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
+use twilight_http::response::DeserializeBodyError;
+use twilight_model::application::command::Command;
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
@@ -19,6 +22,7 @@ use crate::interaction::application_command::counter::CounterCommand;
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
 use crate::interaction::HandleInteractionError;
+use crate::sync::OnceLockExpect;
 use crate::util::impl_from_variant::impl_from_variant;
 use crate::{APPLICATION_ID, STATE};
 
@@ -126,10 +130,21 @@ impl_from_variant!(
     TryFromInteraction
 );
 
-pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), TwilightHttpError> {
-    // TODO: register commands globally instead
-    let _res = client
-        .set_guild_commands(Id::new(581884294495207444), &[
+#[derive(Debug)]
+pub enum RegisterCommandsError {
+    Http(TwilightHttpError),
+    DeserializeBody(DeserializeBodyError),
+    MissingRegistries(Vec<Command>)
+}
+
+impl_from_variant!(TwilightHttpError, RegisterCommandsError, Http);
+impl_from_variant!(DeserializeBodyError, RegisterCommandsError, DeserializeBody);
+
+pub async fn register_commands(
+    client: &InteractionClient<'_>
+) -> Result<(), RegisterCommandsError> {
+    let commands = client
+        .set_global_commands(&[
             cloaker::chat_input(),
             cloaker::user_context_menu(),
             cloaker::message_context_menu(),
@@ -140,8 +155,43 @@ pub async fn register_commands(client: &InteractionClient<'_>) -> Result<(), Twi
             ranks::chat_input(),
             help::chat_input()
         ])
+        .await?
+        .models()
         .await?;
-    Ok(())
+
+    let mut command_map = HashMap::new();
+    for command in commands.iter() {
+        // insert newest version of a command into the map
+        let mapped_command = command_map
+            .entry(command.name.as_str())
+            .or_insert(command.clone());
+        if mapped_command.version.into_nonzero() < command.version.into_nonzero() {
+            command_map.insert(command.name.as_str(), command.clone());
+        }
+    }
+
+    for (command_name, command) in command_map {
+        if let None = command.guild_id {
+            match (command_name, command.id) {
+                (config::NAME, Some(command_id)) => OnceLockExpect::set(&config::ID, command_id),
+                (cloaker::NAME, Some(command_id)) => OnceLockExpect::set(&cloaker::ID, command_id),
+                (counter::NAME, Some(command_id)) => OnceLockExpect::set(&counter::ID, command_id),
+                (help::NAME, Some(command_id)) => OnceLockExpect::set(&help::ID, command_id),
+                (ranks::NAME, Some(command_id)) => OnceLockExpect::set(&ranks::ID, command_id),
+                _ => ()
+            }
+        }
+    }
+
+    match OnceLockExpect::is_initialized(&config::ID) &&
+        OnceLockExpect::is_initialized(&cloaker::ID) &&
+        OnceLockExpect::is_initialized(&counter::ID) &&
+        OnceLockExpect::is_initialized(&help::ID) &&
+        OnceLockExpect::is_initialized(&ranks::ID)
+    {
+        true => Ok(()),
+        false => Err(RegisterCommandsError::MissingRegistries(commands))
+    }
 }
 
 #[derive(Debug)]

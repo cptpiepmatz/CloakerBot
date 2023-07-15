@@ -5,11 +5,15 @@ use std::{io, iter};
 
 use const_format::str_replace;
 use futures::stream::{select, StreamExt};
+use serde_json::Value;
 use tokio_stream::wrappers::IntervalStream;
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
 use twilight_http::client::Client as HttpClient;
+use twilight_http::request::Request;
+use twilight_http::routing::Route;
+use twilight_http::Response;
 use twilight_model::application::interaction::application_command;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
