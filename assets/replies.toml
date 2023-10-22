@@ -5,14 +5,14 @@ Select danger zones to be observed by the {}.
 For more info use {}.
 """
 
-set = """
+unset = """
 ## 🗑️ Unset Danger Zones
 No danger zones are set now.
 
 > {}
 """
 
-unset = """
+set = """
 ## 📌 Configured Danger Zones
 Set the following channels as danger zones:
 {}

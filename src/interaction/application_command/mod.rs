@@ -44,7 +44,8 @@ impl TryFrom<&Interaction> for ApplicationCommand {
     type Error = TryFromInteractionError;
 
     fn try_from(interaction: &Interaction) -> Result<Self, Self::Error> {
-        let Some(InteractionData::ApplicationCommand(data)) = &interaction.data else {
+        let Some(InteractionData::ApplicationCommand(data)) = &interaction.data
+        else {
             return Err(TryFromInteractionError::NoApplicationCommand);
         };
 

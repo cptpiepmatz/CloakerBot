@@ -14,16 +14,14 @@ use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::{QUOTES, REPLIES};
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::impl_from_variant::impl_from_variant;
-use crate::{assets, APPLICATION_ID, STATE};
-
-const CLOAKER_QUOTE_CHANNELS: &str =
-    "Welcome to the arena of your demise, where pain becomes your only companion.";
-const CLOAKER_QUOTE_NO_CHANNELS: &str = "No longer my turf, but don’t mistake absence for safety.";
+use crate::util::template::Template;
+use crate::{APPLICATION_ID, STATE};
 
 pub fn component() -> Value {
     // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
@@ -68,30 +66,19 @@ pub async fn action(
     guild_config.danger_zones = channels.clone();
 
     let content = match channels.is_empty() {
-        true => format!(
-            "
-## 🗑️ Unset Danger Zones
-No danger zones are set now.
-
-> {}
-            ",
-            CLOAKER_QUOTE_NO_CHANNELS
-        ),
-        false => format!(
-            "
-## 📌 Configured Danger Zones
-Set the following channels as danger zones:
-{}
-
-> {}
-        ",
-            channels
+        true => REPLIES
+            .config
+            .danger_zones
+            .unset
+            .template([&QUOTES.config.danger_zones.no_channels]),
+        false => REPLIES.config.danger_zones.set.template([
+            &channels
                 .iter()
                 .map(|c_id| format!("- {}", c_id.mention()))
                 .collect::<Vec<String>>()
                 .join("\n"),
-            CLOAKER_QUOTE_CHANNELS
-        )
+            &QUOTES.config.danger_zones.channels
+        ])
     };
 
     let data = InteractionResponseDataBuilder::new()

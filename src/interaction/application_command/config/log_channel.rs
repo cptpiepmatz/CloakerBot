@@ -92,7 +92,8 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     // check if the channel is guild text or guild announcement
     if let Some(c) = &channel {
-        let (ChannelType::GuildText | ChannelType::GuildAnnouncement) = c.kind else {
+        let (ChannelType::GuildText | ChannelType::GuildAnnouncement) = c.kind
+        else {
             let content = format!("{} is not a valid log channel.", c.id.mention());
             let response_data = InteractionResponseDataBuilder::new()
                 .content(content)
@@ -112,7 +113,7 @@ pub async fn action(
                 )
                 .await?;
 
-            return Ok(())
+            return Ok(());
         };
     }
 

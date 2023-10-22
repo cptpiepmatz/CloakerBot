@@ -15,7 +15,7 @@ pub enum MessageComponentCustomId {
 
     DangerZonesSelect,
     ImmunityGeneralSelect,
-    ImmunityRandomSelect,
+    ImmunityRandomSelect
 }
 
 const CONFIG_UNSET_DANGER_ZONES: &str = "config_unset_danger_zones";

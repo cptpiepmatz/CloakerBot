@@ -39,12 +39,21 @@ impl TryFrom<&CommandData> for ConfigCommand {
     type Error = TryFromInteractionError;
 
     fn try_from(data: &CommandData) -> Result<Self, Self::Error> {
-        let Some(CommandDataOption {name, value}) = data.options.first() else {
-            return Err(TryFromInteractionError::MissingField {command: NAME.into(), field: "subcommand".into()})
+        let Some(CommandDataOption { name, value }) = data.options.first()
+        else {
+            return Err(TryFromInteractionError::MissingField {
+                command: NAME.into(),
+                field: "subcommand".into()
+            });
         };
 
-        let CommandOptionValue::SubCommand(options) = value else {
-            return Err(TryFromInteractionError::IncorrectFieldType {command: NAME.into(), field: "subcommand".into(), value: value.clone() })
+        let CommandOptionValue::SubCommand(options) = value
+        else {
+            return Err(TryFromInteractionError::IncorrectFieldType {
+                command: NAME.into(),
+                field: "subcommand".into(),
+                value: value.clone()
+            });
         };
 
         match name.as_str() {

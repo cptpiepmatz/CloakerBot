@@ -1,7 +1,7 @@
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
-use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
+use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
 use crate::interaction::application_command::TryFromInteractionError;

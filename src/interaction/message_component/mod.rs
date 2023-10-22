@@ -35,7 +35,8 @@ impl_from_variant!(twilight_http::Error, HandleMessageComponentError, Http);
 pub async fn handle_message_component(
     interaction: &Interaction
 ) -> Result<(), HandleMessageComponentError> {
-    let Some(InteractionData::MessageComponent(data)) = interaction.data.as_ref() else {
+    let Some(InteractionData::MessageComponent(data)) = interaction.data.as_ref()
+    else {
         return Err(HandleMessageComponentError::NoMessageComponent);
     };
 
