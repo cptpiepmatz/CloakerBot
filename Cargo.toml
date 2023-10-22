@@ -31,7 +31,7 @@ chrono = "0.4"
 const_format = { version = "0.2", features = ["rust_1_51"] }
 konst = "0.3"
 rand = "0.8"
-toml = "0.7"
+toml = "0.8"
 
 # logging
 [dependencies.paris]
