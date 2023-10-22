@@ -3,6 +3,10 @@ name = "cloaker-bot"
 version = "3.0.0"
 edition = "2021"
 
+[[bin]]
+name = "CloakerBot"
+path = "src/main.rs"
+
 [dependencies]
 
 # discord integration
