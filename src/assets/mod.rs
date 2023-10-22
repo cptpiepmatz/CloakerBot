@@ -1,6 +1,8 @@
-pub mod replies;
+use static_toml::static_toml;
+
 pub mod sounds;
 
-pub mod colors {
-    pub const PRIMARY: u32 = 0x49CE34;
+static_toml! {
+    pub static REPLIES = include_toml!("assets/replies.toml");
+    pub static COLORS = include_toml!("assets/colors.toml");
 }

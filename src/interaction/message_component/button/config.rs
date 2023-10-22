@@ -9,12 +9,13 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::COLORS;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::impl_from_variant::impl_from_variant;
-use crate::{assets, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ConfigUnsetButton {
@@ -136,7 +137,7 @@ pub async fn action(
     };
 
     let embed = EmbedBuilder::new()
-        .color(assets::colors::PRIMARY)
+        .color(COLORS.primary as u32)
         .title(serious_res)
         .description(snarky_res)
         .build();

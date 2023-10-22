@@ -1,4 +1,10 @@
-[interaction.config.danger_zones]
+[config.danger_zones]
+select = """
+## 🛠️ Configure Danger Zones
+Select danger zones to be observed by the {}.
+For more info use {}.
+"""
+
 set = """
 ## 🗑️ Unset Danger Zones
 No danger zones are set now.

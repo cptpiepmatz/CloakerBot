@@ -6,19 +6,19 @@ use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
-use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
+use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
-use crate::assets::colors;
+use crate::assets::COLORS;
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
+use crate::sync::OnceLockExpect;
 use crate::util::trim::trim;
 use crate::{APPLICATION_ID, STATE};
-use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
@@ -52,16 +52,18 @@ impl TryFrom<&CommandData> for HelpCommand {
     type Error = TryFromInteractionError;
 
     fn try_from(value: &CommandData) -> Result<Self, Self::Error> {
-        let Some(data) = value.options.first() else {
+        let Some(data) = value.options.first()
+        else {
             return Ok(Self::All);
         };
 
-        let CommandOptionValue::String(selected) = &data.value else {
+        let CommandOptionValue::String(selected) = &data.value
+        else {
             return Err(TryFromInteractionError::IncorrectFieldType {
                 command: NAME.to_owned(),
                 field: String::from("command"),
-                value: data.value.clone(),
-            })
+                value: data.value.clone()
+            });
         };
 
         match selected.as_str() {
@@ -141,7 +143,7 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     defer(&interaction).await?;
 
-    let embed = EmbedBuilder::new().color(colors::PRIMARY);
+    let embed = EmbedBuilder::new().color(COLORS.primary as u32);
 
     let embed = match command {
         HelpCommand::All => embed

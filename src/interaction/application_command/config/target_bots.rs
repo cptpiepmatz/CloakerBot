@@ -12,13 +12,14 @@ use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::COLORS;
 use crate::data::config::GuildConfig;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::message_component;
-use crate::{assets, APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "target-bots";
 pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
@@ -121,7 +122,7 @@ pub async fn action(
     let embed = EmbedBuilder::new()
         .title(serious_res)
         .description(snarky_res)
-        .color(assets::colors::PRIMARY)
+        .color(COLORS.primary as u32)
         .build();
     let button = message_component::button::config::component(
         message_component::button::config::ConfigUnsetButton::TargetBots

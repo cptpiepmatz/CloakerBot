@@ -15,11 +15,13 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
 
+use crate::assets::REPLIES;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::{application_command, message_component};
 use crate::sync::OnceLockExpect;
+use crate::util::template::Template;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";
@@ -58,18 +60,14 @@ pub async fn action(
         "type": InteractionResponseType::ChannelMessageWithSource,
         "data": {
             "flags": MessageFlags::EPHEMERAL,
-            "content": format!("
-## 🛠️ Configure Danger Zones
-Select danger zones to be observed by the {}.
-For more info use {}.
-            ",
-                BOT_USER_ID.mention(),
-                format!(
+            "content": REPLIES.config.danger_zones.select.template([
+                &BOT_USER_ID.mention(),
+                &format!(
                     "</{}:{}>",
                     application_command::help::NAME,
                     OnceLockExpect::deref(&application_command::help::ID)
                 )
-            ),
+            ]),
             "components": [
                 {
                     "type": ComponentType::ActionRow,
