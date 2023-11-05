@@ -13,3 +13,8 @@ no_roles = "I will find you!"
 [config.log_channel]
 channel = "I'd rather eat glass than report in, but hey, let’s not disappoint the bureaucracy."
 no_channel = "So you don't want reports? That's fine for me!"
+
+[config.random]
+# TODO: add nice quotes here
+enabled = "random quote"
+disabled = "quote for no random"

@@ -6,7 +6,7 @@ For more info use {}.
 """
 
 set = """
-## 📌 Configured Danger Zones
+## 🪤 Configured Danger Zones
 Set the following channels as danger zones:
 {}
 
@@ -86,3 +86,23 @@ Fallback channel is {} if {} is allowed to chat there.
 
 > {}
 """
+
+[config.random]
+disabled = """
+## 🛑 No Random Takedowns
+Random takedowns are **disabled**.
+
+> {}
+"""
+
+enabled = """
+## 💫 Random Takedowns Enabled
+Random takedowns are **enabled**.
+Takedowns are checked in an interval between **{}** hours and **{}** hours.
+
+For more info use {}.
+
+> {}
+"""
+
+

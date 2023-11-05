@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::ops::Deref;
+
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
@@ -10,12 +13,15 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::{QUOTES, REPLIES};
+use crate::data::config::GuildConfigRandom;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::ApplicationCommand::Config;
 use crate::interaction::application_command::{
-    HandleApplicationCommandError, TryFromInteractionError
+    self, HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
+use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
@@ -111,22 +117,49 @@ pub async fn action(
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let mut guild_configs = STATE.guild_configs.write().await;
     let guild_config = guild_configs.entry(guild_id).or_default();
+    let random = &guild_config.random;
 
-    let current = &guild_config.random.clone();
+    let (enabled, mut min, mut max) = match (enable, min, max) {
+        (Some(false), _, _) => (Some(false), None, None),
+        (Some(true), _, _) => (Some(true), random.max, random.min),
+        (None, None, None) => (random.enabled, random.min, random.max),
+        (_, Some(max), None) => (Some(true), Some(max), random.min),
+        (_, None, Some(min)) => (Some(true), random.min, Some(min)),
+        (_, Some(max), Some(min)) => (Some(true), Some(max), Some(min))
+    };
 
-    if let Some(enable) = enable {
-        guild_config.random.enabled = Some(enable);
+    if matches!(min, Some(m) if m < 0.0) {
+        min = None;
     }
 
-    if let Some(min) = min {
-        guild_config.random.min = Some(min);
+    if matches!(max, Some(m) if m < 0.0) {
+        max = None;
     }
 
-    if let Some(max) = max {
-        guild_config.random.max = Some(max);
+    guild_config.random = GuildConfigRandom { enabled, min, max };
+
+    fn format_f64(num: f64) -> String {
+        let mut formatted = format!("{:.2}", num);
+        let trimmed = formatted.trim_end_matches('0').trim_end_matches('.');
+        // by truncating here we can avoid to allocate a new string
+        formatted.truncate(trimmed.len());
+        formatted
     }
 
-    let content = "updated";
+    let content = match guild_config.random.enabled {
+        None | Some(false) => REPLIES
+            .config
+            .random
+            .disabled
+            .template([&QUOTES.config.random.enabled]),
+        Some(true) => REPLIES.config.random.enabled.template([
+            // TODO: somehow show default values here
+            &min.map(format_f64).unwrap_or("*[default min]*".into()),
+            &max.map(format_f64).unwrap_or("*[default max]*".into()),
+            application_command::help::MENTION.deref(),
+            &QUOTES.config.random.disabled
+        ])
+    };
 
     let response_data = InteractionResponseDataBuilder::new()
         .flags(MessageFlags::EPHEMERAL)
