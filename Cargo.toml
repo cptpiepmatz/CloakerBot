@@ -10,13 +10,13 @@ path = "src/main.rs"
 [dependencies]
 
 # discord integration
-twilight-cache-inmemory = "0.15"
-twilight-gateway = "0.15"
-twilight-http = "0.15"
-twilight-model = "0.15"
-twilight-mention = "0.15"
-twilight-util = { version = "0.15", features = ["builder"] }
-twilight-validate = "0.15"
+twilight-cache-inmemory = { version = "0.15", path = "../twilight/twilight-cache-inmemory" }
+twilight-gateway = { version = "0.15", path = "../twilight/twilight-gateway" }
+twilight-http = { version = "0.15", path = "../twilight/twilight-http" }
+twilight-model = { version = "0.15", path = "../twilight/twilight-model" }
+twilight-mention = { version = "0.15", path = "../twilight/twilight-mention" }
+twilight-util = { version = "0.15", features = ["builder"], path = "../twilight/twilight-util" }
+twilight-validate = { version = "0.15", path = "../twilight/twilight-validate" }
 
 # data serialization
 serde = { version = "1", features = ["derive"] }

@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use const_format::{concatcp, formatcp, str_replace};
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
@@ -18,7 +19,6 @@ use crate::interaction::application_command::{
 };
 use crate::sync::OnceLockExpect;
 use crate::util::trim::trim;
-use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
@@ -32,6 +32,7 @@ pub const CHOICES: [&str; 7] = [
     ranks::NAME
 ];
 pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub enum HelpCommand {
     All,

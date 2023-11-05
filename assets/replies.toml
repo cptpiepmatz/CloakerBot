@@ -1,7 +1,7 @@
 [config.danger_zones]
 select = """
 ## 🛠️ Configure Danger Zones
-Select danger zones to be observed by the {}.
+Select danger zones to be observed by {}.
 For more info use {}.
 """
 
@@ -15,6 +15,36 @@ No danger zones are set now.
 set = """
 ## 📌 Configured Danger Zones
 Set the following channels as danger zones:
+{}
+
+> {}
+"""
+
+[config.immunity.general]
+select = """
+## 🛠️ Configure General Immunity Roles
+Select what roles should be immune to all kind of takedowns by {}.
+For more info use {}.
+"""
+
+set = """
+## 🛡️ Configured General Immunity Roles
+The following roles are now immune to all takedowns by {}:
+{}
+
+> {}
+"""
+
+[config.immunity.random]
+select = """
+## 🛠️ Configure Random Immunity Roles
+Select what roles should be immune to random takedowns by {}.
+For more info use {}.
+"""
+
+set = """
+## 🛡️ Configured Random Immunity Roles
+The following roles are now immune to random takedowns by {}:
 {}
 
 > {}

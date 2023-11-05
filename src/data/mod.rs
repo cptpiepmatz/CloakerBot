@@ -16,7 +16,7 @@ pub struct PersistentData<T> {
 
 use persist::Persist;
 
-use crate::util::impl_from_variant::impl_from_variant;
+use crate::util::impl_from_variant::{impl_from_variant, impl_from_variant_2};
 use crate::STATE;
 
 mod persist {

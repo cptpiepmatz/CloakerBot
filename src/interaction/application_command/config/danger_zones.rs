@@ -16,6 +16,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::assets::REPLIES;
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
@@ -51,7 +52,14 @@ pub async fn action(
     interaction: &Interaction,
     _command: DangerZonesSubCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    let channel_select = message_component::channel_select::danger_zones::component();
+    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    let guild_config = STATE.guild_configs.read().await;
+    let current = guild_config
+        .get(&guild_id)
+        .map(|config| config.danger_zones.as_slice())
+        .unwrap_or_default();
+
+    let channel_select = message_component::channel_select::danger_zones::component(&current);
     let button = message_component::button::config::component(
         message_component::button::config::ConfigUnsetButton::DangerZones
     );
@@ -62,11 +70,7 @@ pub async fn action(
             "flags": MessageFlags::EPHEMERAL,
             "content": REPLIES.config.danger_zones.select.template([
                 &BOT_USER_ID.mention(),
-                &format!(
-                    "</{}:{}>",
-                    application_command::help::NAME,
-                    OnceLockExpect::deref(&application_command::help::ID)
-                )
+                application_command::help::MENTION.deref()
             ]),
             "components": [
                 {

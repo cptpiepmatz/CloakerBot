@@ -23,7 +23,17 @@ use crate::util::impl_from_variant::impl_from_variant;
 use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
-pub fn component() -> Value {
+pub fn component(current: &[Id<ChannelMarker>]) -> Value {
+    let default_values: Vec<_> = current
+        .iter()
+        .map(|channel_id| {
+            json!({
+                "id": channel_id,
+                "type": "channel"
+            })
+        })
+        .collect();
+
     // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
     json!({
         // select menu for channel select
@@ -32,6 +42,7 @@ pub fn component() -> Value {
         "channel_types": [ChannelType::GuildVoice],
         "min_values": 0,
         "max_values": 25,
+        "default_values": default_values,
         "placeholder": "⚠️ Select channels as danger zones."
     })
 }

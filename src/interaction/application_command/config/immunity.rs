@@ -1,9 +1,11 @@
 use std::env::var;
+use std::ops::Deref;
 
 use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
+use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
@@ -16,14 +18,16 @@ use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
+use crate::assets::REPLIES;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::message_component;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
+use crate::interaction::{application_command, message_component};
 use crate::sync::OnceLockExpect;
-use crate::STATE;
+use crate::util::template::Template;
+use crate::{BOT_USER_ID, STATE};
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -113,10 +117,20 @@ pub async fn action(
         }
     });
 
+    let content = (match variant {
+        ImmunitySelect::General => REPLIES.config.immunity.general.select,
+        ImmunitySelect::Random => REPLIES.config.immunity.random.select
+    })
+    .template([
+        &BOT_USER_ID.mention(),
+        application_command::help::MENTION.deref()
+    ]);
+
     let payload = json!({
         "type": InteractionResponseType::ChannelMessageWithSource,
         "data": {
             "flags": MessageFlags::EPHEMERAL,
+            "content": content,
             "components": [
                 {
                     "type": ComponentType::ActionRow,

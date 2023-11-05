@@ -5,6 +5,7 @@ use std::fmt::{Debug, Display, Formatter};
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
+use twilight_mention::fmt::CommandMention;
 use twilight_model::application::command::Command;
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
@@ -177,7 +178,17 @@ pub async fn register_commands(
                 (config::NAME, Some(command_id)) => OnceLockExpect::set(&config::ID, command_id),
                 (cloaker::NAME, Some(command_id)) => OnceLockExpect::set(&cloaker::ID, command_id),
                 (counter::NAME, Some(command_id)) => OnceLockExpect::set(&counter::ID, command_id),
-                (help::NAME, Some(command_id)) => OnceLockExpect::set(&help::ID, command_id),
+                (help::NAME, Some(command_id)) => {
+                    OnceLockExpect::set(&help::ID, command_id);
+                    OnceLockExpect::set(
+                        &help::MENTION,
+                        CommandMention::Command {
+                            name: help::NAME.to_owned(),
+                            id: command_id
+                        }
+                        .into_mention()
+                    );
+                }
                 (ranks::NAME, Some(command_id)) => OnceLockExpect::set(&ranks::ID, command_id),
                 _ => ()
             }
@@ -188,6 +199,7 @@ pub async fn register_commands(
         OnceLockExpect::is_initialized(&cloaker::ID) &&
         OnceLockExpect::is_initialized(&counter::ID) &&
         OnceLockExpect::is_initialized(&help::ID) &&
+        OnceLockExpect::is_initialized(&help::MENTION) &&
         OnceLockExpect::is_initialized(&ranks::ID)
     {
         true => Ok(()),
