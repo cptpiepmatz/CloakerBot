@@ -1,3 +1,11 @@
 [config.danger_zones]
 channels = "Welcome to the arena of your demise, where pain becomes your only companion."
 no_channels = "No longer my turf, but don’t mistake absence for safety."
+
+[config.immunity.general]
+roles = "Okay, these are losers."
+no_roles = "I can see all of you!"
+
+[config.immunity.random]
+roles = "Okay, these are losers."
+no_roles = "I will find you!"

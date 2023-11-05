@@ -1,5 +1,6 @@
 use std::num::ParseIntError;
 
+use itertools::Itertools;
 use serde_json::{json, Value};
 use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
@@ -79,7 +80,6 @@ pub async fn action(
             &channels
                 .iter()
                 .map(|c_id| format!("- {}", c_id.mention()))
-                .collect::<Vec<String>>()
                 .join("\n"),
             &QUOTES.config.danger_zones.channels
         ])

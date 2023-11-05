@@ -101,7 +101,9 @@ pub async fn action(
     }
 
     match variant {
-        ConfigUnsetButton::DangerZones => {
+        ConfigUnsetButton::DangerZones |
+        ConfigUnsetButton::ImmunityGeneral |
+        ConfigUnsetButton::ImmunityRandom => {
             // will be pulled out, when the other variant is deprecated fully
             let reply = match variant {
                 ConfigUnsetButton::DangerZones => REPLIES
@@ -109,6 +111,18 @@ pub async fn action(
                     .danger_zones
                     .unset
                     .template([&QUOTES.config.danger_zones.no_channels]),
+                ConfigUnsetButton::ImmunityGeneral => REPLIES
+                    .config
+                    .immunity
+                    .general
+                    .unset
+                    .template([&QUOTES.config.immunity.general.no_roles]),
+                ConfigUnsetButton::ImmunityRandom => REPLIES
+                    .config
+                    .immunity
+                    .random
+                    .unset
+                    .template([&QUOTES.config.immunity.random.no_roles]),
                 _ => unreachable!()
             };
 
@@ -135,17 +149,9 @@ pub async fn action(
         // TODO: deprecate this
         _ => {
             let (serious_res, snarky_res) = match variant {
-                ConfigUnsetButton::DangerZones => unreachable!(),
-                ConfigUnsetButton::ImmunityGeneral => (
-                    "Unset config for immunity roles for general takedowns. No role is immune to \
-                     general takedowns.",
-                    "I can see all of you!"
-                ),
-                ConfigUnsetButton::ImmunityRandom => (
-                    "Unset config for immunity roles for random takedowns. No role is immune to \
-                     random takedowns specifically.",
-                    "I will find you!"
-                ),
+                ConfigUnsetButton::DangerZones |
+                ConfigUnsetButton::ImmunityGeneral |
+                ConfigUnsetButton::ImmunityRandom => unreachable!(),
                 ConfigUnsetButton::LogChannel => (
                     "Unset config for a log channel. Defaulting to other channels. This action is \
                      not recommended.",

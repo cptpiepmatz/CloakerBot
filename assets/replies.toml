@@ -5,13 +5,6 @@ Select danger zones to be observed by {}.
 For more info use {}.
 """
 
-unset = """
-## 🗑️ Unset Danger Zones
-No danger zones are set now.
-
-> {}
-"""
-
 set = """
 ## 📌 Configured Danger Zones
 Set the following channels as danger zones:
@@ -20,17 +13,31 @@ Set the following channels as danger zones:
 > {}
 """
 
+unset = """
+## 🗑️ Unset Danger Zones
+No danger zones are set now.
+
+> {}
+"""
+
 [config.immunity.general]
 select = """
 ## 🛠️ Configure General Immunity Roles
-Select what roles should be immune to all kind of takedowns by {}.
+Select what roles should be immune to **all** kind of takedowns by {}.
 For more info use {}.
 """
 
 set = """
 ## 🛡️ Configured General Immunity Roles
-The following roles are now immune to all takedowns by {}:
+The following roles are now immune to **all** takedowns by {}:
 {}
+
+> {}
+"""
+
+unset = """
+## 🗑️ Unset General Immunity Roles
+No **general** immunity roles are set now.
 
 > {}
 """
@@ -38,14 +45,21 @@ The following roles are now immune to all takedowns by {}:
 [config.immunity.random]
 select = """
 ## 🛠️ Configure Random Immunity Roles
-Select what roles should be immune to random takedowns by {}.
+Select what roles should be immune to **random** takedowns by {}.
 For more info use {}.
 """
 
 set = """
 ## 🛡️ Configured Random Immunity Roles
-The following roles are now immune to random takedowns by {}:
+The following roles are now immune to **random** takedowns by {}:
 {}
+
+> {}
+"""
+
+unset = """
+## 🗑️ Unset Random Immunity Roles
+No **random** immunity roles are set now.
 
 > {}
 """

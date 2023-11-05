@@ -2,6 +2,7 @@ use std::env::var;
 use std::num::ParseIntError;
 
 use derive_more::From;
+use itertools::Itertools;
 use serde_json::{json, Value};
 use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
@@ -11,16 +12,17 @@ use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
 use twilight_model::channel::ChannelType;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{ChannelMarker, RoleMarker};
+use twilight_model::id::marker::{ChannelMarker, RoleMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::COLORS;
+use crate::assets::{COLORS, QUOTES, REPLIES};
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
+use crate::util::template::Template;
 use crate::{assets, APPLICATION_ID, STATE};
 
 const CLOAKER_QUOTE_ROLES: &str =
@@ -101,39 +103,40 @@ pub async fn action(
         ImmunitySelect::Random => guild_config.immunity.random = roles.clone()
     }
 
-    let embed_builder = EmbedBuilder::new().color(COLORS.primary as u32);
-    let embed: Embed;
-    if roles.is_empty() {
-        embed = embed_builder
-            .title(match variant {
-                ImmunitySelect::General => "No roles selected for general immunity.",
-                ImmunitySelect::Random => "No roles selected for random immunity."
-            })
-            .description("I get all of you!.")
-            .build();
-    }
-    else {
-        let mut roles_field_content = String::new();
-        for role in roles {
-            roles_field_content.push_str(format!("{}\n", role.mention()).as_str());
-        }
-        embed = embed_builder
-            .title(match variant {
-                ImmunitySelect::General => "Set roles to be immune to all takedowns.",
-                ImmunitySelect::Random => "Set roles to be immune to random takedowns."
-            })
-            .description("Okay, these are losers.")
-            .field(EmbedField {
-                inline: false,
-                name: "Roles".to_string(),
-                value: roles_field_content
-            })
-            .build();
-    }
+    let self_mention = APPLICATION_ID.cast::<UserMarker>().mention();
+    let roles_insert = roles
+        .iter()
+        .map(|r| format!("- {}", r.mention()))
+        .join("\n");
+    let content = match (roles.is_empty(), variant) {
+        (true, ImmunitySelect::General) => REPLIES
+            .config
+            .immunity
+            .general
+            .unset
+            .template([&QUOTES.config.immunity.general.no_roles]),
+        (true, ImmunitySelect::Random) => REPLIES.config.immunity.random.unset.template([&QUOTES
+            .config
+            .immunity
+            .random
+            .no_roles]),
+        (false, ImmunitySelect::General) => REPLIES
+            .config
+            .immunity
+            .general
+            .set
+            .template([&self_mention, &roles_insert, &QUOTES.config.immunity.general.roles]),
+        (false, ImmunitySelect::Random) => REPLIES
+            .config
+            .immunity
+            .random
+            .set
+            .template([&self_mention, &roles_insert, &QUOTES.config.immunity.random.roles])
+    };
 
     let data = InteractionResponseDataBuilder::new()
         .flags(MessageFlags::EPHEMERAL)
-        .embeds([embed])
+        .content(content)
         .build();
     STATE
         .http
