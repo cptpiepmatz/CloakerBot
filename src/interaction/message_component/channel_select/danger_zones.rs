@@ -88,6 +88,7 @@ pub async fn action(
     let data = InteractionResponseDataBuilder::new()
         .flags(MessageFlags::EPHEMERAL)
         .content(content)
+        .components(None)
         .build();
     STATE
         .http
@@ -96,7 +97,7 @@ pub async fn action(
             interaction.id,
             interaction.token.as_str(),
             &InteractionResponse {
-                kind: InteractionResponseType::ChannelMessageWithSource,
+                kind: InteractionResponseType::UpdateMessage,
                 data: Some(data)
             }
         )

@@ -62,15 +62,26 @@ impl TryFrom<MessageComponentCustomId> for ImmunitySelect {
     }
 }
 
-pub fn component(variant: ImmunitySelect) -> Value {
+pub fn component(variant: ImmunitySelect, current: &[Id<RoleMarker>]) -> Value {
     // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
+    let default_values: Vec<_> = current
+        .iter()
+        .map(|rid| {
+            json!({
+                "id": rid,
+                "type": "role"
+            })
+        })
+        .collect();
+
     json!({
         // select menu for channel select
         "type": 6,
         "custom_id": variant.to_string(),
         "min_values": 0,
         "max_values": 25,
-        "placeholder": "🛡️ Select roles to be immune."
+        "placeholder": "🛡️ Select roles to be immune.",
+        "default_values": default_values
     })
 }
 
@@ -134,6 +145,7 @@ pub async fn action(
     let data = InteractionResponseDataBuilder::new()
         .flags(MessageFlags::EPHEMERAL)
         .content(content)
+        .components(None)
         .build();
     STATE
         .http
@@ -142,7 +154,7 @@ pub async fn action(
             interaction.id,
             interaction.token.as_str(),
             &InteractionResponse {
-                kind: InteractionResponseType::ChannelMessageWithSource,
+                kind: InteractionResponseType::UpdateMessage,
                 data: Some(data)
             }
         )

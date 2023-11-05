@@ -19,6 +19,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
 use crate::assets::REPLIES;
+use crate::data::config::{GuildConfig, GuildConfigImmunity};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -107,7 +108,21 @@ pub async fn action(
         ImmunitySubCommand::General => ImmunitySelect::General,
         ImmunitySubCommand::Random => ImmunitySelect::Random
     };
-    let role_select = message_component::role_select::immunity::component(variant);
+
+    let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
+    let guild_configs = STATE.guild_configs.read().await;
+    let current = match guild_configs.get(&guild_id) {
+        None => &[],
+        Some(GuildConfig {
+            immunity: GuildConfigImmunity { general, random },
+            ..
+        }) => match variant {
+            ImmunitySelect::General => general.as_slice(),
+            ImmunitySelect::Random => random.as_slice()
+        }
+    };
+
+    let role_select = message_component::role_select::immunity::component(variant, current);
     let button = message_component::button::config::component(match variant {
         ImmunitySelect::General => {
             message_component::button::config::ConfigUnsetButton::ImmunityGeneral
