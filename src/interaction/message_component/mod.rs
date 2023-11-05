@@ -3,6 +3,7 @@ use twilight_model::application::interaction::{Interaction, InteractionData};
 
 use crate::interaction::message_component::button::config::ConfigButtonActionError;
 use crate::interaction::message_component::channel_select::danger_zones::DangerZonesSelectActionError;
+use crate::interaction::message_component::channel_select::log_channel::LogChannelSelectActionError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
 use crate::interaction::HandleInteractionError;
@@ -20,6 +21,7 @@ pub enum HandleMessageComponentError {
     ConfigButtonAction(ConfigButtonActionError),
     DangerZonesSelectAction(DangerZonesSelectActionError),
     ImmunitySelectAction(ImmunitySelectActionError),
+    LogChannelSelectAction(LogChannelSelectActionError),
 
     Http(twilight_http::Error)
 }
@@ -46,5 +48,6 @@ pub async fn handle_message_component(
         ImmunityGeneralSelect | ImmunityRandomSelect => {
             role_select::immunity::action(interaction, custom_id, data).await
         }
+        LogChannelSelect => channel_select::log_channel::action(interaction, data).await
     }
 }

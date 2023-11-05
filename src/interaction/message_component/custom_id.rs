@@ -15,7 +15,8 @@ pub enum MessageComponentCustomId {
 
     DangerZonesSelect,
     ImmunityGeneralSelect,
-    ImmunityRandomSelect
+    ImmunityRandomSelect,
+    LogChannelSelect
 }
 
 const CONFIG_UNSET_DANGER_ZONES: &str = "config_unset_danger_zones";
@@ -28,6 +29,7 @@ const CONFIG_UNSET_TARGET_BOTS: &str = "config_unset_target_bots";
 const DANGER_ZONES_SELECT: &str = "danger_zones_select";
 const IMMUNITY_GENERAL_SELECT: &str = "immunity_general_select";
 const IMMUNITY_RANDOM_SELECT: &str = "immunity_random_select";
+const LOG_CHANNEL_SELECT: &str = "log_channel_select";
 
 impl ToString for MessageComponentCustomId {
     fn to_string(&self) -> String {
@@ -42,7 +44,8 @@ impl ToString for MessageComponentCustomId {
 
             DangerZonesSelect => DANGER_ZONES_SELECT,
             ImmunityGeneralSelect => IMMUNITY_GENERAL_SELECT,
-            ImmunityRandomSelect => IMMUNITY_RANDOM_SELECT
+            ImmunityRandomSelect => IMMUNITY_RANDOM_SELECT,
+            LogChannelSelect => LOG_CHANNEL_SELECT
         })
     }
 }
@@ -55,18 +58,19 @@ impl FromStr for MessageComponentCustomId {
     type Err = ParseMessageComponentCustomIdError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use MessageComponentCustomId::*;
+        type MCCID = MessageComponentCustomId;
         match s {
-            CONFIG_UNSET_DANGER_ZONES => Ok(ConfigUnsetDangerZones),
-            CONFIG_UNSET_IMMUNITY_GENERAL => Ok(ConfigUnsetImmunityGeneral),
-            CONFIG_UNSET_IMMUNITY_RANDOM => Ok(ConfigUnsetImmunityRandom),
-            CONFIG_UNSET_LOG_CHANNEL => Ok(ConfigUnsetLogChannel),
-            CONFIG_UNSET_RANDOM => Ok(ConfigUnsetRandom),
-            CONFIG_UNSET_TARGET_BOTS => Ok(ConfigUnsetTargetBots),
+            CONFIG_UNSET_DANGER_ZONES => Ok(MCCID::ConfigUnsetDangerZones),
+            CONFIG_UNSET_IMMUNITY_GENERAL => Ok(MCCID::ConfigUnsetImmunityGeneral),
+            CONFIG_UNSET_IMMUNITY_RANDOM => Ok(MCCID::ConfigUnsetImmunityRandom),
+            CONFIG_UNSET_LOG_CHANNEL => Ok(MCCID::ConfigUnsetLogChannel),
+            CONFIG_UNSET_RANDOM => Ok(MCCID::ConfigUnsetRandom),
+            CONFIG_UNSET_TARGET_BOTS => Ok(MCCID::ConfigUnsetTargetBots),
 
-            DANGER_ZONES_SELECT => Ok(DangerZonesSelect),
-            IMMUNITY_GENERAL_SELECT => Ok(ImmunityGeneralSelect),
-            IMMUNITY_RANDOM_SELECT => Ok(ImmunityRandomSelect),
+            DANGER_ZONES_SELECT => Ok(MCCID::DangerZonesSelect),
+            IMMUNITY_GENERAL_SELECT => Ok(MCCID::ImmunityGeneralSelect),
+            IMMUNITY_RANDOM_SELECT => Ok(MCCID::ImmunityRandomSelect),
+            LOG_CHANNEL_SELECT => Ok(MCCID::LogChannelSelect),
 
             _ => Err(ParseMessageComponentCustomIdError {
                 unmatched: s.to_owned()

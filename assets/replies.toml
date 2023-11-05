@@ -63,3 +63,26 @@ No **random** immunity roles are set now.
 
 > {}
 """
+
+[config.log_channel]
+select = """
+## 🛠️ Configure Log Channel
+Select channel for {} to log into.
+If unset this defaults to {}.
+"""
+
+set = """
+## 📝 Configured Log Channel
+Logs will be written in {}.
+Make sure {} is allowed to chat there.
+
+> {}
+"""
+
+unset = """
+## 🗑️ Unset Log Channel
+No log channel is defined.
+Fallback channel is {} if {} is allowed to chat there.
+
+> {}
+"""

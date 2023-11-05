@@ -60,7 +60,7 @@ impl TryFrom<&CommandData> for ConfigCommand {
                 danger_zones::DangerZonesSubCommand::try_from(options)?
             )),
             log_channel::NAME => Ok(ConfigCommand::LogChannel(
-                log_channel::LogChannelSubCommand::try_from((options, &data.resolved))?
+                log_channel::LogChannelSubCommand::try_from(options)?
             )),
             target_bots::NAME => Ok(ConfigCommand::TargetBots(
                 target_bots::TargetBotsSubCommand::try_from(options)?

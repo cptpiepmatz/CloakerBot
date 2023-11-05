@@ -23,7 +23,7 @@ use crate::interaction::message_component::custom_id::{
 };
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::template::Template;
-use crate::{assets, APPLICATION_ID, STATE};
+use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
 
 const CLOAKER_QUOTE_ROLES: &str =
     "It's like they're wrapped in bubble wrap. Oh, how I want to pop those bubbles.";
@@ -103,7 +103,6 @@ pub async fn action(
         ImmunitySelect::Random => guild_config.immunity.random = roles.clone()
     }
 
-    let self_mention = APPLICATION_ID.cast::<UserMarker>().mention();
     let roles_insert = roles
         .iter()
         .map(|r| format!("- {}", r.mention()))
@@ -120,18 +119,16 @@ pub async fn action(
             .immunity
             .random
             .no_roles]),
-        (false, ImmunitySelect::General) => REPLIES
-            .config
-            .immunity
-            .general
-            .set
-            .template([&self_mention, &roles_insert, &QUOTES.config.immunity.general.roles]),
-        (false, ImmunitySelect::Random) => REPLIES
-            .config
-            .immunity
-            .random
-            .set
-            .template([&self_mention, &roles_insert, &QUOTES.config.immunity.random.roles])
+        (false, ImmunitySelect::General) => REPLIES.config.immunity.general.set.template([
+            &BOT_USER_ID.mention(),
+            &roles_insert,
+            &QUOTES.config.immunity.general.roles
+        ]),
+        (false, ImmunitySelect::Random) => REPLIES.config.immunity.random.set.template([
+            &BOT_USER_ID.mention(),
+            &roles_insert,
+            &QUOTES.config.immunity.random.roles
+        ])
     };
 
     let data = InteractionResponseDataBuilder::new()

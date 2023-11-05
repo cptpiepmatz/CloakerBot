@@ -2,6 +2,7 @@ use std::convert::Infallible;
 use std::env::var;
 use std::str::FromStr;
 
+use twilight_mention::Mention;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{Button, ButtonStyle};
 use twilight_model::channel::message::{Component, MessageFlags, ReactionType};
@@ -15,7 +16,7 @@ use crate::interaction::message_component::custom_id::{
 };
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::util::template::Template;
-use crate::{APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ConfigUnsetButton {
@@ -103,7 +104,8 @@ pub async fn action(
     match variant {
         ConfigUnsetButton::DangerZones |
         ConfigUnsetButton::ImmunityGeneral |
-        ConfigUnsetButton::ImmunityRandom => {
+        ConfigUnsetButton::ImmunityRandom |
+        ConfigUnsetButton::LogChannel => {
             // will be pulled out, when the other variant is deprecated fully
             let reply = match variant {
                 ConfigUnsetButton::DangerZones => REPLIES
@@ -123,6 +125,12 @@ pub async fn action(
                     .random
                     .unset
                     .template([&QUOTES.config.immunity.random.no_roles]),
+                ConfigUnsetButton::LogChannel => REPLIES.config.log_channel.unset.template([
+                    // TODO: insert fallback log channel here
+                    &"[insert fallback log channel here]",
+                    &BOT_USER_ID.mention(),
+                    &QUOTES.config.log_channel.no_channel
+                ]),
                 _ => unreachable!()
             };
 
@@ -151,12 +159,8 @@ pub async fn action(
             let (serious_res, snarky_res) = match variant {
                 ConfigUnsetButton::DangerZones |
                 ConfigUnsetButton::ImmunityGeneral |
-                ConfigUnsetButton::ImmunityRandom => unreachable!(),
-                ConfigUnsetButton::LogChannel => (
-                    "Unset config for a log channel. Defaulting to other channels. This action is \
-                     not recommended.",
-                    "So you don't want reports? That's fine for me!"
-                ),
+                ConfigUnsetButton::ImmunityRandom |
+                ConfigUnsetButton::LogChannel => unreachable!(),
                 ConfigUnsetButton::Random => (
                     "Unset config for random takedowns. No random takedowns will occur.",
                     "Well, call me if you need me."
