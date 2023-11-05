@@ -11,8 +11,8 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
-
-use crate::assets::COLORS;
+use crate::util::template::Template;
+use crate::assets::{COLORS, REPLIES, QUOTES};
 use crate::data::config::GuildConfig;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
@@ -75,64 +75,20 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let mut guild_configs = STATE.guild_configs.write().await;
-    let mut config = &mut guild_configs.entry(guild_id).or_default().target_bots;
-
-    let (serious_res, snarky_res) = match (allow, &config) {
-        // No update is set, only retrieving info
-        (None, None) => (
-            "Targeting bots is currently unset. (default: `allowed`)",
-            "I don't care if you're a bot or not!"
-        ),
-        (None, Some(true)) => (
-            "Targeting bots is allowed.",
-            "I will dropkick even your roomba!"
-        ),
-        (None, Some(false)) => (
-            "Targeting bots is forbidden.",
-            "Fine, I won't kick your radio."
-        ),
-
-        // Allow taking down bots
-        (Some(true), None) => (
-            "Targeting bots is allowed. Previously unset.",
-            "You feel bad for me? I don't even know if you're alive!"
-        ),
-        (Some(true), Some(true)) => (
-            "Targeting bots is still allowed.",
-            "I will even take down MEE6!"
-        ),
-        (Some(true), Some(false)) => (
-            "Targeting bots is now allowed. Previously allowed.",
-            "Now the days of your digital friends are counted, loser!"
-        ),
-
-        // Disallow taking down bots
-        (Some(false), None) => ("Targeting bots is forbidden. Previously unset.", "Boring!"),
-        (Some(false), Some(true)) => (
-            "Targeting bots is now forbidden. Previously allowed.",
-            "Do you miss your digital friends, loser?!"
-        ),
-        (Some(false), Some(false)) => ("Targeting bots is still forbidden.", "Are you scared?!")
-    };
+    let config = &mut guild_configs.entry(guild_id).or_default().target_bots;
 
     if let Some(update) = allow {
         config.replace(update);
     }
 
-    let embed = EmbedBuilder::new()
-        .title(serious_res)
-        .description(snarky_res)
-        .color(COLORS.primary as u32)
-        .build();
-    let button = message_component::button::config::component(
-        message_component::button::config::ConfigUnsetButton::TargetBots
-    );
+    let content = match config {
+        None | Some(true) => REPLIES.config.target_bots.enabled.template([&QUOTES.config.target_bots.enabled]),
+        Some(false) => REPLIES.config.target_bots.disabled.template([&QUOTES.config.target_bots.disabled])
+    };
+
     let response_data = InteractionResponseDataBuilder::new()
-        .embeds([embed])
         .flags(MessageFlags::EPHEMERAL)
-        .components([Component::ActionRow(ActionRow {
-            components: vec![button]
-        })])
+        .content(content)
         .build();
 
     STATE

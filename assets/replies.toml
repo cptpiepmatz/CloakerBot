@@ -105,4 +105,18 @@ For more info use {}.
 > {}
 """
 
+[config.target_bots]
+disabled = """
+## 🚸 Don't Target Bots
+Bots are no valid targets.
 
+> {}
+"""
+
+enabled = """
+## 🤖🔫 Targeting Bots
+Bots are valid targets for takedowns.
+This also applies to random takedowns.
+
+> {}
+"""

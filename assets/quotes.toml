@@ -18,3 +18,7 @@ no_channel = "So you don't want reports? That's fine for me!"
 # TODO: add nice quotes here
 enabled = "random quote"
 disabled = "quote for no random"
+
+[config.target_bots]
+enabled = "Tin cans are back on the menu! Let's see what these robots are really made of."
+disabled = "So I've got to play nice with the tin cans, huh? Just don’t expect me to oil them up."
