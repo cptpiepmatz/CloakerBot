@@ -19,7 +19,6 @@ use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
-use crate::util::impl_from_variant::impl_from_variant;
 use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
@@ -52,12 +51,6 @@ pub enum DangerZonesSelectActionError {
     NotInGuild,
     InvalidValues(Vec<String>)
 }
-
-impl_from_variant!(
-    DangerZonesSelectActionError,
-    HandleMessageComponentError,
-    DangerZonesSelectAction
-);
 
 pub async fn action(
     interaction: &Interaction,

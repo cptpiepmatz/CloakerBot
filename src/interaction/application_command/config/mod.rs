@@ -21,7 +21,6 @@ use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "config";
 const DESCRIPTION: &str = "Configure the CloakerBot.";
@@ -102,12 +101,6 @@ impl Display for ConfigActionError {
 }
 
 impl Error for ConfigActionError {}
-
-impl_from_variant!(
-    ConfigActionError,
-    HandleApplicationCommandError,
-    ConfigAction
-);
 
 pub async fn action(
     interaction: &Interaction,

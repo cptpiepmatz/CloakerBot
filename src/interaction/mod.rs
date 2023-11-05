@@ -1,3 +1,4 @@
+use derive_more::From;
 use twilight_model::application::interaction::{Interaction, InteractionType};
 use twilight_model::gateway::payload::incoming::InteractionCreate;
 
@@ -18,17 +19,11 @@ mod message_component;
 
 pub use application_command::register_commands;
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum HandleInteractionError {
     MessageComponent(HandleMessageComponentError),
     ApplicationCommand(HandleApplicationCommandError),
     ApplicationCommandAutocomplete(HandleApplicationCommandAutocompleteError)
-}
-
-impl From<HandleInteractionError> for HandleDiscordEventError {
-    fn from(value: HandleInteractionError) -> Self {
-        HandleDiscordEventError::Interaction(value)
-    }
 }
 
 pub async fn handle_interaction(

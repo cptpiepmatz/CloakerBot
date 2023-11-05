@@ -2,6 +2,7 @@ use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use derive_more::From;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::util::log::debug;
@@ -16,7 +17,6 @@ pub struct PersistentData<T> {
 
 use persist::Persist;
 
-use crate::util::impl_from_variant::{impl_from_variant, impl_from_variant_2};
 use crate::STATE;
 
 mod persist {
@@ -100,16 +100,11 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum LoadPersistentDataError {
     SerdeJson(serde_json::Error),
     Io(io::Error)
 }
-
-impl_from_variant!(serde_json::Error, LoadPersistentDataError, SerdeJson);
-impl_from_variant!(io::Error, LoadPersistentDataError, Io);
-
-impl_from_variant!(io::Error, super::HandleEventError, Persist);
 
 pub async fn handle_persist_data() -> io::Result<()> {
     STATE.guild_configs.store().await?;

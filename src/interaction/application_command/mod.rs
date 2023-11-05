@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
+use derive_more::From;
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
@@ -24,7 +25,6 @@ use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
 use crate::interaction::HandleInteractionError;
 use crate::sync::OnceLockExpect;
-use crate::util::impl_from_variant::impl_from_variant;
 use crate::{APPLICATION_ID, STATE};
 
 mod cloaker;
@@ -126,21 +126,12 @@ impl Display for TryFromInteractionError {
 
 impl Error for TryFromInteractionError {}
 
-impl_from_variant!(
-    TryFromInteractionError,
-    HandleApplicationCommandError,
-    TryFromInteraction
-);
-
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum RegisterCommandsError {
     Http(TwilightHttpError),
     DeserializeBody(DeserializeBodyError),
     MissingRegistries(Vec<Command>)
 }
-
-impl_from_variant!(TwilightHttpError, RegisterCommandsError, Http);
-impl_from_variant!(DeserializeBodyError, RegisterCommandsError, DeserializeBody);
 
 pub async fn register_commands(
     client: &InteractionClient<'_>
@@ -207,7 +198,7 @@ pub async fn register_commands(
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum HandleApplicationCommandError {
     TryFromInteraction(TryFromInteractionError),
 
@@ -219,14 +210,6 @@ pub enum HandleApplicationCommandError {
 
     Http(twilight_http::Error)
 }
-
-impl_from_variant!(
-    HandleApplicationCommandError,
-    HandleInteractionError,
-    ApplicationCommand
-);
-
-impl_from_variant!(twilight_http::Error, HandleApplicationCommandError, Http);
 
 pub async fn handle_application_command(
     interaction: &Interaction
@@ -249,8 +232,6 @@ impl From<twilight_http::Error> for DeferError {
     }
 }
 
-impl_from_variant!(DeferError, HandleApplicationCommandError, Defer);
-
 async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
@@ -269,17 +250,12 @@ async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum UpdateDeferError {
     Http(twilight_http::Error),
     MessageValidation(MessageValidationError),
     EmbedValidation(EmbedValidationError)
 }
-
-impl_from_variant!(twilight_http::Error, UpdateDeferError, Http);
-impl_from_variant!(MessageValidationError, UpdateDeferError, MessageValidation);
-impl_from_variant!(EmbedValidationError, UpdateDeferError, EmbedValidation);
-impl_from_variant!(UpdateDeferError, HandleApplicationCommandError, UpdateDefer);
 
 async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), UpdateDeferError> {
     STATE

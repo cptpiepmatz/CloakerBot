@@ -4,6 +4,7 @@ use std::time::Duration;
 use std::{io, iter};
 
 use const_format::str_replace;
+use derive_more::From;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
 use tokio_stream::wrappers::IntervalStream;
@@ -24,7 +25,6 @@ use crate::data::config::GuildConfig;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::OnceLockExpect;
-use crate::util::impl_from_variant::impl_from_variant;
 use crate::util::log::info;
 use crate::util::trim::trim;
 
@@ -104,7 +104,7 @@ async fn main() {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 enum HandleEventError {
     Fatal,
     Discord(HandleDiscordEventError),
@@ -129,12 +129,10 @@ async fn handle_event(event: BotEvent) {
     run(event).await.unwrap();
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 enum HandleDiscordEventError {
     Interaction(HandleInteractionError)
 }
-
-impl_from_variant!(HandleDiscordEventError, HandleEventError, Discord);
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
     match event {

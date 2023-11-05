@@ -15,7 +15,6 @@ use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::util::impl_from_variant::impl_from_variant;
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
@@ -103,12 +102,6 @@ impl Display for CloakerActionError {
 }
 
 impl Error for CloakerActionError {}
-
-impl_from_variant!(
-    CloakerActionError,
-    HandleApplicationCommandError,
-    CloakerAction
-);
 
 pub async fn action(
     interaction: &Interaction,

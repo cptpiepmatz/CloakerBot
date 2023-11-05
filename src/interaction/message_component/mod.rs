@@ -1,3 +1,4 @@
+use derive_more::From;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 
 use crate::interaction::message_component::button::config::ConfigButtonActionError;
@@ -5,14 +6,13 @@ use crate::interaction::message_component::channel_select::danger_zones::DangerZ
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
 use crate::interaction::HandleInteractionError;
-use crate::util::impl_from_variant::impl_from_variant;
 
 pub mod button;
 pub mod channel_select;
 mod custom_id;
 pub mod role_select;
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum HandleMessageComponentError {
     NoMessageComponent,
     UnknownCustomId(String),
@@ -23,14 +23,6 @@ pub enum HandleMessageComponentError {
 
     Http(twilight_http::Error)
 }
-
-impl_from_variant!(
-    HandleMessageComponentError,
-    HandleInteractionError,
-    MessageComponent
-);
-
-impl_from_variant!(twilight_http::Error, HandleMessageComponentError, Http);
 
 pub async fn handle_message_component(
     interaction: &Interaction

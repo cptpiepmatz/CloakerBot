@@ -37,6 +37,7 @@ konst = "0.3"
 rand = "0.8"
 toml = "0.8"
 static-toml = "1"
+derive_more = "0.99"
 
 # logging
 [dependencies.paris]

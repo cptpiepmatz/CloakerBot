@@ -1,6 +1,7 @@
 use std::env::var;
 use std::num::ParseIntError;
 
+use derive_more::From;
 use serde_json::{json, Value};
 use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
@@ -20,7 +21,6 @@ use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
-use crate::util::impl_from_variant::impl_from_variant;
 use crate::{assets, APPLICATION_ID, STATE};
 
 const CLOAKER_QUOTE_ROLES: &str =
@@ -72,18 +72,12 @@ pub fn component(variant: ImmunitySelect) -> Value {
     })
 }
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum ImmunitySelectActionError {
     NotInGuild,
     UnexpectedCustomId(MessageComponentCustomId),
     InvalidValues(Vec<String>)
 }
-
-impl_from_variant!(
-    ImmunitySelectActionError,
-    HandleMessageComponentError,
-    ImmunitySelectAction
-);
 
 pub async fn action(
     interaction: &Interaction,

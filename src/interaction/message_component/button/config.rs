@@ -14,7 +14,6 @@ use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
-use crate::util::impl_from_variant::impl_from_variant;
 use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
@@ -80,12 +79,6 @@ pub enum ConfigButtonActionError {
     NotInGuild,
     UnexpectedCustomId(MessageComponentCustomId)
 }
-
-impl_from_variant!(
-    ConfigButtonActionError,
-    HandleMessageComponentError,
-    ConfigButtonAction
-);
 
 pub async fn action(
     interaction: &Interaction,
