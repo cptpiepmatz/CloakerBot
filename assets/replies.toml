@@ -120,3 +120,16 @@ This also applies to random takedowns.
 
 > {}
 """
+
+[help]
+overview = """
+## 🔎 Help Overview
+For more info and help on a command, use `/help command:<command name>`.
+"""
+
+support = """
+### CloakerBot Discord Server
+If you have any issues come over to the [discord server](https://cptpiepmatz.de/cloaker-bot/join-server) and ask there.
+"""
+
+title = "## 🔎 Help on "

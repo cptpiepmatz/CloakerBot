@@ -2,6 +2,7 @@ use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
@@ -29,6 +30,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "log-channel";
 pub const DESCRIPTION: &str = "Define your log channel.";
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub const CLOAKER_QUOTE_LOG_CHANNEL: &str =
     "I'd rather eat glass than report in, but hey, let’s not disappoint the bureaucracy.";

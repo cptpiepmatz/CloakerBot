@@ -5,6 +5,7 @@ use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
@@ -32,6 +33,7 @@ use crate::{BOT_USER_ID, STATE};
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub enum ImmunitySubCommand {
     General,

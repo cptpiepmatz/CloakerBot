@@ -1,3 +1,4 @@
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
@@ -11,18 +12,21 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{BooleanBuilder, SubCommandBuilder};
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
-use crate::util::template::Template;
-use crate::assets::{COLORS, REPLIES, QUOTES};
+
+use crate::assets::{COLORS, QUOTES, REPLIES};
 use crate::data::config::GuildConfig;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::message_component;
+use crate::sync::OnceLockExpect;
+use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "target-bots";
 pub const DESCRIPTION: &str = "Configure if the bot should target bots.";
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub const CLOAKER_QUOTE_TARGET_BOTS: &str =
     "So I've got to play nice with the tin cans, huh? Just don’t expect me to oil them up.";
@@ -82,8 +86,16 @@ pub async fn action(
     }
 
     let content = match config {
-        None | Some(true) => REPLIES.config.target_bots.enabled.template([&QUOTES.config.target_bots.enabled]),
-        Some(false) => REPLIES.config.target_bots.disabled.template([&QUOTES.config.target_bots.disabled])
+        None | Some(true) => REPLIES
+            .config
+            .target_bots
+            .enabled
+            .template([&QUOTES.config.target_bots.enabled]),
+        Some(false) => REPLIES
+            .config
+            .target_bots
+            .disabled
+            .template([&QUOTES.config.target_bots.disabled])
     };
 
     let response_data = InteractionResponseDataBuilder::new()

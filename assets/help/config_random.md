@@ -1,7 +1,7 @@
 Configure the random takedowns.
 
 
-The CloakerBot is able to perform randomized takedowns. 
+The {} is able to perform randomized takedowns. 
 If enabled, the bot will check for a user to take down within a specified time 
 interval determined by the `min` and `max` values, which represent the minimum and 
 maximum time between checks, respectively. 

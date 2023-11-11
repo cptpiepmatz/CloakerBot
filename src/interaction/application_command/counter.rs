@@ -1,3 +1,4 @@
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
 use twilight_model::id::marker::CommandMarker;
@@ -10,6 +11,7 @@ use crate::sync::OnceLockExpect;
 pub const NAME: &str = "counter";
 pub const DESCRIPTION: &str = "Counter an incoming takedown.";
 pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub struct CounterCommand;
 

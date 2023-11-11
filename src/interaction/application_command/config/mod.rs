@@ -8,6 +8,7 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 use tokio::runtime::Handle;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -23,7 +24,7 @@ use crate::interaction::application_command::{
 use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "config";
-const DESCRIPTION: &str = "Configure the CloakerBot.";
+pub const DESCRIPTION: &str = "Configure the CloakerBot.";
 pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
 
 pub enum ConfigCommand {

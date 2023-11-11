@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -19,6 +20,7 @@ use crate::sync::OnceLockExpect;
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
 pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 #[derive(Debug)]
 pub struct CloakerCommand {

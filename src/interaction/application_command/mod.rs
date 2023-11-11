@@ -7,7 +7,7 @@ use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
 use twilight_mention::fmt::CommandMention;
-use twilight_model::application::command::Command;
+use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
@@ -154,6 +154,11 @@ pub async fn register_commands(
 
     let mut command_map = HashMap::new();
     for command in commands.iter() {
+        // we only care for chat input IDs
+        if command.kind != CommandType::ChatInput {
+            continue;
+        }
+
         // insert newest version of a command into the map
         let mapped_command = command_map
             .entry(command.name.as_str())
@@ -166,9 +171,48 @@ pub async fn register_commands(
     for (command_name, command) in command_map {
         if let None = command.guild_id {
             match (command_name, command.id) {
-                (config::NAME, Some(command_id)) => OnceLockExpect::set(&config::ID, command_id),
-                (cloaker::NAME, Some(command_id)) => OnceLockExpect::set(&cloaker::ID, command_id),
-                (counter::NAME, Some(command_id)) => OnceLockExpect::set(&counter::ID, command_id),
+                (config::NAME, Some(command_id)) => {
+                    OnceLockExpect::set(&config::ID, command_id);
+                    for (mention, name) in [
+                        (&config::danger_zones::MENTION, config::danger_zones::NAME),
+                        (&config::immunity::MENTION, config::immunity::NAME),
+                        (&config::log_channel::MENTION, config::log_channel::NAME),
+                        (&config::random::MENTION, config::random::NAME),
+                        (&config::target_bots::MENTION, config::target_bots::NAME)
+                    ] {
+                        OnceLockExpect::set(
+                            mention,
+                            CommandMention::SubCommand {
+                                name: config::NAME.to_owned(),
+                                sub_command: name.to_owned(),
+                                id: command_id
+                            }
+                            .into_mention()
+                        );
+                    }
+                }
+                (cloaker::NAME, Some(command_id)) => {
+                    OnceLockExpect::set(&cloaker::ID, command_id);
+                    OnceLockExpect::set(
+                        &cloaker::MENTION,
+                        CommandMention::Command {
+                            name: cloaker::NAME.to_owned(),
+                            id: command_id
+                        }
+                        .into_mention()
+                    );
+                }
+                (counter::NAME, Some(command_id)) => {
+                    OnceLockExpect::set(&counter::ID, command_id);
+                    OnceLockExpect::set(
+                        &counter::MENTION,
+                        CommandMention::Command {
+                            name: counter::NAME.to_owned(),
+                            id: command_id
+                        }
+                        .into_mention()
+                    );
+                }
                 (help::NAME, Some(command_id)) => {
                     OnceLockExpect::set(&help::ID, command_id);
                     OnceLockExpect::set(
@@ -180,18 +224,36 @@ pub async fn register_commands(
                         .into_mention()
                     );
                 }
-                (ranks::NAME, Some(command_id)) => OnceLockExpect::set(&ranks::ID, command_id),
+                (ranks::NAME, Some(command_id)) => {
+                    OnceLockExpect::set(&ranks::ID, command_id);
+                    OnceLockExpect::set(
+                        &ranks::MENTION,
+                        CommandMention::Command {
+                            name: ranks::NAME.to_owned(),
+                            id: command_id
+                        }
+                        .into_mention()
+                    );
+                }
                 _ => ()
             }
         }
     }
 
     match OnceLockExpect::is_initialized(&config::ID) &&
+        OnceLockExpect::is_initialized(&config::danger_zones::MENTION) &&
+        OnceLockExpect::is_initialized(&config::immunity::MENTION) &&
+        OnceLockExpect::is_initialized(&config::log_channel::MENTION) &&
+        OnceLockExpect::is_initialized(&config::random::MENTION) &&
+        OnceLockExpect::is_initialized(&config::target_bots::MENTION) &&
         OnceLockExpect::is_initialized(&cloaker::ID) &&
+        OnceLockExpect::is_initialized(&cloaker::MENTION) &&
         OnceLockExpect::is_initialized(&counter::ID) &&
+        OnceLockExpect::is_initialized(&counter::MENTION) &&
         OnceLockExpect::is_initialized(&help::ID) &&
         OnceLockExpect::is_initialized(&help::MENTION) &&
-        OnceLockExpect::is_initialized(&ranks::ID)
+        OnceLockExpect::is_initialized(&ranks::ID) &&
+        OnceLockExpect::is_initialized(&ranks::MENTION)
     {
         true => Ok(()),
         false => Err(RegisterCommandsError::MissingRegistries(commands))

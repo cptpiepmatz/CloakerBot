@@ -1,6 +1,7 @@
 use static_toml::static_toml;
 
 pub mod sounds;
+pub mod help_texts;
 
 static_toml! {
     pub static REPLIES = include_toml!("assets/replies.toml");

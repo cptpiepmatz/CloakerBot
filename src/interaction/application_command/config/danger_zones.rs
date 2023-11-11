@@ -4,7 +4,7 @@ use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
-use twilight_mention::fmt::Mention;
+use twilight_mention::fmt::{CommandMention, Mention, MentionFormat};
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::application::interaction::Interaction;
@@ -27,6 +27,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";
 pub const DESCRIPTION: &str = "Define your danger zones.";
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub struct DangerZonesSubCommand;
 

@@ -1,30 +1,39 @@
+use std::fmt::{Display, Write};
 use std::ops::Deref;
 
 use const_format::{concatcp, formatcp, str_replace};
+use itertools::Itertools;
+use twilight_http::request::RequestBuilder;
+use twilight_http::routing::Route;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
+use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::MessageFlags;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
-
-use crate::assets::COLORS;
+use twilight_util::builder::InteractionResponseDataBuilder;
+use crate::util::template::Template;
+use crate::assets::{COLORS, REPLIES};
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::util::trim::trim;
+use crate::{APPLICATION_ID, assets, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
-pub const CHOICES: [&str; 7] = [
+pub const CHOICES: [&str; 8] = [
     cloaker::NAME,
     formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
+    formatcp!("{} {}", config::NAME, config::immunity::NAME),
     formatcp!("{} {}", config::NAME, config::log_channel::NAME),
     formatcp!("{} {}", config::NAME, config::target_bots::NAME),
     formatcp!("{} {}", config::NAME, config::random::NAME),
@@ -44,6 +53,7 @@ pub enum HelpCommand {
 
 pub enum ConfigHelpCommand {
     DangerZones,
+    Immunity,
     LogChannel,
     TargetBots,
     Random
@@ -77,6 +87,9 @@ impl TryFrom<&CommandData> for HelpCommand {
                     (Some(config::NAME), Some(config::danger_zones::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::DangerZones))
                     }
+                    (Some(config::NAME), Some(config::immunity::NAME)) => {
+                        Ok(HelpCommand::Config(ConfigHelpCommand::Immunity))
+                    }
                     (Some(config::NAME), Some(config::log_channel::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::LogChannel))
                     }
@@ -97,35 +110,6 @@ impl TryFrom<&CommandData> for HelpCommand {
     }
 }
 
-macro_rules! prepare_md {
-    ($in:expr) => {
-        str_replace!(
-            str_replace!(
-                str_replace!(
-                    str_replace!(str_replace!(trim!($in), "\r\n", "\n"), "\n\n\n", "<br><br>"),
-                    "\n\n",
-                    "<br>"
-                ),
-                "\n",
-                " "
-            ),
-            "<br>",
-            "\n"
-        )
-    };
-}
-
-const CLOAKER_HELP_TEXT: &str = prepare_md!(include_str!("../../../assets/help/cloaker.md"));
-const CONFIG_DANGER_ZONES_HELP_TEXT: &str =
-    prepare_md!(include_str!("../../../assets/help/config_danger_zones.md"));
-const CONFIG_LOG_CHANNEL_HELP_TEXT: &str =
-    prepare_md!(include_str!("../../../assets/help/config_log_channel.md"));
-const CONFIG_TARGET_BOTS_HELP_TEXT: &str =
-    prepare_md!(include_str!("../../../assets/help/config_target_bots.md"));
-const CONFIG_RANDOM_HELP_TEXT: &str =
-    prepare_md!(include_str!("../../../assets/help/config_random.md"));
-const COUNTER_HELP_TEXT: &str = prepare_md!(include_str!("../../../assets/help/counter.md"));
-
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .dm_permission(false)
@@ -142,97 +126,93 @@ pub async fn action(
     interaction: &Interaction,
     command: HelpCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    defer(&interaction).await?;
+    let mut content = String::new();
 
-    let embed = EmbedBuilder::new().color(COLORS.primary as u32);
+    // writing to String is infallible anyways
+    #[allow(unused_must_use)]
+    {
+        match command {
+            HelpCommand::All => {
+                writeln!(content, "{}", REPLIES.help.overview);
+                content.write_char('\n');
+                writeln!(content, "{}", cloaker::MENTION.deref());
+                writeln!(content, "{}", cloaker::DESCRIPTION);
+                content.write_char('\n');
+                writeln!(content, "`/{}`", config::NAME);
+                writeln!(content, "{}", config::DESCRIPTION);
+                writeln!(content, "    {}", config::danger_zones::MENTION.deref());
+                writeln!(content, "    {}", config::danger_zones::DESCRIPTION);
+                writeln!(content, "    {}", config::immunity::MENTION.deref());
+                writeln!(content, "    {}", config::immunity::DESCRIPTION);
+                writeln!(content, "    {}", config::log_channel::MENTION.deref());
+                writeln!(content, "    {}", config::log_channel::DESCRIPTION);
+                writeln!(content, "    {}", config::random::MENTION.deref());
+                writeln!(content, "    {}", config::random::DESCRIPTION);
+                writeln!(content, "    {}", config::target_bots::MENTION.deref());
+                writeln!(content, "    {}", config::target_bots::DESCRIPTION);
+                content.write_char('\n');
+                writeln!(content, "{}", counter::MENTION.deref());
+                writeln!(content, "{}", counter::DESCRIPTION);
+                content.write_char('\n');
+                writeln!(content, "{}", MENTION.deref());
+                writeln!(content, "{}", DESCRIPTION);
+                content.write_char('\n');
+                writeln!(content, "{}", ranks::MENTION.deref());
+                writeln!(content, "{}", ranks::DESCRIPTION);
+            }
+            HelpCommand::Cloaker => {
+                writeln!(content, "{}{}", REPLIES.help.title, cloaker::MENTION.deref());
+                write!(content, "{}", assets::help_texts::CLOAKER.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
+            },
+            HelpCommand::Config(ConfigHelpCommand::DangerZones) => {
+                writeln!(content, "{}{}", REPLIES.help.title, config::danger_zones::MENTION.deref());
+                write!(content, "{}", assets::help_texts::CONFIG_DANGER_ZONES.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
+            }
+            HelpCommand::Config(ConfigHelpCommand::Immunity) => {
+                writeln!(content, "{}{}", REPLIES.help.title, config::immunity::MENTION.deref());
+                write!(content, "{}", assets::help_texts::CONFIG_IMMUNITY.template([&BOT_USER_ID.mention()]));
+            }
+            HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
+                writeln!(content, "{}{}", REPLIES.help.title, config::log_channel::MENTION.deref());
+                content.write_str(assets::help_texts::CONFIG_LOG_CHANNEL);
+            }
+            HelpCommand::Config(ConfigHelpCommand::Random) => {
+                writeln!(content, "{}{}", REPLIES.help.title, config::random::MENTION.deref());
+                write!(content, "{}", assets::help_texts::CONFIG_RANDOM.template([&BOT_USER_ID.mention()]));
+            }
+            HelpCommand::Config(ConfigHelpCommand::TargetBots) => {
+                writeln!(content, "{}{}", REPLIES.help.title, config::target_bots::MENTION.deref());
+                content.write_str(assets::help_texts::CONFIG_TARGET_BOTS);
+            }
+            HelpCommand::Counter => {
+                writeln!(content, "{}{}", REPLIES.help.title, counter::MENTION.deref());
+                write!(content, "{}", assets::help_texts::COUNTER.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
+            },
+            HelpCommand::Ranks => {
+                writeln!(content, "{}{}", REPLIES.help.title, ranks::MENTION.deref());
+                // TODO: add ranks help content here
+                write!(content, "🚧 Ranks are currently work in progress. 🚧");
+            }
+        }
 
-    let embed = match command {
-        HelpCommand::All => embed
-            .title("🔎 Help Overview")
-            .description("For more info and help on a command use `/help <command name>`.")
-            .field(EmbedFieldBuilder::new(
-                format!("/{}", cloaker::NAME),
-                "Take down your friends."
-            ))
-            .field(EmbedFieldBuilder::new(
-                format!("/{}", config::NAME),
-                concatcp!(
-                    "Configure the bot for this server.\n",
-                    formatcp!("**{}**\n", config::danger_zones::NAME),
-                    "Define what channels should be marked as danger zones.\n",
-                    formatcp!("**{}**\n", config::log_channel::NAME),
-                    "Define what channel to use for logging.\n",
-                    formatcp!("**{}**\n", config::target_bots::NAME),
-                    "Define whether the CloakerBot should take down bots.\n",
-                    formatcp!("**{}**\n", config::random::NAME),
-                    "Configure the random takedowns."
-                )
-            ))
-            .field(EmbedFieldBuilder::new(
-                format!("/{}", counter::NAME),
-                "Counter a takedown."
-            ))
-            .field(EmbedFieldBuilder::new(
-                format!("/{}", ranks::NAME),
-                "Create a badge that shows your takedown stats."
-            )),
+        content.write_char('\n');
+        content.write_char('\n');
+        writeln!(content, "{}", REPLIES.help.support);
+    }
 
-        HelpCommand::Cloaker => embed
-            .title(format!("🔎 Help for /{}", cloaker::NAME))
-            .description(CLOAKER_HELP_TEXT),
-
-        HelpCommand::Config(ConfigHelpCommand::DangerZones) => embed
-            .title(format!(
-                "🔎 Help for /{} {}",
-                config::NAME,
-                config::danger_zones::NAME
-            ))
-            .description(CONFIG_DANGER_ZONES_HELP_TEXT),
-
-        HelpCommand::Config(ConfigHelpCommand::LogChannel) => embed
-            .title(format!(
-                "🔎 Help for /{} {}",
-                config::NAME,
-                config::log_channel::NAME
-            ))
-            .description(CONFIG_LOG_CHANNEL_HELP_TEXT),
-
-        HelpCommand::Config(ConfigHelpCommand::TargetBots) => embed
-            .title(format!(
-                "🔎 Help for /{} {}",
-                config::NAME,
-                config::target_bots::NAME
-            ))
-            .description(CONFIG_TARGET_BOTS_HELP_TEXT),
-
-        HelpCommand::Config(ConfigHelpCommand::Random) => embed
-            .title(format!(
-                "🔎 Help for /{} {}",
-                config::NAME,
-                config::random::NAME
-            ))
-            .description(CONFIG_RANDOM_HELP_TEXT),
-
-        HelpCommand::Counter => embed
-            .title(format!("🔎 Help for /{}", counter::NAME))
-            .description(COUNTER_HELP_TEXT),
-
-        HelpCommand::Ranks => todo!()
+    let response = InteractionResponse {
+        kind: InteractionResponseType::ChannelMessageWithSource,
+        data: InteractionResponseDataBuilder::new()
+            .content(content)
+            .flags(MessageFlags::EPHEMERAL)
+            .build()
+            .into()
     };
-
-    #[allow(clippy::invisible_characters)]
-    let embed = embed
-        .field(EmbedFieldBuilder::new("​", ""))
-        .field(EmbedFieldBuilder::new(
-            "CloakerBot Discord Server",
-            concat!(
-                "If you have any issues come over to the ",
-                "[discord server](https://cptpiepmatz.de/cloaker-bot/join-server)",
-                " and ask there."
-            )
-        ));
-
-    update_defer_embeds(interaction, embed).await?;
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, interaction.token.as_str(), &response)
+        .await?;
 
     Ok(())
 }

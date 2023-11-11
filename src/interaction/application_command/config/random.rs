@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::ops::Deref;
 
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
@@ -26,6 +27,7 @@ use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
 pub const DESCRIPTION: &str = "Configure random takedown behavior.";
+pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
 pub const CLOAKER_QUOTE_TARGET_BOTS: &str =
     "They just gave a tiger a free pass in a playground. Better run, kids!";
