@@ -23,6 +23,8 @@ pub enum ConfigUnsetButton {
     DangerZones,
     ImmunityGeneral,
     ImmunityRandom,
+    ImmunityGeneralSilent,
+    ImmunityRandomSilent,
     LogChannel,
     Random,
     TargetBots
@@ -30,15 +32,17 @@ pub enum ConfigUnsetButton {
 
 impl ToString for ConfigUnsetButton {
     fn to_string(&self) -> String {
-        use ConfigUnsetButton::*;
-        use MessageComponentCustomId::*;
+        type CUB = ConfigUnsetButton;
+        type MCCId = MessageComponentCustomId;
         (match self {
-            DangerZones => ConfigUnsetDangerZones,
-            ImmunityGeneral => ConfigUnsetImmunityGeneral,
-            ImmunityRandom => ConfigUnsetImmunityRandom,
-            LogChannel => ConfigUnsetLogChannel,
-            Random => ConfigUnsetRandom,
-            TargetBots => ConfigUnsetTargetBots
+            CUB::DangerZones => MCCId::ConfigUnsetDangerZones,
+            CUB::ImmunityGeneral => MCCId::ConfigUnsetImmunityGeneral,
+            CUB::ImmunityRandom => MCCId::ConfigUnsetImmunityRandom,
+            CUB::ImmunityGeneralSilent => MCCId::ConfigUnsetImmunityGeneralSilent,
+            CUB::ImmunityRandomSilent => MCCId::ConfigUnsetImmunityRandomSilent,
+            CUB::LogChannel => MCCId::ConfigUnsetLogChannel,
+            CUB::Random => MCCId::ConfigUnsetRandom,
+            CUB::TargetBots => MCCId::ConfigUnsetTargetBots
         })
         .to_string()
     }
@@ -48,15 +52,17 @@ impl TryFrom<MessageComponentCustomId> for ConfigUnsetButton {
     type Error = ConfigButtonActionError;
 
     fn try_from(value: MessageComponentCustomId) -> Result<Self, Self::Error> {
-        use ConfigUnsetButton::*;
-        use MessageComponentCustomId::*;
+        type CUB = ConfigUnsetButton;
+        type MCCId = MessageComponentCustomId;
         Ok(match value {
-            ConfigUnsetDangerZones => DangerZones,
-            ConfigUnsetImmunityGeneral => ImmunityGeneral,
-            ConfigUnsetImmunityRandom => ImmunityRandom,
-            ConfigUnsetLogChannel => LogChannel,
-            ConfigUnsetRandom => Random,
-            ConfigUnsetTargetBots => TargetBots,
+            MCCId::ConfigUnsetDangerZones => CUB::DangerZones,
+            MCCId::ConfigUnsetImmunityGeneral => CUB::ImmunityGeneral,
+            MCCId::ConfigUnsetImmunityRandom => CUB::ImmunityRandom,
+            MCCId::ConfigUnsetImmunityGeneralSilent => CUB::ImmunityGeneralSilent,
+            MCCId::ConfigUnsetImmunityRandomSilent => CUB::ImmunityRandomSilent,
+            MCCId::ConfigUnsetLogChannel => CUB::LogChannel,
+            MCCId::ConfigUnsetRandom => CUB::Random,
+            MCCId::ConfigUnsetTargetBots => CUB::TargetBots,
             c_id => return Err(ConfigButtonActionError::UnexpectedCustomId(c_id))
         })
     }
@@ -96,6 +102,8 @@ pub async fn action(
         ConfigUnsetButton::DangerZones => guild_config.danger_zones.clear(),
         ConfigUnsetButton::ImmunityGeneral => guild_config.immunity.general.clear(),
         ConfigUnsetButton::ImmunityRandom => guild_config.immunity.random.clear(),
+        ConfigUnsetButton::ImmunityGeneralSilent => guild_config.immunity.general_silent.clear(),
+        ConfigUnsetButton::ImmunityRandomSilent => guild_config.immunity.random_silent.clear(),
         ConfigUnsetButton::LogChannel => guild_config.log_channel = Default::default(),
         ConfigUnsetButton::Random => guild_config.random = Default::default(),
         ConfigUnsetButton::TargetBots => guild_config.target_bots = Default::default()
@@ -105,6 +113,8 @@ pub async fn action(
         ConfigUnsetButton::DangerZones |
         ConfigUnsetButton::ImmunityGeneral |
         ConfigUnsetButton::ImmunityRandom |
+        ConfigUnsetButton::ImmunityGeneralSilent |
+        ConfigUnsetButton::ImmunityRandomSilent |
         ConfigUnsetButton::LogChannel => {
             // will be pulled out, when the other variant is deprecated fully
             let reply = match variant {
@@ -123,6 +133,20 @@ pub async fn action(
                     .config
                     .immunity
                     .random
+                    .unset
+                    .template([&QUOTES.config.immunity.random.no_roles]),
+                ConfigUnsetButton::ImmunityGeneralSilent => REPLIES
+                    .config
+                    .immunity
+                    .general
+                    .silent
+                    .unset
+                    .template([&QUOTES.config.immunity.general.no_roles]),
+                ConfigUnsetButton::ImmunityRandomSilent => REPLIES
+                    .config
+                    .immunity
+                    .random
+                    .silent
                     .unset
                     .template([&QUOTES.config.immunity.random.no_roles]),
                 ConfigUnsetButton::LogChannel => REPLIES.config.log_channel.unset.template([
@@ -161,6 +185,8 @@ pub async fn action(
                 ConfigUnsetButton::DangerZones |
                 ConfigUnsetButton::ImmunityGeneral |
                 ConfigUnsetButton::ImmunityRandom |
+                ConfigUnsetButton::ImmunityGeneralSilent |
+                ConfigUnsetButton::ImmunityRandomSilent |
                 ConfigUnsetButton::LogChannel => unreachable!(),
                 ConfigUnsetButton::Random => (
                     "Unset config for random takedowns. No random takedowns will occur.",

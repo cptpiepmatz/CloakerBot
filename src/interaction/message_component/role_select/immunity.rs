@@ -18,6 +18,7 @@ use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::{COLORS, QUOTES, REPLIES};
+use crate::interaction::message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
@@ -33,16 +34,20 @@ const CLOAKER_QUOTE_NO_ROLES: &str =
 #[derive(Debug, Copy, Clone)]
 pub enum ImmunitySelect {
     General,
-    Random
+    Random,
+    GeneralSilent,
+    RandomSilent
 }
 
 impl ToString for ImmunitySelect {
     fn to_string(&self) -> String {
-        use ImmunitySelect::*;
-        use MessageComponentCustomId::*;
+        type IS = ImmunitySelect;
+        type MCCId = MessageComponentCustomId;
         (match self {
-            General => ImmunityGeneralSelect,
-            Random => ImmunityRandomSelect
+            IS::General => MCCId::ImmunityGeneralSelect,
+            IS::Random => MCCId::ImmunityRandomSelect,
+            IS::GeneralSilent => MCCId::ImmunityGeneralSilentSelect,
+            IS::RandomSilent => MCCId::ImmunityRandomSilentSelect
         })
         .to_string()
     }
@@ -52,11 +57,13 @@ impl TryFrom<MessageComponentCustomId> for ImmunitySelect {
     type Error = ImmunitySelectActionError;
 
     fn try_from(value: MessageComponentCustomId) -> Result<Self, Self::Error> {
-        use ImmunitySelect::*;
-        use MessageComponentCustomId::*;
+        type IS = ImmunitySelect;
+        type MCCId = MessageComponentCustomId;
         Ok(match value {
-            ImmunityGeneralSelect => General,
-            ImmunityRandomSelect => Random,
+            MCCId::ImmunityGeneralSelect => IS::General,
+            MCCId::ImmunityRandomSelect => IS::Random,
+            MCCId::ImmunityGeneralSilentSelect => IS::GeneralSilent,
+            MCCId::ImmunityRandomSilentSelect => IS::RandomSilent,
             c_id => return Err(ImmunitySelectActionError::UnexpectedCustomId(c_id))
         })
     }
@@ -111,7 +118,9 @@ pub async fn action(
     let guild_config = guild_configs.entry(guild_id).or_default();
     match variant {
         ImmunitySelect::General => guild_config.immunity.general = roles.clone(),
-        ImmunitySelect::Random => guild_config.immunity.random = roles.clone()
+        ImmunitySelect::Random => guild_config.immunity.random = roles.clone(),
+        ImmunitySelect::GeneralSilent => guild_config.immunity.general_silent = roles.clone(),
+        ImmunitySelect::RandomSilent => guild_config.immunity.random_silent = roles.clone()
     }
 
     let roles_insert = roles
@@ -130,6 +139,20 @@ pub async fn action(
             .immunity
             .random
             .no_roles]),
+        (true, ImmunitySelect::GeneralSilent) => REPLIES
+            .config
+            .immunity
+            .general
+            .silent
+            .unset
+            .template([&QUOTES.config.immunity.general.no_roles]),
+        (true, ImmunitySelect::RandomSilent) => REPLIES
+            .config
+            .immunity
+            .random
+            .silent
+            .unset
+            .template([&QUOTES.config.immunity.random.no_roles]),
         (false, ImmunitySelect::General) => REPLIES.config.immunity.general.set.template([
             &BOT_USER_ID.mention(),
             &roles_insert,
@@ -139,7 +162,21 @@ pub async fn action(
             &BOT_USER_ID.mention(),
             &roles_insert,
             &QUOTES.config.immunity.random.roles
-        ])
+        ]),
+        (false, ImmunitySelect::GeneralSilent) => {
+            REPLIES.config.immunity.general.silent.set.template([
+                &BOT_USER_ID.mention(),
+                &roles_insert,
+                &QUOTES.config.immunity.general.roles
+            ])
+        }
+        (false, ImmunitySelect::RandomSilent) => {
+            REPLIES.config.immunity.random.silent.set.template([
+                &BOT_USER_ID.mention(),
+                &roles_insert,
+                &QUOTES.config.immunity.random.roles
+            ])
+        }
     };
 
     let data = InteractionResponseDataBuilder::new()

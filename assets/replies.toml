@@ -42,6 +42,31 @@ No **general** immunity roles are set now.
 > {}
 """
 
+[config.immunity.general.silent]
+select = """
+## 🛠️ Configure General Silent Immunity Roles
+Select what roles should be immune to **all** kind of takedowns by {}.
+Takedowns targeting these roles won't even initialize.
+For more info use {}.
+"""
+
+set = """
+## 🛡️ Configured General Immunity Roles
+The following roles are now immune to **all** takedowns by {}:
+{}
+
+Takedowns targeting these roles won't even initialize.
+
+> {}
+"""
+
+unset = """
+## 🗑️ Unset General Immunity Roles
+No **silent general** immunity roles are set now.
+
+> {}
+"""
+
 [config.immunity.random]
 select = """
 ## 🛠️ Configure Random Immunity Roles
@@ -63,6 +88,32 @@ No **random** immunity roles are set now.
 
 > {}
 """
+
+[config.immunity.random.silent]
+select = """
+## 🛠️ Configure Random Silent Immunity Roles
+Select what roles should be immune to **random** takedowns by {}.
+Takedowns targeting these roles won't even initialize.
+For more info use {}.
+"""
+
+set = """
+## 🛡️ Configured Random Immunity Roles
+The following roles are now immune to **random** takedowns by {}:
+{}
+
+Takedowns targeting these roles won't even initialize.
+
+> {}
+"""
+
+unset = """
+## 🗑️ Unset Random Immunity Roles
+No **random** immunity roles are set now.
+
+> {}
+"""
+
 
 [config.log_channel]
 select = """

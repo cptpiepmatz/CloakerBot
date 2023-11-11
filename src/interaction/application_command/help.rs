@@ -19,14 +19,15 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
-use crate::util::template::Template;
+
 use crate::assets::{COLORS, REPLIES};
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::{APPLICATION_ID, assets, BOT_USER_ID, STATE};
+use crate::util::template::Template;
+use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
@@ -161,33 +162,91 @@ pub async fn action(
                 writeln!(content, "{}", ranks::DESCRIPTION);
             }
             HelpCommand::Cloaker => {
-                writeln!(content, "{}{}", REPLIES.help.title, cloaker::MENTION.deref());
-                write!(content, "{}", assets::help_texts::CLOAKER.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
-            },
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    cloaker::MENTION.deref()
+                );
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::CLOAKER
+                        .template([&BOT_USER_ID.mention(), counter::MENTION.deref()])
+                );
+            }
             HelpCommand::Config(ConfigHelpCommand::DangerZones) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::danger_zones::MENTION.deref());
-                write!(content, "{}", assets::help_texts::CONFIG_DANGER_ZONES.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    config::danger_zones::MENTION.deref()
+                );
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::CONFIG_DANGER_ZONES
+                        .template([&BOT_USER_ID.mention(), counter::MENTION.deref()])
+                );
             }
             HelpCommand::Config(ConfigHelpCommand::Immunity) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::immunity::MENTION.deref());
-                write!(content, "{}", assets::help_texts::CONFIG_IMMUNITY.template([&BOT_USER_ID.mention()]));
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    config::immunity::MENTION.deref()
+                );
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::CONFIG_IMMUNITY.template([&BOT_USER_ID.mention()])
+                );
             }
             HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::log_channel::MENTION.deref());
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    config::log_channel::MENTION.deref()
+                );
                 content.write_str(assets::help_texts::CONFIG_LOG_CHANNEL);
             }
             HelpCommand::Config(ConfigHelpCommand::Random) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::random::MENTION.deref());
-                write!(content, "{}", assets::help_texts::CONFIG_RANDOM.template([&BOT_USER_ID.mention()]));
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    config::random::MENTION.deref()
+                );
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::CONFIG_RANDOM.template([&BOT_USER_ID.mention()])
+                );
             }
             HelpCommand::Config(ConfigHelpCommand::TargetBots) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::target_bots::MENTION.deref());
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    config::target_bots::MENTION.deref()
+                );
                 content.write_str(assets::help_texts::CONFIG_TARGET_BOTS);
             }
             HelpCommand::Counter => {
-                writeln!(content, "{}{}", REPLIES.help.title, counter::MENTION.deref());
-                write!(content, "{}", assets::help_texts::COUNTER.template([&BOT_USER_ID.mention(), counter::MENTION.deref()]));
-            },
+                writeln!(
+                    content,
+                    "{}{}",
+                    REPLIES.help.title,
+                    counter::MENTION.deref()
+                );
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::COUNTER
+                        .template([&BOT_USER_ID.mention(), counter::MENTION.deref()])
+                );
+            }
             HelpCommand::Ranks => {
                 writeln!(content, "{}{}", REPLIES.help.title, ranks::MENTION.deref());
                 // TODO: add ranks help content here

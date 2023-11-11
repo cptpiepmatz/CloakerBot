@@ -40,12 +40,17 @@ pub async fn handle_message_component(
         ConfigUnsetDangerZones |
         ConfigUnsetImmunityGeneral |
         ConfigUnsetImmunityRandom |
+        ConfigUnsetImmunityGeneralSilent |
+        ConfigUnsetImmunityRandomSilent |
         ConfigUnsetLogChannel |
         ConfigUnsetRandom |
         ConfigUnsetTargetBots => button::config::action(interaction, custom_id).await,
 
         DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await,
-        ImmunityGeneralSelect | ImmunityRandomSelect => {
+        ImmunityGeneralSelect |
+        ImmunityRandomSelect |
+        ImmunityGeneralSilentSelect |
+        ImmunityRandomSilentSelect => {
             role_select::immunity::action(interaction, custom_id, data).await
         }
         LogChannelSelect => channel_select::log_channel::action(interaction, data).await

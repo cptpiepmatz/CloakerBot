@@ -18,7 +18,9 @@ pub struct GuildConfig {
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct GuildConfigImmunity {
     pub general: Vec<Id<RoleMarker>>,
-    pub random: Vec<Id<RoleMarker>>
+    pub random: Vec<Id<RoleMarker>>,
+    pub general_silent: Vec<Id<RoleMarker>>,
+    pub random_silent: Vec<Id<RoleMarker>>
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]

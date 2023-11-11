@@ -37,7 +37,9 @@ pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpe
 
 pub enum ImmunitySubCommand {
     General,
-    Random
+    Random,
+    GeneralSilent,
+    RandomSilent
 }
 
 impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
@@ -46,6 +48,8 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
     fn try_from(options: &Vec<CommandDataOption>) -> Result<Self, Self::Error> {
         let mut for_general = false;
         let mut for_random = false;
+        let mut for_general_silent = false;
+        let mut for_random_silent = false;
         let command = format!("{} {}", super::NAME, NAME);
         for option in options {
             match option.name.as_str() {
@@ -53,6 +57,8 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
                     CommandOptionValue::String(s) => match s.as_str() {
                         "general" => for_general = true,
                         "random" => for_random = true,
+                        "general-silent" => for_general_silent = true,
+                        "random-silent" => for_random_silent = true,
                         _ => {
                             return Err(TryFromInteractionError::IncorrectFieldValue {
                                 command,
@@ -78,10 +84,17 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
             }
         }
 
-        match (for_general, for_random) {
-            (true, _) => Ok(ImmunitySubCommand::General),
-            (_, true) => Ok(ImmunitySubCommand::Random),
-            (false, false) => Err(TryFromInteractionError::MissingField {
+        match (
+            for_general,
+            for_random,
+            for_general_silent,
+            for_random_silent
+        ) {
+            (true, _, _, _) => Ok(ImmunitySubCommand::General),
+            (_, true, _, _) => Ok(ImmunitySubCommand::Random),
+            (_, _, true, _) => Ok(ImmunitySubCommand::GeneralSilent),
+            (_, _, _, true) => Ok(ImmunitySubCommand::RandomSilent),
+            (false, false, false, false) => Err(TryFromInteractionError::MissingField {
                 command,
                 field: "type".into()
             })
@@ -95,7 +108,9 @@ pub fn chat_input() -> CommandOption {
             StringBuilder::new("type", "Select which type of immunity role.")
                 .choices([
                     ("general".to_owned(), "general".to_owned()),
-                    ("random".to_owned(), "random".to_owned())
+                    ("random".to_owned(), "random".to_owned()),
+                    ("general-silent".to_owned(), "general-silent".to_owned()),
+                    ("random-silent".to_owned(), "random-silent".to_owned())
                 ])
                 .required(true)
         )
@@ -108,7 +123,9 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let variant = match command {
         ImmunitySubCommand::General => ImmunitySelect::General,
-        ImmunitySubCommand::Random => ImmunitySelect::Random
+        ImmunitySubCommand::Random => ImmunitySelect::Random,
+        ImmunitySubCommand::GeneralSilent => ImmunitySelect::GeneralSilent,
+        ImmunitySubCommand::RandomSilent => ImmunitySelect::RandomSilent
     };
 
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
@@ -116,11 +133,19 @@ pub async fn action(
     let current = match guild_configs.get(&guild_id) {
         None => &[],
         Some(GuildConfig {
-            immunity: GuildConfigImmunity { general, random },
+            immunity:
+                GuildConfigImmunity {
+                    general,
+                    random,
+                    general_silent,
+                    random_silent
+                },
             ..
         }) => match variant {
             ImmunitySelect::General => general.as_slice(),
-            ImmunitySelect::Random => random.as_slice()
+            ImmunitySelect::Random => random.as_slice(),
+            ImmunitySelect::GeneralSilent => general_silent.as_slice(),
+            ImmunitySelect::RandomSilent => random_silent.as_slice()
         }
     };
 
@@ -132,11 +157,19 @@ pub async fn action(
         ImmunitySelect::Random => {
             message_component::button::config::ConfigUnsetButton::ImmunityRandom
         }
+        ImmunitySelect::GeneralSilent => {
+            message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent
+        }
+        ImmunitySelect::RandomSilent => {
+            message_component::button::config::ConfigUnsetButton::ImmunityRandomSilent
+        }
     });
 
     let content = (match variant {
         ImmunitySelect::General => REPLIES.config.immunity.general.select,
-        ImmunitySelect::Random => REPLIES.config.immunity.random.select
+        ImmunitySelect::Random => REPLIES.config.immunity.random.select,
+        ImmunitySelect::GeneralSilent => REPLIES.config.immunity.general.silent.select,
+        ImmunitySelect::RandomSilent => REPLIES.config.immunity.random.silent.select
     })
     .template([
         &BOT_USER_ID.mention(),
