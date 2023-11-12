@@ -160,6 +160,7 @@ dependencies = [
  "itertools",
  "konst",
  "paris",
+ "parking_lot",
  "rand",
  "serde",
  "serde_json",

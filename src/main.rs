@@ -24,7 +24,7 @@ use twilight_model::id::Id;
 use crate::data::config::GuildConfig;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
-use crate::sync::OnceLockExpect;
+use crate::sync::{KeyLock, OnceLockExpect};
 use crate::util::log::info;
 use crate::util::trim::trim;
 
@@ -58,7 +58,9 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 #[derive(Debug)]
 struct State {
     http: Arc<HttpClient>,
-    guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>
+    guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
+    /// Lock per guild to allow only one takedown to happen per guild.
+    takedown_locks: KeyLock<Id<GuildMarker>>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -78,7 +80,8 @@ async fn main() {
         guild_configs: PersistentData::load()
             .await
             .expect("load should work")
-            .unwrap_or_default()
+            .unwrap_or_default(),
+        takedown_locks: Default::default()
     });
 
     interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
