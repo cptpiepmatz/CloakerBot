@@ -1531,6 +1531,7 @@ dependencies = [
 [[package]]
 name = "twilight-cache-inmemory"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "bitflags",
  "dashmap",
@@ -1541,6 +1542,7 @@ dependencies = [
 [[package]]
 name = "twilight-gateway"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "bitflags",
  "flate2",
@@ -1561,6 +1563,7 @@ dependencies = [
 [[package]]
 name = "twilight-gateway-queue"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "tokio",
  "tracing",
@@ -1569,6 +1572,7 @@ dependencies = [
 [[package]]
 name = "twilight-http"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "brotli",
  "hyper",
@@ -1587,6 +1591,7 @@ dependencies = [
 [[package]]
 name = "twilight-http-ratelimiting"
 version = "0.15.3"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "futures-util",
  "http",
@@ -1597,6 +1602,7 @@ dependencies = [
 [[package]]
 name = "twilight-mention"
 version = "0.15.3"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "twilight-model",
 ]
@@ -1604,6 +1610,7 @@ dependencies = [
 [[package]]
 name = "twilight-model"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "bitflags",
  "serde",
@@ -1615,6 +1622,7 @@ dependencies = [
 [[package]]
 name = "twilight-util"
 version = "0.15.4"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "twilight-model",
  "twilight-validate",
@@ -1623,6 +1631,7 @@ dependencies = [
 [[package]]
 name = "twilight-validate"
 version = "0.15.3"
+source = "git+https://github.com/twilight-rs/twilight.git?rev=879bd592e85a8f64261a72622703fe548b21228a#879bd592e85a8f64261a72622703fe548b21228a"
 dependencies = [
  "twilight-model",
 ]

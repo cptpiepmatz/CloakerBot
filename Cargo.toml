@@ -9,15 +9,6 @@ path = "src/main.rs"
 
 [dependencies]
 
-# discord integration
-twilight-cache-inmemory = { version = "0.15", path = "../twilight/twilight-cache-inmemory" }
-twilight-gateway = { version = "0.15", path = "../twilight/twilight-gateway" }
-twilight-http = { version = "0.15", path = "../twilight/twilight-http" }
-twilight-model = { version = "0.15", path = "../twilight/twilight-model" }
-twilight-mention = { version = "0.15", path = "../twilight/twilight-mention" }
-twilight-util = { version = "0.15", features = ["builder"], path = "../twilight/twilight-util" }
-twilight-validate = { version = "0.15", path = "../twilight/twilight-validate" }
-
 # data serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -47,3 +38,41 @@ itertools = "0.11"
 [dependencies.paris]
 version = "1"
 features = ["macros", "no_logger"]
+
+# discord integration
+[dependencies.twilight-cache-inmemory]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[dependencies.twilight-gateway]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[dependencies.twilight-http]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[dependencies.twilight-model]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[dependencies.twilight-mention]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[dependencies.twilight-util]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+features = ["builder"]
+
+[dependencies.twilight-validate]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
