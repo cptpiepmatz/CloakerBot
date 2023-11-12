@@ -28,8 +28,8 @@ use crate::sync::{KeyLock, OnceLockExpect};
 use crate::util::log::info;
 use crate::util::trim::trim;
 
-pub mod assets;
-pub mod data;
+mod assets;
+mod data;
 mod interaction;
 mod sync;
 mod util;
