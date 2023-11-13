@@ -8,6 +8,7 @@ use derive_more::From;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
 use tokio_stream::wrappers::IntervalStream;
+use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
@@ -32,6 +33,7 @@ mod assets;
 mod data;
 mod interaction;
 mod sync;
+mod takedown;
 mod util;
 
 #[cfg(debug_assertions)]
@@ -60,7 +62,8 @@ struct State {
     http: Arc<HttpClient>,
     guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
     /// Lock per guild to allow only one takedown to happen per guild.
-    takedown_locks: KeyLock<Id<GuildMarker>>
+    takedown_locks: KeyLock<Id<GuildMarker>>,
+    cache: InMemoryCache
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -81,8 +84,19 @@ async fn main() {
             .await
             .expect("load should work")
             .unwrap_or_default(),
-        takedown_locks: Default::default()
+        takedown_locks: Default::default(),
+        cache: InMemoryCache::builder()
+            .resource_types(
+                ResourceType::CHANNEL &
+                    ResourceType::GUILD &
+                    ResourceType::MEMBER &
+                    ResourceType::USER &
+                    ResourceType::VOICE_STATE
+            )
+            .build()
     });
+
+    takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
 
     interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
         .await

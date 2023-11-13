@@ -14,7 +14,7 @@ pub static FAILS: &[&[u8]] = &[
     include_bytes!("../../assets/sounds/fails/pain11.wav"),
     include_bytes!("../../assets/sounds/fails/pain12.wav"),
     include_bytes!("../../assets/sounds/fails/pain13.wav"),
-    include_bytes!("../../assets/sounds/fails/pain14.wav"),
+    include_bytes!("../../assets/sounds/fails/pain14.wav")
 ];
 
 pub static TAKEDOWNS: &[&[u8]] = &[
@@ -57,5 +57,5 @@ pub static TAKEDOWNS: &[&[u8]] = &[
     include_bytes!("../../assets/sounds/takedowns/work smarter.wav"),
     include_bytes!("../../assets/sounds/takedowns/you asked for it.wav"),
     include_bytes!("../../assets/sounds/takedowns/you got what was coming.wav"),
-    include_bytes!("../../assets/sounds/takedowns/you wanted me back.wav"),
+    include_bytes!("../../assets/sounds/takedowns/you wanted me back.wav")
 ];

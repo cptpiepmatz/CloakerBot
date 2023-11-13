@@ -76,7 +76,13 @@ git = "https://github.com/twilight-rs/twilight.git"
 rev = "879bd592e85a8f64261a72622703fe548b21228a"
 version = "0.15"
 
-# discord audio
+# audio handling
+[dependencies.wav]
+version = "1"
+
+[dependencies.symphonia]
+version = "0.5
+
 [dependencies.songbird]
 git = "https://github.com/serenity-rs/songbird.git"
 rev = "3ac17b62a66d22089d822962a53970bd4731ac09"
