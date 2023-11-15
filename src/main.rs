@@ -4,7 +4,6 @@ use std::time::Duration;
 use std::{io, iter};
 
 use const_format::str_replace;
-use dashmap::DashMap;
 use derive_more::From;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
@@ -61,7 +60,7 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
-    http: Arc<HttpClient>,
+    http: HttpClient,
     guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
