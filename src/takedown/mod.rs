@@ -41,6 +41,19 @@ pub enum TakedownFail {
     Immune
 }
 
+/// Takedown plan.
+///
+/// Applied to a hash map with guilds as keys.
+#[derive(Debug)]
+pub struct PlannedTakedown {
+    target_id: Id<UserMarker>,
+    channel_id: Id<ChannelMarker>,
+    /// Caller of the takedown plan.
+    ///
+    /// If [`None`], the bot itself invoked this.
+    caller: Option<Id<UserMarker>>
+}
+
 pub async fn takedown(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,

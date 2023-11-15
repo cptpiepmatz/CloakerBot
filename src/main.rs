@@ -4,6 +4,7 @@ use std::time::Duration;
 use std::{io, iter};
 
 use const_format::str_replace;
+use dashmap::DashMap;
 use derive_more::From;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
@@ -26,6 +27,7 @@ use crate::data::config::GuildConfig;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect};
+use crate::takedown::PlannedTakedown;
 use crate::util::log::info;
 use crate::util::trim::trim;
 
@@ -63,6 +65,10 @@ struct State {
     guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
+    /// Planned takedowns per guild.
+    ///
+    /// As only one takedown may happen per guild, a single values is fine.
+    planned_takedowns: DashMap<Id<GuildMarker>, PlannedTakedown>,
     cache: InMemoryCache
 }
 
@@ -85,6 +91,7 @@ async fn main() {
             .expect("load should work")
             .unwrap_or_default(),
         takedown_locks: Default::default(),
+        planned_takedowns: Default::default(),
         cache: InMemoryCache::builder()
             .resource_types(
                 ResourceType::CHANNEL &

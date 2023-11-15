@@ -21,6 +21,7 @@ async-trait = "0.1"
 
 # concurrency
 parking_lot = "0.12"
+dashmap = "5"
 
 # time management
 chrono = "0.4"
