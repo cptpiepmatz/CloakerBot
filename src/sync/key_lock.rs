@@ -20,6 +20,7 @@ where
 /// When `KeyLockGuard` is dropped, the underlying `MutexGuard` is automatically
 /// released.
 #[derive(Debug)]
+#[must_use]
 pub struct KeyLockGuard<'l> {
     /// The `MutexGuard` for the locked key.
     /// It's bound to the lifetime of the guard to ensure it's not released

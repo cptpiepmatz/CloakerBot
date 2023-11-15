@@ -21,7 +21,7 @@ async-trait = "0.1"
 
 # concurrency
 parking_lot = "0.12"
-dashmap = "5"
+#dashmap = "5"
 
 # time management
 chrono = "0.4"
@@ -90,3 +90,13 @@ rev = "3ac17b62a66d22089d822962a53970bd4731ac09"
 version = "0.3"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls"]
+
+[patch.crates-io.twilight-gateway]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
+
+[patch.crates-io.twilight-model]
+git = "https://github.com/twilight-rs/twilight.git"
+rev = "879bd592e85a8f64261a72622703fe548b21228a"
+version = "0.15"
