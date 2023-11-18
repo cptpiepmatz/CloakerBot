@@ -160,7 +160,7 @@ pub async fn action(
                 .components(None)
                 .build();
             STATE
-                .http
+                .client
                 .interaction(APPLICATION_ID)
                 .create_response(
                     interaction.id,
@@ -200,7 +200,7 @@ pub async fn action(
                 .flags(MessageFlags::EPHEMERAL)
                 .build();
             STATE
-                .http
+                .client
                 .interaction(APPLICATION_ID)
                 .create_response(
                     interaction.id,

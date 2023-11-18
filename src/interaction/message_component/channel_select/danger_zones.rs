@@ -91,7 +91,7 @@ pub async fn action(
         .components(None)
         .build();
     STATE
-        .http
+        .client
         .interaction(APPLICATION_ID)
         .create_response(
             interaction.id,

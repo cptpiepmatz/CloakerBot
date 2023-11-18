@@ -19,9 +19,7 @@ use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::REPLIES;
 use crate::interaction::application_command;
-use crate::interaction::application_command::{
-    HandleApplicationCommandError, TryFromInteractionError
-};
+use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError, update_defer_msg};
 use crate::sync::OnceLockExpect;
 use crate::takedown::{TakedownFail, TakedownResult};
 use crate::util::template::Template;
@@ -122,6 +120,7 @@ pub async fn action(
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
     let author_id = interaction.author_id().ok_or(CloakerActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
+
     let content = match takedown::takedown(command.target_id, guild_id, author_id, false).await {
         // TODO: add quotes for all replies
         TakedownResult::Success => REPLIES
@@ -142,19 +141,6 @@ pub async fn action(
         }])
     };
 
-    let response = InteractionResponse {
-        kind: InteractionResponseType::ChannelMessageWithSource,
-        data: InteractionResponseDataBuilder::new()
-            .content(content)
-            .flags(MessageFlags::EPHEMERAL)
-            .build()
-            .into()
-    };
-    STATE
-        .http
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await?;
-
+    update_defer_msg(interaction, &content).await?;
     Ok(())
 }

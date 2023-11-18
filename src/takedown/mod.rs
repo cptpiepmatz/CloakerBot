@@ -203,7 +203,7 @@ pub async fn takedown(
         return match caller_is_here && !counter_is_immune {
             true => {
                 if let Err(err) = STATE
-                    .http
+                    .client
                     .update_guild_member(guild_id, caller_id)
                     .channel_id(None)
                     .await
@@ -248,7 +248,7 @@ pub async fn takedown(
     }
 
     if let Err(err) = STATE
-        .http
+        .client
         .update_guild_member(guild_id, target_id)
         .channel_id(None)
         .await

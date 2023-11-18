@@ -252,7 +252,7 @@ pub async fn action(
             .into()
     };
     STATE
-        .http
+        .client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
         .await?;

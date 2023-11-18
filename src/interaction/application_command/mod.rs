@@ -302,7 +302,7 @@ async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
         )
     };
     STATE
-        .http
+        .client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
         .await?;
@@ -319,7 +319,7 @@ pub enum UpdateDeferError {
 
 async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), UpdateDeferError> {
     STATE
-        .http
+        .client
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
         .content(Some(msg))?
@@ -333,7 +333,7 @@ async fn update_defer_embeds(
     embed_builder: EmbedBuilder
 ) -> Result<(), UpdateDeferError> {
     STATE
-        .http
+        .client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
         .embeds(Some(&[embed_builder.validate()?.build()]))?

@@ -14,7 +14,7 @@ use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
-use twilight_http::client::Client as HttpClient;
+use twilight_http::client::Client;
 use twilight_http::request::Request;
 use twilight_http::routing::Route;
 use twilight_http::Response;
@@ -62,7 +62,7 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
-    http: HttpClient,
+    client: Client,
     guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
@@ -86,9 +86,9 @@ enum BotEvent {
 #[tokio::main]
 async fn main() {
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
-    let http = HttpClient::new(DISCORD_TOKEN.to_owned());
+    let http = Client::new(DISCORD_TOKEN.to_owned());
     OnceLockExpect::set(&STATE, State {
-        http,
+        client: http,
         guild_configs: PersistentData::load()
             .await
             .expect("load should work")
@@ -117,7 +117,7 @@ async fn main() {
         .await
         .expect("prepping sounds is necessary");
 
-    interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
+    interaction::register_commands(&STATE.client.interaction(APPLICATION_ID))
         .await
         .expect("registering commands is necessary");
 
