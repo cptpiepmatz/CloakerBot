@@ -23,7 +23,7 @@ use crate::{util, BOT_USER_ID, STATE};
 
 pub mod sounds;
 
-const WAIT_AFTER_QUOTE: Duration = Duration::from_secs(1);
+const WAIT_AFTER_QUOTE: Duration = Duration::from_millis(300);
 
 pub type TakedownResult = Result<TakedownSuccess, TakedownFail>;
 
@@ -89,8 +89,8 @@ pub async fn takedown(
     let guild_configs = STATE.guild_configs.read().await;
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
-    let member_roles = fetch_member_roles(guild_id, target_id).await?;
-    preliminary_checks(kind, config, &member_roles)?;
+    let target_roles = fetch_target_roles(guild_id, target_id).await?;
+    preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
 
     let _takedown_lock = STATE.takedown_locks.lock(guild_id);
@@ -99,6 +99,33 @@ pub async fn takedown(
     let call = get_call(guild_id, channel_id).await?;
     let mut call = call.lock().await;
 
+    let takedown_res = takedown_in_voice(
+        &mut call,
+        target_id,
+        &target_roles,
+        guild_id,
+        channel_id,
+        kind,
+        config,
+        rng
+    ).await;
+
+    // leave the channel after everything that happened, we cannot do a thing if it fails to leave
+    let _ = call.leave().await;
+    takedown_res
+}
+
+#[inline]
+async fn takedown_in_voice(
+    mut call: &mut MutexGuard<'_, Call>,
+    target_id: Id<UserMarker>,
+    target_roles: &[Id<RoleMarker>],
+    guild_id: Id<GuildMarker>,
+    channel_id: Id<ChannelMarker>,
+    kind: TakedownType,
+    config: &GuildConfig,
+    rng: &mut impl Rng,
+) -> Result<TakedownSuccess, TakedownFail> {
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
 
     let notification_track_handle =
@@ -122,12 +149,12 @@ pub async fn takedown(
 
             // do the counter measures here
             let Some(caller_id) = caller_id.into()
-            else {
-                // no caller_id, bot did it own it's own
-                call.play_only_input(fail_sound.input.new_handle().into());
-                tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
-                return error;
-            };
+                else {
+                    // no caller_id, bot did it own it's own
+                    call.play_only_input(fail_sound.input.new_handle().into());
+                    tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
+                    return error;
+                };
 
             let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
                 None => false,
@@ -186,7 +213,7 @@ pub async fn takedown(
     // TODO: check for fleeing
 
     // no counter, continue with takedown
-    let has_immune_role = member_roles
+    let has_immune_role = target_roles
         .iter()
         .any(|role| config.immunity.general.contains(role));
     if has_immune_role {
@@ -218,12 +245,10 @@ pub async fn takedown(
         .play_and_wait(&mut call, WAIT_AFTER_QUOTE)
         .await;
     Ok(TakedownSuccess)
-
-    // TODO: bot should leave at the end
 }
 
 #[inline]
-async fn fetch_member_roles(
+async fn fetch_target_roles(
     guild_id: Id<GuildMarker>,
     target_id: Id<UserMarker>
 ) -> Result<Vec<Id<RoleMarker>>, TakedownFail> {
