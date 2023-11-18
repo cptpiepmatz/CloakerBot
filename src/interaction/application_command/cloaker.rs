@@ -64,6 +64,16 @@ impl TryFrom<&CommandData> for CloakerCommand {
             }
         }
 
+        if let Some(resolved) = &data.resolved {
+            if let Some(user_id) = resolved.users.keys().next() {
+                target = Some(*user_id);
+            }
+
+            if let Some(message) = resolved.messages.values().next() {
+                target = Some(message.author.id);
+            }
+        }
+
         match target {
             None => Err(TryFromInteractionError::MissingField {
                 command: NAME.into(),
