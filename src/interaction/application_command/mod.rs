@@ -20,7 +20,7 @@ use twilight_validate::message::MessageValidationError;
 
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
 use crate::interaction::application_command::config::{ConfigActionError, ConfigCommand};
-use crate::interaction::application_command::counter::CounterCommand;
+use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::RanksCommand;
 use crate::interaction::HandleInteractionError;
@@ -264,6 +264,7 @@ pub enum HandleApplicationCommandError {
 
     ConfigAction(ConfigActionError),
     CloakerAction(CloakerActionError),
+    CounterAction(CounterActionError),
 
     Defer(DeferError),
     UpdateDefer(UpdateDeferError),
@@ -277,7 +278,7 @@ pub async fn handle_application_command(
     match ApplicationCommand::try_from(interaction)? {
         ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command).await,
         ApplicationCommand::Config(command) => config::action(interaction, command).await,
-        ApplicationCommand::Counter(_) => todo!(),
+        ApplicationCommand::Counter(command) => counter::action(interaction, command).await,
         ApplicationCommand::Help(command) => help::action(interaction, command).await,
         ApplicationCommand::Ranks(_) => todo!()
     }

@@ -215,3 +215,18 @@ fled = "Target fled into another channel."
 immune = "Target is immune to takedowns."
 rejected = "{} got moved from voice channel."
 other = "An error occured: \n> {}"
+
+[counter]
+success = """
+## 🏸 Counter Successful
+You countered the takedown on {}.
+
+> {}
+"""
+
+miss = """
+## 🪠 Nothing to Counter
+No takedown currently happening.
+
+> {}
+"""

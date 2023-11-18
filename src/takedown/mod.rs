@@ -5,8 +5,8 @@ use std::time::Duration;
 
 use derive_more::From;
 use rand::prelude::*;
-use songbird::Call;
 use songbird::error::JoinError;
+use songbird::Call;
 use tokio::sync::{Mutex, MutexGuard};
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
@@ -21,6 +21,7 @@ use crate::takedown::sounds::Sound;
 use crate::util::ClientError;
 use crate::{util, BOT_USER_ID, STATE};
 
+pub mod counter;
 pub mod sounds;
 
 const WAIT_AFTER_QUOTE: Duration = Duration::from_millis(300);
@@ -66,6 +67,8 @@ const MISSING_PERMS_ERROR_CODE: u64 = 50013;
 /// Some values are only for debug purposes.
 #[derive(Debug)]
 pub struct PlannedTakedown {
+    /// Target of the takedown.
+    target_id: Id<UserMarker>,
     /// If countered, the user that countered will be placed here.
     countered_by_id: Option<Id<UserMarker>>
 }
@@ -94,7 +97,7 @@ pub async fn takedown(
     let channel_id = get_channel_id(target_id, guild_id)?;
 
     let _takedown_lock = STATE.takedown_locks.lock(guild_id);
-    let _planned_takedown_guard = upsert_takedown_plan(guild_id);
+    let _planned_takedown_guard = upsert_takedown_plan(target_id, guild_id);
 
     let call = get_call(guild_id, channel_id).await?;
     let mut call = call.lock().await;
@@ -108,9 +111,11 @@ pub async fn takedown(
         kind,
         config,
         rng
-    ).await;
+    )
+    .await;
 
-    // leave the channel after everything that happened, we cannot do a thing if it fails to leave
+    // leave the channel after everything that happened, we cannot do a thing if it
+    // fails to leave
     let _ = call.leave().await;
     takedown_res
 }
@@ -124,7 +129,7 @@ async fn takedown_in_voice(
     channel_id: Id<ChannelMarker>,
     kind: TakedownType,
     config: &GuildConfig,
-    rng: &mut impl Rng,
+    rng: &mut impl Rng
 ) -> Result<TakedownSuccess, TakedownFail> {
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
 
@@ -140,7 +145,7 @@ async fn takedown_in_voice(
     if let TakedownType::Called { caller_id } = kind {
         if let Some(countered_by_id) = STATE
             .planned_takedowns
-            .read(guild_id, |plan| plan.countered_by_id)
+            .apply(guild_id, |plan| plan.countered_by_id)
             .expect("guard for that entry still alive")
         {
             let error = Err(TakedownFail::Countered {
@@ -149,12 +154,12 @@ async fn takedown_in_voice(
 
             // do the counter measures here
             let Some(caller_id) = caller_id.into()
-                else {
-                    // no caller_id, bot did it own it's own
-                    call.play_only_input(fail_sound.input.new_handle().into());
-                    tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
-                    return error;
-                };
+            else {
+                // no caller_id, bot did it own it's own
+                call.play_only_input(fail_sound.input.new_handle().into());
+                tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
+                return error;
+            };
 
             let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
                 None => false,
@@ -304,18 +309,23 @@ fn get_channel_id(
 
 #[inline]
 fn upsert_takedown_plan(
+    target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>
 ) -> VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown> {
     STATE
         .planned_takedowns
         .upsert(guild_id, PlannedTakedown {
+            target_id,
             countered_by_id: None
         })
         .expect("is unset as per guild this is a critical section")
 }
 
 #[inline]
-async fn get_call(guild_id: Id<GuildMarker>, channel_id: Id<ChannelMarker>) -> Result<Arc<Mutex<Call>>, TakedownFail> {
+async fn get_call(
+    guild_id: Id<GuildMarker>,
+    channel_id: Id<ChannelMarker>
+) -> Result<Arc<Mutex<Call>>, TakedownFail> {
     Ok(STATE
         .songbird
         .join(guild_id, channel_id)

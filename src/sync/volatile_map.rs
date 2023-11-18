@@ -1,6 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::hash::Hash;
+use futures::FutureExt;
 
 use parking_lot::Mutex;
 
@@ -57,35 +58,16 @@ where
         }
     }
 
-    /// Applies a function to a value associated with a key, returning an owned
-    /// result.
+    /// Applies a function to a value associated with a key.
     ///
-    /// This method is for reading a value with a specified key, processing it
-    /// with the given function, and returning the result.
-    /// The function must return an owned value, not a reference, to comply with
-    /// the volatile nature of the map.
-    /// Returns `Some(R)` if the key exists, otherwise `None`.
-    pub fn read<R>(&self, key: K, f: impl Fn(&V) -> R) -> Option<R> {
-        let lock = self.inner.lock();
-        match lock.get(&key) {
-            None => None,
-            Some(value) => Some(f(value))
-        }
-    }
-
-    /// Mutates a key's value based on a provided function.
-    ///
-    /// Performs the update and returns `Some(())` if the key exists, otherwise
-    /// `None`.
-    pub fn update(&self, key: K, f: impl Fn(&mut V)) -> Option<()> {
+    /// This method allows the application of a function to the value of a given
+    /// key, which can either modify the value or return a computed result.
+    /// The function receives a mutable reference to the value (`&mut V`) and
+    /// returns a result of type `R`. If the key is found, `Some(R)` is returned;
+    /// otherwise, it returns `None`.
+    pub fn apply<R>(&self, key: K, f: impl Fn(&mut V) -> R) -> Option<R> {
         let mut lock = self.inner.lock();
-        match lock.get_mut(&key) {
-            None => None,
-            Some(value) => {
-                f(value);
-                Some(())
-            }
-        }
+        lock.get_mut(&key).map(f)
     }
 }
 

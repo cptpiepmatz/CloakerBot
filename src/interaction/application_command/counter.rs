@@ -1,12 +1,20 @@
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 use twilight_mention::fmt::{CommandMention, MentionFormat};
+use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandData;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
+use crate::assets::REPLIES;
+use crate::interaction::application_command;
 
-use crate::interaction::application_command::TryFromInteractionError;
+use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError};
 use crate::sync::OnceLockExpect;
+use crate::takedown;
+use crate::util::template::Template;
 
 pub const NAME: &str = "counter";
 pub const DESCRIPTION: &str = "Counter an incoming takedown.";
@@ -40,3 +48,39 @@ pub fn message_context_menu() -> Command {
         .dm_permission(false)
         .build()
 }
+
+
+#[derive(Debug)]
+pub enum CounterActionError {
+    NotInGuild,
+    NoAuthor
+}
+
+impl Display for CounterActionError {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
+impl Error for CounterActionError {}
+
+pub async fn action(
+    interaction: &Interaction,
+    _command: CounterCommand
+) -> Result<(), HandleApplicationCommandError> {
+    let guild_id = interaction.guild_id.ok_or(CounterActionError::NotInGuild)?;
+    let author_id = interaction
+        .author_id()
+        .ok_or(CounterActionError::NoAuthor)?;
+    application_command::defer(interaction).await?;
+
+    let content = match takedown::counter::counter(guild_id, author_id) {
+        Ok(target_id) => REPLIES.counter.success.template([&target_id.mention()]),
+        Err(()) => REPLIES.counter.miss.template([])
+    };
+
+    application_command::update_defer_msg(interaction, &content).await?;
+
+    Ok(())
+}
+
