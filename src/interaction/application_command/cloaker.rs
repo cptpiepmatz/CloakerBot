@@ -23,7 +23,7 @@ use crate::interaction::application_command::{
     update_defer_msg, HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::takedown::{TakedownFail, TakedownResult};
+use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
 use crate::util::template::Template;
 use crate::{takedown, APPLICATION_ID, STATE};
 
@@ -125,16 +125,20 @@ pub async fn action(
         .ok_or(CloakerActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
 
-    let content = match takedown::takedown(command.target_id, guild_id, author_id, false).await {
-        // TODO: add quotes for all replies
-        TakedownResult::Success => REPLIES
+    let content = match takedown::takedown(command.target_id, guild_id, TakedownType::Called {
+        caller_id: author_id
+    })
+    .await
+    {
+        Ok(TakedownSuccess { .. }) => REPLIES
             .cloaker
             .success
             .template([&command.target_id.mention()]),
-        TakedownResult::Countered { by_id } => {
+        Err(TakedownFail::Countered { by_id }) => {
             REPLIES.cloaker.countered.template([&by_id.mention()])
         }
-        TakedownResult::Fail(fail) => REPLIES.cloaker.fail.template.template([&match fail {
+        Err(fail) => REPLIES.cloaker.fail.template.template([&match fail {
+            TakedownFail::Countered { .. } => unreachable!(),
             TakedownFail::Join(_) => Cow::from(REPLIES.cloaker.fail.join),
             TakedownFail::MissingPermissions => Cow::from(REPLIES.cloaker.fail.missing_perms),
             TakedownFail::NotFound => Cow::from(REPLIES.cloaker.fail.not_found),
