@@ -2,9 +2,12 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use parking_lot::{Mutex, MutexGuard};
+use tokio::sync::Notify;
 
 /// A synchronization primitive for mutually exclusive access to code based on
-/// keys. `KeyLock` allows concurrent access to different keys while
+/// keys.
+///
+/// `KeyLock` allows concurrent access to different keys while
 /// guaranteeing exclusive access to the code sections locked by the same key.
 #[derive(Debug)]
 pub struct KeyLock<K>
@@ -12,20 +15,21 @@ where
     K: Eq + Hash + Copy
 {
     /// A map holding the locks for each key.
-    /// Each key in the map has a corresponding Mutex.
-    locks: Mutex<HashMap<K, &'static Mutex<()>>>
+    /// Each key in the map has a corresponding [`Notify`].
+    locks: Mutex<HashMap<K, &'static Notify>>
 }
 
 /// A guard that holds a lock for a given key until it goes out of scope.
-/// When `KeyLockGuard` is dropped, the underlying `MutexGuard` is automatically
-/// released.
+///
+/// When [`KeyLockGuard`] is dropped, the lock for that key is released.
 #[derive(Debug)]
 #[must_use]
-pub struct KeyLockGuard<'l> {
-    /// The `MutexGuard` for the locked key.
-    /// It's bound to the lifetime of the guard to ensure it's not released
-    /// prematurely.
-    guard: MutexGuard<'l, ()>
+pub struct KeyLockGuard {
+    /// The notify to wake up a waiting task.
+    ///
+    /// Since we keep the `Notify` until the end of the program, we don't need
+    /// reference the lifetime here better.
+    notify: &'static Notify
 }
 
 impl<K> KeyLock<K>
@@ -41,21 +45,28 @@ where
     }
 
     /// Locks the code section associated with the given key and returns a
-    /// guard. If the key does not exist, a new `Mutex` is created, boxed,
+    /// guard.
+    ///
+    /// If the key does not exist, a new [`Notify`] is created, boxed,
     /// leaked, and its static reference is stored in the map.
-    /// If the key exists, it tries to lock the corresponding Mutex and returns
-    /// a guard that can be used to access the protected code section.
-    pub fn lock(&self, key: K) -> KeyLockGuard {
+    ///
+    /// Then this waits on the `Notify` to resolve.
+    /// Only one task can be waken up by this as only a newly created `Notify`
+    /// notifies or a dropped `KeyLockGuard`.
+    pub async fn lock(&self, key: K) -> KeyLockGuard {
         let lock_ref = {
             let mut locks = self.locks.lock();
             *locks.entry(key).or_insert_with(|| {
-                let mutex_box = Box::new(Mutex::new(()));
+                let mutex_box = Box::new(Notify::new());
+                // instantly notify so that the next request will resolve immediately
+                mutex_box.notify_one();
                 Box::leak(mutex_box)
             })
         };
 
-        let guard = lock_ref.lock();
-        KeyLockGuard { guard }
+        // wait here until one Notify notifies
+        lock_ref.notified().await;
+        KeyLockGuard { notify: lock_ref }
     }
 }
 
@@ -69,13 +80,12 @@ where
     }
 }
 
-impl Drop for KeyLockGuard<'_> {
-    /// The drop implementation for `KeyLockGuard`.
-    /// This is where you would add any additional logic required to clean up
-    /// after the guard is no longer needed. Currently, no action is needed
-    /// because the `parking_lot::Mutex` does not poison and will release
-    /// the lock automatically.
+impl Drop for KeyLockGuard {
+    /// On drop, notify a waiting task.
+    ///
+    /// The internal [`Notify::notify_one`] will be called here ensuring that
+    /// another task may start now.
     fn drop(&mut self) {
-        // This space intentionally left blank.
+        self.notify.notify_one();
     }
 }
