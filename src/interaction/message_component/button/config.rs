@@ -26,8 +26,7 @@ pub enum ConfigUnsetButton {
     ImmunityGeneralSilent,
     ImmunityRandomSilent,
     LogChannel,
-    Random,
-    TargetBots
+    Random
 }
 
 impl ToString for ConfigUnsetButton {
@@ -41,8 +40,7 @@ impl ToString for ConfigUnsetButton {
             CUB::ImmunityGeneralSilent => MCCId::ConfigUnsetImmunityGeneralSilent,
             CUB::ImmunityRandomSilent => MCCId::ConfigUnsetImmunityRandomSilent,
             CUB::LogChannel => MCCId::ConfigUnsetLogChannel,
-            CUB::Random => MCCId::ConfigUnsetRandom,
-            CUB::TargetBots => MCCId::ConfigUnsetTargetBots
+            CUB::Random => MCCId::ConfigUnsetRandom
         })
         .to_string()
     }
@@ -62,7 +60,6 @@ impl TryFrom<MessageComponentCustomId> for ConfigUnsetButton {
             MCCId::ConfigUnsetImmunityRandomSilent => CUB::ImmunityRandomSilent,
             MCCId::ConfigUnsetLogChannel => CUB::LogChannel,
             MCCId::ConfigUnsetRandom => CUB::Random,
-            MCCId::ConfigUnsetTargetBots => CUB::TargetBots,
             c_id => return Err(ConfigButtonActionError::UnexpectedCustomId(c_id))
         })
     }
@@ -105,8 +102,7 @@ pub async fn action(
         ConfigUnsetButton::ImmunityGeneralSilent => guild_config.immunity.general_silent.clear(),
         ConfigUnsetButton::ImmunityRandomSilent => guild_config.immunity.random_silent.clear(),
         ConfigUnsetButton::LogChannel => guild_config.log_channel = Default::default(),
-        ConfigUnsetButton::Random => guild_config.random = Default::default(),
-        ConfigUnsetButton::TargetBots => guild_config.target_bots = Default::default()
+        ConfigUnsetButton::Random => guild_config.random = Default::default()
     }
 
     match variant {
@@ -191,10 +187,6 @@ pub async fn action(
                 ConfigUnsetButton::Random => (
                     "Unset config for random takedowns. No random takedowns will occur.",
                     "Well, call me if you need me."
-                ),
-                ConfigUnsetButton::TargetBots => (
-                    "Unset config for targeting bots. Bots can be taken down by default.",
-                    "Now MEE6 is no more safe than you."
                 )
             };
 

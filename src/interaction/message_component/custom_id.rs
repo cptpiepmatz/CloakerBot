@@ -13,7 +13,6 @@ pub enum MessageComponentCustomId {
     ConfigUnsetImmunityRandomSilent,
     ConfigUnsetLogChannel,
     ConfigUnsetRandom,
-    ConfigUnsetTargetBots,
 
     DangerZonesSelect,
     ImmunityGeneralSelect,
@@ -30,7 +29,6 @@ const CONFIG_UNSET_IMMUNITY_GENERAL_SILENT: &str = "config_unset_immunity_genera
 const CONFIG_UNSET_IMMUNITY_RANDOM_SILENT: &str = "config_unset_immunity_random_silent";
 const CONFIG_UNSET_LOG_CHANNEL: &str = "config_unset_log_channel";
 const CONFIG_UNSET_RANDOM: &str = "config_unset_random";
-const CONFIG_UNSET_TARGET_BOTS: &str = "config_unset_target_bots";
 
 const DANGER_ZONES_SELECT: &str = "danger_zones_select";
 const IMMUNITY_GENERAL_SELECT: &str = "immunity_general_select";
@@ -49,7 +47,6 @@ impl ToString for MessageComponentCustomId {
             Self::ConfigUnsetImmunityRandomSilent => CONFIG_UNSET_IMMUNITY_RANDOM_SILENT,
             Self::ConfigUnsetLogChannel => CONFIG_UNSET_LOG_CHANNEL,
             Self::ConfigUnsetRandom => CONFIG_UNSET_RANDOM,
-            Self::ConfigUnsetTargetBots => CONFIG_UNSET_TARGET_BOTS,
 
             Self::DangerZonesSelect => DANGER_ZONES_SELECT,
             Self::ImmunityGeneralSelect => IMMUNITY_GENERAL_SELECT,
@@ -78,7 +75,6 @@ impl FromStr for MessageComponentCustomId {
             CONFIG_UNSET_IMMUNITY_RANDOM_SILENT => Ok(MCCId::ConfigUnsetImmunityRandomSilent),
             CONFIG_UNSET_LOG_CHANNEL => Ok(MCCId::ConfigUnsetLogChannel),
             CONFIG_UNSET_RANDOM => Ok(MCCId::ConfigUnsetRandom),
-            CONFIG_UNSET_TARGET_BOTS => Ok(MCCId::ConfigUnsetTargetBots),
 
             DANGER_ZONES_SELECT => Ok(MCCId::DangerZonesSelect),
             IMMUNITY_GENERAL_SELECT => Ok(MCCId::ImmunityGeneralSelect),

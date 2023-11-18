@@ -31,12 +31,11 @@ use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
-pub const CHOICES: [&str; 8] = [
+pub static CHOICES: &[&str] = &[
     cloaker::NAME,
     formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
     formatcp!("{} {}", config::NAME, config::immunity::NAME),
     formatcp!("{} {}", config::NAME, config::log_channel::NAME),
-    formatcp!("{} {}", config::NAME, config::target_bots::NAME),
     formatcp!("{} {}", config::NAME, config::random::NAME),
     counter::NAME,
     ranks::NAME
@@ -56,7 +55,6 @@ pub enum ConfigHelpCommand {
     DangerZones,
     Immunity,
     LogChannel,
-    TargetBots,
     Random
 }
 
@@ -93,9 +91,6 @@ impl TryFrom<&CommandData> for HelpCommand {
                     }
                     (Some(config::NAME), Some(config::log_channel::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::LogChannel))
-                    }
-                    (Some(config::NAME), Some(config::target_bots::NAME)) => {
-                        Ok(HelpCommand::Config(ConfigHelpCommand::TargetBots))
                     }
                     (Some(config::NAME), Some(config::random::NAME)) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::Random))
@@ -149,8 +144,6 @@ pub async fn action(
                 writeln!(content, "    {}", config::log_channel::DESCRIPTION);
                 writeln!(content, "    {}", config::random::MENTION.deref());
                 writeln!(content, "    {}", config::random::DESCRIPTION);
-                writeln!(content, "    {}", config::target_bots::MENTION.deref());
-                writeln!(content, "    {}", config::target_bots::DESCRIPTION);
                 content.write_char('\n');
                 writeln!(content, "{}", counter::MENTION.deref());
                 writeln!(content, "{}", counter::DESCRIPTION);
@@ -223,15 +216,6 @@ pub async fn action(
                     "{}",
                     assets::help_texts::CONFIG_RANDOM.template([&BOT_USER_ID.mention()])
                 );
-            }
-            HelpCommand::Config(ConfigHelpCommand::TargetBots) => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    config::target_bots::MENTION.deref()
-                );
-                content.write_str(assets::help_texts::CONFIG_TARGET_BOTS);
             }
             HelpCommand::Counter => {
                 writeln!(

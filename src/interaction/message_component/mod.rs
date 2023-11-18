@@ -43,8 +43,7 @@ pub async fn handle_message_component(
         ConfigUnsetImmunityGeneralSilent |
         ConfigUnsetImmunityRandomSilent |
         ConfigUnsetLogChannel |
-        ConfigUnsetRandom |
-        ConfigUnsetTargetBots => button::config::action(interaction, custom_id).await,
+        ConfigUnsetRandom => button::config::action(interaction, custom_id).await,
 
         DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await,
         ImmunityGeneralSelect |

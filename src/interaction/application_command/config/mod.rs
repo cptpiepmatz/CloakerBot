@@ -2,7 +2,6 @@ pub mod danger_zones;
 pub mod immunity;
 pub mod log_channel;
 pub mod random;
-pub mod target_bots;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -31,7 +30,6 @@ pub enum ConfigCommand {
     DangerZones(danger_zones::DangerZonesSubCommand),
     LogChannel(log_channel::LogChannelSubCommand),
     Random(random::RandomSubCommand),
-    TargetBots(target_bots::TargetBotsSubCommand),
     Immunity(immunity::ImmunitySubCommand)
 }
 
@@ -63,9 +61,6 @@ impl TryFrom<&CommandData> for ConfigCommand {
             log_channel::NAME => Ok(ConfigCommand::LogChannel(
                 log_channel::LogChannelSubCommand::try_from(options)?
             )),
-            target_bots::NAME => Ok(ConfigCommand::TargetBots(
-                target_bots::TargetBotsSubCommand::try_from(options)?
-            )),
             random::NAME => Ok(ConfigCommand::Random(random::RandomSubCommand::try_from(
                 options
             )?)),
@@ -84,7 +79,6 @@ pub fn chat_input() -> Command {
         .dm_permission(false)
         .option(log_channel::chat_input())
         .option(danger_zones::chat_input())
-        .option(target_bots::chat_input())
         .option(random::chat_input())
         .option(immunity::chat_input())
         .build()
@@ -111,7 +105,6 @@ pub async fn action(
         ConfigCommand::DangerZones(cmd) => danger_zones::action(interaction, cmd).await?,
         ConfigCommand::LogChannel(cmd) => log_channel::action(interaction, cmd).await?,
         ConfigCommand::Random(cmd) => random::action(interaction, cmd).await?,
-        ConfigCommand::TargetBots(cmd) => target_bots::action(interaction, cmd).await?,
         ConfigCommand::Immunity(cmd) => immunity::action(interaction, cmd).await?
     };
 

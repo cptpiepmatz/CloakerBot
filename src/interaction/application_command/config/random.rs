@@ -29,11 +29,6 @@ pub const NAME: &str = "random";
 pub const DESCRIPTION: &str = "Configure random takedown behavior.";
 pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
 
-pub const CLOAKER_QUOTE_TARGET_BOTS: &str =
-    "They just gave a tiger a free pass in a playground. Better run, kids!";
-pub const CLOAKER_QUOTE_NO_TARGET_BOTS: &str =
-    "No more free-for-all fireworks. The party-poopers have spoken.";
-
 pub struct RandomSubCommand {
     enable: Option<bool>,
     min: Option<f64>,

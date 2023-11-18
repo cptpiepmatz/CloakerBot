@@ -30,9 +30,6 @@ pub const CONFIG_IMMUNITY: &str = prepare_md!(include_str!("../../assets/help/co
 pub const CONFIG_LOG_CHANNEL: &str =
     prepare_md!(include_str!("../../assets/help/config_log_channel.md"));
 
-pub const CONFIG_TARGET_BOTS: &str =
-    prepare_md!(include_str!("../../assets/help/config_target_bots.md"));
-
 pub const CONFIG_RANDOM: &str = prepare_md!(include_str!("../../assets/help/config_random.md"));
 
 pub const COUNTER: &str = prepare_md!(include_str!("../../assets/help/counter.md"));

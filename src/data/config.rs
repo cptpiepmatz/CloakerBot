@@ -11,8 +11,7 @@ pub struct GuildConfig {
     pub danger_zones: Vec<Id<ChannelMarker>>,
     pub immunity: GuildConfigImmunity,
     pub log_channel: Option<Id<ChannelMarker>>,
-    pub random: GuildConfigRandom,
-    pub target_bots: Option<bool>
+    pub random: GuildConfigRandom
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]

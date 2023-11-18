@@ -104,7 +104,7 @@ pub fn message_context_menu() -> Command {
 #[derive(Debug)]
 pub enum CloakerActionError {
     NotInGuild,
-    NoUser
+    NoAuthor
 }
 
 impl Display for CloakerActionError {
@@ -120,12 +120,9 @@ pub async fn action(
     command: CloakerCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
-    let user = interaction
-        .user
-        .as_ref()
-        .ok_or(CloakerActionError::NoUser)?;
+    let author_id = interaction.author_id().ok_or(CloakerActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
-    let content = match takedown::takedown(command.target_id, guild_id, user.id, false).await {
+    let content = match takedown::takedown(command.target_id, guild_id, author_id, false).await {
         // TODO: add quotes for all replies
         TakedownResult::Success => REPLIES
             .cloaker

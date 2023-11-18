@@ -177,8 +177,7 @@ pub async fn register_commands(
                         (&config::danger_zones::MENTION, config::danger_zones::NAME),
                         (&config::immunity::MENTION, config::immunity::NAME),
                         (&config::log_channel::MENTION, config::log_channel::NAME),
-                        (&config::random::MENTION, config::random::NAME),
-                        (&config::target_bots::MENTION, config::target_bots::NAME)
+                        (&config::random::MENTION, config::random::NAME)
                     ] {
                         OnceLockExpect::set(
                             mention,
@@ -245,7 +244,6 @@ pub async fn register_commands(
         OnceLockExpect::is_initialized(&config::immunity::MENTION) &&
         OnceLockExpect::is_initialized(&config::log_channel::MENTION) &&
         OnceLockExpect::is_initialized(&config::random::MENTION) &&
-        OnceLockExpect::is_initialized(&config::target_bots::MENTION) &&
         OnceLockExpect::is_initialized(&cloaker::ID) &&
         OnceLockExpect::is_initialized(&cloaker::MENTION) &&
         OnceLockExpect::is_initialized(&counter::ID) &&

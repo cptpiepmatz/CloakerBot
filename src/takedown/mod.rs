@@ -86,19 +86,6 @@ pub async fn takedown(
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
 
-    // if the user is not part of the cache the bot will most likely not know
-    // where the user is
-    let Some(user_target) = STATE.cache.user(target_id)
-    else {
-        return TakedownFail::NotFound.into();
-    };
-    let user_target = user_target.deref();
-
-    // if targeting bots is false and the user is a bot, handle like immune
-    if !config.target_bots.unwrap_or(true) && user_target.bot {
-        return TakedownFail::Immune.into();
-    }
-
     // same goes for the member
     let Some(member_target) = STATE.cache.member(guild_id, target_id)
     else {
