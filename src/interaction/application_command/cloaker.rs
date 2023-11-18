@@ -1,21 +1,31 @@
+use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
+use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::MessageFlags;
 use twilight_model::guild::Permissions;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
+use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::REPLIES;
+use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
+use crate::takedown::{TakedownFail, TakedownResult};
+use crate::util::template::Template;
+use crate::{takedown, APPLICATION_ID, STATE};
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
@@ -109,5 +119,45 @@ pub async fn action(
     interaction: &Interaction,
     command: CloakerCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    todo!()
+    let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
+    let user = interaction
+        .user
+        .as_ref()
+        .ok_or(CloakerActionError::NoUser)?;
+    application_command::defer(interaction).await?;
+    let content = match takedown::takedown(command.target_id, guild_id, user.id, false).await {
+        // TODO: add quotes for all replies
+        TakedownResult::Success => REPLIES
+            .cloaker
+            .success
+            .template([&command.target_id.mention()]),
+        TakedownResult::Countered { by_id } => {
+            REPLIES.cloaker.countered.template([&by_id.mention()])
+        }
+        TakedownResult::Fail(fail) => REPLIES.cloaker.fail.template.template([&match fail {
+            TakedownFail::Join(_) => Cow::from(REPLIES.cloaker.fail.join),
+            TakedownFail::MissingPermissions => Cow::from(REPLIES.cloaker.fail.missing_perms),
+            TakedownFail::NotFound => Cow::from(REPLIES.cloaker.fail.not_found),
+            TakedownFail::Fled => Cow::from(REPLIES.cloaker.fail.fled),
+            TakedownFail::Immune => Cow::from(REPLIES.cloaker.fail.immune),
+            TakedownFail::Rejected => Cow::from(REPLIES.cloaker.fail.rejected),
+            TakedownFail::HttpError(err) => Cow::from(REPLIES.cloaker.fail.other.template([&err]))
+        }])
+    };
+
+    let response = InteractionResponse {
+        kind: InteractionResponseType::ChannelMessageWithSource,
+        data: InteractionResponseDataBuilder::new()
+            .content(content)
+            .flags(MessageFlags::EPHEMERAL)
+            .build()
+            .into()
+    };
+    STATE
+        .http
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, interaction.token.as_str(), &response)
+        .await?;
+
+    Ok(())
 }

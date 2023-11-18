@@ -184,3 +184,34 @@ If you have any issues come over to the [discord server](https://cptpiepmatz.de/
 """
 
 title = "## 🔎 Help on "
+
+[cloaker]
+success = """
+## 🎯 Takedown Successful
+You succesfully took down {}.
+
+> {}
+"""
+
+countered = """
+## 🔄 Takedown Got Countered
+The takedown was countered by {}.
+
+> {}
+"""
+
+[cloaker.fail]
+template = """
+## ❌ Takedown Failed
+{}
+
+> {}
+"""
+
+join = "Failed to join voice channel."
+missing-perms = "Missing permissions to remove target from channel."
+not-found = "Could not find the target in a voice channel."
+fled = "Target fled into another channel."
+immune = "Target is immune to takedowns."
+rejected = "{} got moved from voice channel."
+other = "An error occured: \n> {}"

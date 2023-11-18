@@ -248,6 +248,8 @@ pub async fn takedown(
         };
     }
 
+    // TODO: check for fleeing
+
     // no counter, continue with takedown
     let has_immune_role = member_target
         .roles()

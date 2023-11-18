@@ -185,7 +185,9 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         }
 
         // handle user joins a voice channel
-        DiscordEvent::VoiceStateUpdate(_) => todo!(),
+        DiscordEvent::VoiceStateUpdate(_) => {
+            // TODO
+        },
 
         _ => ()
     }
