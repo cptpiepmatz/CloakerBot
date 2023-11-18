@@ -7,6 +7,8 @@ use const_format::str_replace;
 use derive_more::From;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
+use songbird::shards::TwilightMap;
+use songbird::Songbird;
 use tokio_stream::wrappers::IntervalStream;
 use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::error::ReceiveMessageError;
@@ -25,7 +27,7 @@ use twilight_model::id::Id;
 use crate::data::config::GuildConfig;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
-use crate::sync::{KeyLock, OnceLockExpect};
+use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
 use crate::takedown::PlannedTakedown;
 use crate::util::log::info;
 use crate::util::trim::trim;
@@ -67,8 +69,9 @@ struct State {
     /// Planned takedowns per guild.
     ///
     /// As only one takedown may happen per guild, a single values is fine.
-    planned_takedowns: DashMap<Id<GuildMarker>, PlannedTakedown>,
-    cache: InMemoryCache
+    planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
+    cache: InMemoryCache,
+    songbird: Songbird
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -82,7 +85,8 @@ enum BotEvent {
 
 #[tokio::main]
 async fn main() {
-    let http = Arc::new(HttpClient::new(DISCORD_TOKEN.to_owned()));
+    let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
+    let http = HttpClient::new(DISCORD_TOKEN.to_owned());
     OnceLockExpect::set(&STATE, State {
         http,
         guild_configs: PersistentData::load()
@@ -99,16 +103,24 @@ async fn main() {
                     ResourceType::USER &
                     ResourceType::VOICE_STATE
             )
-            .build()
+            .build(),
+        songbird: Songbird::twilight(
+            Arc::new(TwilightMap::new(HashMap::from([(
+                shard.id().number(),
+                shard.sender()
+            )]))),
+            BOT_USER_ID
+        )
     });
 
-    takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
+    takedown::sounds::prep_sounds()
+        .await
+        .expect("prepping sounds is necessary");
 
     interaction::register_commands(&STATE.http.interaction(APPLICATION_ID))
         .await
         .expect("registering commands is necessary");
 
-    let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let discord_events =
         ShardEventStream::new(iter::once(&mut shard)).map(|(_, event)| BotEvent::Discord(event));
 
@@ -158,6 +170,8 @@ enum HandleDiscordEventError {
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
+    STATE.songbird.process(&event).await;
+    STATE.cache.update(&event);
     match event {
         // log when ready
         DiscordEvent::Ready(_) => info!("Bot is ready"),

@@ -7,6 +7,8 @@ use futures::future::try_join_all;
 use futures::stream::FuturesUnordered;
 use songbird::input::cached::{CodecCacheError, Decompressed, Memory};
 use songbird::input::{AudioStream, Input, LiveInput};
+use songbird::Call;
+use tokio::sync::MutexGuard;
 use wav::BitDepth;
 
 use crate::assets;
@@ -28,6 +30,15 @@ impl Sound {
         let input = Decompressed::new(wav_bytes.into()).await?;
         let duration = wav::read(&mut Cursor::new(wav_bytes))?.calc_duration();
         Ok(Sound { input, duration })
+    }
+
+    pub async fn play_and_wait(
+        &self,
+        call: &mut MutexGuard<'_, Call>,
+        extra_wait_time: impl Into<Option<Duration>>
+    ) {
+        call.play_only_input(self.input.new_handle().into());
+        tokio::time::sleep(self.duration + extra_wait_time.into().unwrap_or_default()).await;
     }
 }
 
