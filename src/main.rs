@@ -95,15 +95,7 @@ async fn main() {
             .unwrap_or_default(),
         takedown_locks: Default::default(),
         planned_takedowns: Default::default(),
-        cache: InMemoryCache::builder()
-            .resource_types(
-                ResourceType::CHANNEL &
-                    ResourceType::GUILD &
-                    ResourceType::MEMBER &
-                    ResourceType::USER &
-                    ResourceType::VOICE_STATE
-            )
-            .build(),
+        cache: InMemoryCache::builder().build(),
         songbird: Songbird::twilight(
             Arc::new(TwilightMap::new(HashMap::from([(
                 shard.id().number(),
