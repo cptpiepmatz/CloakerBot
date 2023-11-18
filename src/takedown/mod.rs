@@ -8,37 +8,34 @@ use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
+use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::data::config::GuildConfig;
-use crate::{BOT_USER_ID, STATE};
+use crate::util::ClientError;
+use crate::{util, BOT_USER_ID, STATE};
 
 pub mod sounds;
 
 const WAIT_AFTER_QUOTE: Duration = Duration::from_secs(1);
 
-// used to provide a response to the caller
+
+type TakedownResult = Result<TakedownSuccess, TakedownFail>;
+
+struct TakedownSuccess;
+
 #[derive(Debug, From)]
-pub enum TakedownResult {
-    /// The takedown was successful.
-    Success,
-    /// The takedown failed.
-    Fail(TakedownFail),
+pub enum TakedownFail {
     /// The takedown was countered.
     ///
     /// `by_id` refers to the user who countered the bot.
     /// It may be another user than the target.
-    Countered { by_id: Id<UserMarker> }
-}
-
-#[derive(Debug, From)]
-pub enum TakedownFail {
+    Countered { by_id: Id<UserMarker> },
     // TODO: maybe this needs a variant for other discord-related errors
     Join(JoinError),
 
     // Any error that could happen when interacting with discord via their http interface.
-    HttpError(twilight_http::error::Error),
+    Client(ClientError),
     /// Missing permissions to either join the channel or kick the target.
     MissingPermissions,
     /// Could not find the user.
@@ -86,40 +83,32 @@ pub async fn takedown(
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
 
-    // same goes for the member
-    let Some(member_target) = STATE.cache.member(guild_id, target_id)
-    else {
-        return TakedownFail::NotFound.into();
-    };
-    let member_target = member_target.deref();
+    let member_roles = util::cache_or_fetch(
+        STATE.cache.member(guild_id, target_id),
+        |member| member.roles().to_vec(),
+        STATE.client.guild_member(guild_id, target_id),
+        |member| member.roles
+    ).await?;
 
     let is_random_and_silent_immune = random &&
-        member_target
-            .roles()
+        member_roles
             .iter()
             .any(|role| config.immunity.random_silent.contains(role));
     if is_random_and_silent_immune {
-        return TakedownFail::Immune.into();
+        return Err(TakedownFail::Immune);
     }
 
-    let has_silent_immune_role = member_target
-        .roles()
+    let has_silent_immune_role = member_roles
         .iter()
         .any(|role| config.immunity.general_silent.contains(role));
     if has_silent_immune_role {
-        return TakedownFail::Immune.into();
+        return Err(TakedownFail::Immune);
     }
 
     // all preliminary checks are done here, we can start with joining the channel
     // and wululu
 
-    let Some(channel_id) = STATE
-        .cache
-        .voice_state(target_id, guild_id)
-        .map(|cvs| cvs.channel_id())
-    else {
-        return TakedownFail::NotFound.into();
-    };
+    let channel_id = STATE.cache.voice_state(target_id, guild_id).map(|cvs| cvs.channel_id()).ok_or(TakedownFail::NotFound)?;
 
     // when we get this lock we can be sure no other takedown will take place on
     // this guild
@@ -136,10 +125,7 @@ pub async fn takedown(
         })
         .expect("is unset as per guild this is a critical section");
 
-    let call = match STATE.songbird.join(guild_id, channel_id).await {
-        Ok(call) => call,
-        Err(e) => return TakedownFail::Join(e).into()
-    };
+    let call = STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)?;
     let mut call = call.lock().await;
 
     let notification_sound = sounds::WULULULULU.deref();
@@ -153,10 +139,9 @@ pub async fn takedown(
     let notification_track_handle =
         call.play_only_input(notification_sound.input.new_handle().into());
 
-    let duration_multiplier = rng.gen_range(0.6..1.0);
+    let duration_multiplier = rng.gen_range(0.3..0.8);
     tokio::time::sleep(sounds::WULULULULU.duration.mul_f64(duration_multiplier)).await;
 
-    // TODO: check if `stop` is ok, otherwise do `pause`
     notification_track_handle
         .stop()
         .expect("track is owned here");
@@ -167,9 +152,9 @@ pub async fn takedown(
         .read(guild_id, |plan| plan.countered_by_id)
         .expect("guard for that entry still alive")
     {
-        let result = TakedownResult::Countered {
+        let error = Err(TakedownFail::Countered {
             by_id: countered_by_id
-        };
+        });
 
         // do the counter measures here
         let Some(caller_id) = caller_id.into()
@@ -177,7 +162,7 @@ pub async fn takedown(
             // no caller_id, bot did it own it's own
             call.play_only_input(fail_sound.input.new_handle().into());
             tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
-            return result;
+            return error;
         };
 
         let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
@@ -198,8 +183,6 @@ pub async fn takedown(
             true
         };
 
-        // we do not need to check for bots as they can't invoke an application command
-
         return match caller_is_here && !counter_is_immune {
             true => {
                 if let Err(err) = STATE
@@ -217,20 +200,20 @@ pub async fn takedown(
                         ..
                     }) {
                         fail_sound.play_and_wait(&mut call, None).await;
-                        return result;
+                        return error;
                     }
 
-                    return TakedownFail::HttpError(err).into();
+                    return Err(TakedownFail::Client(err.into()));
                 }
 
                 takedown_sound
                     .play_and_wait(&mut call, WAIT_AFTER_QUOTE)
                     .await;
-                result
+                error
             }
             false => {
                 fail_sound.play_and_wait(&mut call, None).await;
-                result
+                error
             }
         };
     }
@@ -238,13 +221,12 @@ pub async fn takedown(
     // TODO: check for fleeing
 
     // no counter, continue with takedown
-    let has_immune_role = member_target
-        .roles()
+    let has_immune_role = member_roles
         .iter()
         .any(|role| config.immunity.general.contains(role));
     if has_immune_role {
         fail_sound.play_and_wait(&mut call, None).await;
-        return TakedownFail::Immune.into();
+        return Err(TakedownFail::Immune);
     }
 
     if let Err(err) = STATE
@@ -261,10 +243,10 @@ pub async fn takedown(
             ..
         }) {
             fail_sound.play_and_wait(&mut call, None).await;
-            return TakedownFail::MissingPermissions.into();
+            return Err(TakedownFail::MissingPermissions);
         }
 
-        return TakedownFail::HttpError(err).into();
+        return Err(TakedownFail::Client(err.into()));
     }
 
     takedown_sound

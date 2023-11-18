@@ -19,7 +19,9 @@ use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::REPLIES;
 use crate::interaction::application_command;
-use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError, update_defer_msg};
+use crate::interaction::application_command::{
+    update_defer_msg, HandleApplicationCommandError, TryFromInteractionError
+};
 use crate::sync::OnceLockExpect;
 use crate::takedown::{TakedownFail, TakedownResult};
 use crate::util::template::Template;
@@ -118,7 +120,9 @@ pub async fn action(
     command: CloakerCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
-    let author_id = interaction.author_id().ok_or(CloakerActionError::NoAuthor)?;
+    let author_id = interaction
+        .author_id()
+        .ok_or(CloakerActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
 
     let content = match takedown::takedown(command.target_id, guild_id, author_id, false).await {
@@ -137,7 +141,7 @@ pub async fn action(
             TakedownFail::Fled => Cow::from(REPLIES.cloaker.fail.fled),
             TakedownFail::Immune => Cow::from(REPLIES.cloaker.fail.immune),
             TakedownFail::Rejected => Cow::from(REPLIES.cloaker.fail.rejected),
-            TakedownFail::HttpError(err) => Cow::from(REPLIES.cloaker.fail.other.template([&err]))
+            TakedownFail::Client(err) => Cow::from(REPLIES.cloaker.fail.other.template([&err]))
         }])
     };
 
