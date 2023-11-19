@@ -7,7 +7,8 @@ use derive_more::From;
 use rand::prelude::*;
 use songbird::error::JoinError;
 use songbird::Call;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::select;
+use tokio::sync::{oneshot, Mutex, MutexGuard};
 use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_cache_inmemory::Reference;
 use twilight_http::api_error::{ApiError, GeneralApiError};
@@ -69,8 +70,8 @@ const MISSING_PERMS_ERROR_CODE: u64 = 50013;
 pub struct PlannedTakedown {
     /// Target of the takedown.
     target_id: Id<UserMarker>,
-    /// If countered, the user that countered will be placed here.
-    countered_by_id: Option<Id<UserMarker>>
+    /// Sender for the counter oneshot channel.
+    counter_tx: Option<oneshot::Sender<Id<UserMarker>>>
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -97,7 +98,7 @@ pub async fn takedown(
     let channel_id = get_channel_id(target_id, guild_id)?;
 
     let _takedown_lock = STATE.takedown_locks.lock(guild_id);
-    let _planned_takedown_guard = upsert_takedown_plan(target_id, guild_id);
+    let (_planned_takedown_guard, counter_rx) = upsert_takedown_plan(target_id, guild_id);
 
     let call = get_call(guild_id, channel_id).await?;
     let mut call = call.lock().await;
@@ -110,7 +111,8 @@ pub async fn takedown(
         channel_id,
         kind,
         config,
-        rng
+        rng,
+        counter_rx
     )
     .await;
 
@@ -129,25 +131,27 @@ async fn takedown_in_voice(
     channel_id: Id<ChannelMarker>,
     kind: TakedownType,
     config: &GuildConfig,
-    rng: &mut impl Rng
+    rng: &mut impl Rng,
+    counter_rx: oneshot::Receiver<Id<UserMarker>>
 ) -> Result<TakedownSuccess, TakedownFail> {
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
 
     let notification_track_handle =
         call.play_only_input(notification_sound.0.input.new_handle().into());
-    tokio::time::sleep(sounds::WULULULULU.duration.mul_f64(notification_sound.1)).await;
+    let countered_by_id: Option<Id<UserMarker>> = select! {
+        counter_res = counter_rx => counter_res.ok(),
+        _ = tokio::time::sleep(sounds::WULULULULU.duration.mul_f64(notification_sound.1)) => None
+    };
 
     notification_track_handle
         .stop()
         .expect("track is owned here");
 
     // while sleeping here, a counter could occur
+    // FIXME: random and called takedowns may be countered, this should also include
+    // random somehow
     if let TakedownType::Called { caller_id } = kind {
-        if let Some(countered_by_id) = STATE
-            .planned_takedowns
-            .apply(guild_id, |plan| plan.countered_by_id)
-            .expect("guard for that entry still alive")
-        {
+        if let Some(countered_by_id) = countered_by_id {
             let error = Err(TakedownFail::Countered {
                 by_id: countered_by_id
             });
@@ -311,14 +315,22 @@ fn get_channel_id(
 fn upsert_takedown_plan(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>
-) -> VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown> {
-    STATE
-        .planned_takedowns
-        .upsert(guild_id, PlannedTakedown {
-            target_id,
-            countered_by_id: None
-        })
-        .expect("is unset as per guild this is a critical section")
+) -> (
+    VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown>,
+    oneshot::Receiver<Id<UserMarker>>
+) {
+    let (tx, rx) = oneshot::channel();
+
+    (
+        STATE
+            .planned_takedowns
+            .upsert(guild_id, PlannedTakedown {
+                target_id,
+                counter_tx: Some(tx)
+            })
+            .expect("is unset as per guild this is a critical section"),
+        rx
+    )
 }
 
 #[inline]

@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
@@ -8,10 +9,12 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
+
 use crate::assets::REPLIES;
 use crate::interaction::application_command;
-
-use crate::interaction::application_command::{HandleApplicationCommandError, TryFromInteractionError};
+use crate::interaction::application_command::{
+    HandleApplicationCommandError, TryFromInteractionError
+};
 use crate::sync::OnceLockExpect;
 use crate::takedown;
 use crate::util::template::Template;
@@ -49,7 +52,6 @@ pub fn message_context_menu() -> Command {
         .build()
 }
 
-
 #[derive(Debug)]
 pub enum CounterActionError {
     NotInGuild,
@@ -83,4 +85,3 @@ pub async fn action(
 
     Ok(())
 }
-

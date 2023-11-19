@@ -1,8 +1,8 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::hash::Hash;
-use futures::FutureExt;
 
+use futures::FutureExt;
 use parking_lot::Mutex;
 
 /// Thread-safe map with automatic entry removal.
@@ -63,8 +63,8 @@ where
     /// This method allows the application of a function to the value of a given
     /// key, which can either modify the value or return a computed result.
     /// The function receives a mutable reference to the value (`&mut V`) and
-    /// returns a result of type `R`. If the key is found, `Some(R)` is returned;
-    /// otherwise, it returns `None`.
+    /// returns a result of type `R`. If the key is found, `Some(R)` is
+    /// returned; otherwise, it returns `None`.
     pub fn apply<R>(&self, key: K, f: impl Fn(&mut V) -> R) -> Option<R> {
         let mut lock = self.inner.lock();
         lock.get_mut(&key).map(f)
