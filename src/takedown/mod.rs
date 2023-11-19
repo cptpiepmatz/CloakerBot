@@ -93,12 +93,16 @@ pub async fn takedown(
     let guild_configs = STATE.guild_configs.read().await;
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
-    let target_roles = fetch_target_roles(guild_id, target_id).await?;
+    let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
 
     let _takedown_lock = STATE.takedown_locks.lock(guild_id);
-    let (_planned_takedown_guard, counter_rx) = upsert_takedown_plan(target_id, guild_id);
+    let (_planned_takedown_guard, counter_rx) = upsert_takedown_plan(
+        target_id,
+        guild_id,
+        !matches!(kind, TakedownType::DangerZone { .. })
+    );
 
     let call = get_call(guild_id, channel_id).await?;
     let mut call = call.lock().await;
@@ -132,91 +136,89 @@ async fn takedown_in_voice(
     kind: TakedownType,
     config: &GuildConfig,
     rng: &mut impl Rng,
-    counter_rx: oneshot::Receiver<Id<UserMarker>>
+    counter_rx: Option<oneshot::Receiver<Id<UserMarker>>>
 ) -> Result<TakedownSuccess, TakedownFail> {
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
 
     let notification_track_handle =
         call.play_only_input(notification_sound.0.input.new_handle().into());
-    let countered_by_id: Option<Id<UserMarker>> = select! {
-        counter_res = counter_rx => counter_res.ok(),
-        _ = tokio::time::sleep(sounds::WULULULULU.duration.mul_f64(notification_sound.1)) => None
+    let notification_sleep =
+        tokio::time::sleep(sounds::WULULULULU.duration.mul_f64(notification_sound.1));
+
+    // while sleeping here, a counter could occur
+    let countered_by_id: Option<Id<UserMarker>> = match counter_rx {
+        Some(counter_rx) => select! {
+            counter_res = counter_rx => counter_res.ok(),
+            _ = notification_sleep => None
+        },
+        None => {
+            notification_sleep.await;
+            None
+        }
     };
 
     notification_track_handle
         .stop()
         .expect("track is owned here");
 
-    // while sleeping here, a counter could occur
-    // FIXME: random and called takedowns may be countered, this should also include
-    // random somehow
-    if let TakedownType::Called { caller_id } = kind {
-        if let Some(countered_by_id) = countered_by_id {
-            let error = Err(TakedownFail::Countered {
-                by_id: countered_by_id
-            });
+    let caller_id = match kind {
+        TakedownType::Called { caller_id } => Some(caller_id),
+        TakedownType::Random => None,
+        TakedownType::DangerZone { .. } => None
+    };
 
-            // do the counter measures here
-            let Some(caller_id) = caller_id.into()
-            else {
-                // no caller_id, bot did it own it's own
-                call.play_only_input(fail_sound.input.new_handle().into());
-                tokio::time::sleep(fail_sound.duration + WAIT_AFTER_QUOTE).await;
-                return error;
-            };
+    if let Some(countered_by_id) = countered_by_id {
+        let fail = Err(TakedownFail::Countered {
+            by_id: countered_by_id
+        });
 
-            let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
-                None => false,
-                Some(caller_vs) => caller_vs.channel_id() == channel_id
-            };
+        let Some(caller_id) = caller_id
+        else {
+            fail_sound.play_and_wait(call, WAIT_AFTER_QUOTE).await;
+            return fail;
+        };
 
-            let counter_is_immune =
-                if let Some(counter) = STATE.cache.member(guild_id, countered_by_id) {
-                    config
-                        .immunity
-                        .general
-                        .iter()
-                        .chain(config.immunity.general_silent.iter())
-                        .any(|role| counter.roles().contains(role))
-                }
-                else {
-                    true
-                };
+        let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
+            Some(caller_vs) => caller_vs.channel_id() == channel_id,
+            None => false
+        };
 
-            return match caller_is_here && !counter_is_immune {
-                true => {
-                    if let Err(err) = STATE
-                        .client
-                        .update_guild_member(guild_id, caller_id)
-                        .channel_id(None)
-                        .await
-                    {
-                        // TODO: check if this code is the missing permissions code
-                        if matches!(err.kind(), ErrorType::Response {
-                            error: ApiError::General(GeneralApiError {
-                                code: MISSING_PERMS_ERROR_CODE,
-                                ..
-                            }),
-                            ..
-                        }) {
-                            fail_sound.play_and_wait(&mut call, None).await;
-                            return error;
-                        }
+        let caller_roles = fetch_member_roles(guild_id, caller_id).await?;
+        let caller_is_immune = config
+            .immunity
+            .general
+            .iter()
+            .chain(config.immunity.general_silent.iter())
+            .any(|role| caller_roles.contains(role));
 
-                        return Err(TakedownFail::Client(err.into()));
-                    }
-
-                    takedown_sound
-                        .play_and_wait(&mut call, WAIT_AFTER_QUOTE)
-                        .await;
-                    error
-                }
-                false => {
-                    fail_sound.play_and_wait(&mut call, None).await;
-                    error
-                }
-            };
+        if caller_is_immune || !caller_is_here {
+            fail_sound.play_and_wait(&mut call, None).await;
+            return fail;
         }
+
+        if let Err(err) = STATE
+            .client
+            .update_guild_member(guild_id, caller_id)
+            .channel_id(None)
+            .await
+        {
+            // TODO: check if this code is the missing permissions code
+            if matches!(err.kind(), ErrorType::Response {
+                error: ApiError::General(GeneralApiError {
+                    code: MISSING_PERMS_ERROR_CODE,
+                    ..
+                }),
+                ..
+            }) {
+                fail_sound.play_and_wait(&mut call, None).await;
+                return fail;
+            }
+
+            return Err(TakedownFail::Client(err.into()));
+        }
+
+        takedown_sound.play_and_wait(call, WAIT_AFTER_QUOTE).await;
+        return fail;
     }
 
     // TODO: check for fleeing
@@ -257,14 +259,14 @@ async fn takedown_in_voice(
 }
 
 #[inline]
-async fn fetch_target_roles(
+async fn fetch_member_roles(
     guild_id: Id<GuildMarker>,
-    target_id: Id<UserMarker>
+    member_id: Id<UserMarker>
 ) -> Result<Vec<Id<RoleMarker>>, TakedownFail> {
     match util::cache_or_fetch(
-        STATE.cache.member(guild_id, target_id),
+        STATE.cache.member(guild_id, member_id),
         |member| member.roles().to_vec(),
-        STATE.client.guild_member(guild_id, target_id),
+        STATE.client.guild_member(guild_id, member_id),
         |member| member.roles
     )
     .await
@@ -314,19 +316,23 @@ fn get_channel_id(
 #[inline]
 fn upsert_takedown_plan(
     target_id: Id<UserMarker>,
-    guild_id: Id<GuildMarker>
+    guild_id: Id<GuildMarker>,
+    allow_counter: bool
 ) -> (
     VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown>,
-    oneshot::Receiver<Id<UserMarker>>
+    Option<oneshot::Receiver<Id<UserMarker>>>
 ) {
-    let (tx, rx) = oneshot::channel();
+    let (tx, rx) = match (allow_counter, oneshot::channel()) {
+        (true, (tx, rx)) => (Some(tx), Some(rx)),
+        (false, _) => (None, None)
+    };
 
     (
         STATE
             .planned_takedowns
             .upsert(guild_id, PlannedTakedown {
                 target_id,
-                counter_tx: Some(tx)
+                counter_tx: tx
             })
             .expect("is unset as per guild this is a critical section"),
         rx
