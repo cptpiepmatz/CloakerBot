@@ -221,7 +221,15 @@ async fn takedown_in_voice(
         return fail;
     }
 
-    // TODO: check for fleeing
+    let target_end_channel_id = STATE
+        .cache
+        .voice_state(target_id, guild_id)
+        .as_ref()
+        .map(|cvs| cvs.channel_id());
+    if target_end_channel_id != channel_id.into() {
+        fail_sound.play_and_wait(call, None).await;
+        return Err(TakedownFail::Fled);
+    }
 
     // no counter, continue with takedown
     let has_immune_role = target_roles
