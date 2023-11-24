@@ -7,6 +7,7 @@ use serde::de::DeserializeOwned;
 use twilight_http::response::DeserializeBodyError;
 use twilight_http::Response;
 
+pub mod cache;
 pub mod log;
 pub mod template;
 pub mod trim;

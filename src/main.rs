@@ -5,11 +5,12 @@ use std::{io, iter};
 
 use const_format::str_replace;
 use derive_more::From;
+use futures::future::FutureExt;
 use futures::stream::{select, StreamExt};
 use serde_json::Value;
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
-use tokio_stream::wrappers::IntervalStream;
+use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
@@ -25,10 +26,13 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::data::config::GuildConfig;
+use crate::data::stats::GuildStats;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
+use crate::takedown::danger_zones::{check_danger_zones, CheckDangerZonesError};
 use crate::takedown::PlannedTakedown;
+use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
 use crate::util::trim::trim;
 
@@ -64,13 +68,14 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 struct State {
     client: Client,
     guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
+    guild_stats: PersistentData<HashMap<Id<GuildMarker>, GuildStats>>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
     /// Planned takedowns per guild.
     ///
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
-    cache: InMemoryCache,
+    cache: ObservableCache,
     songbird: Songbird
 }
 
@@ -80,22 +85,28 @@ static STATE: OnceLockExpect<State> = OnceLockExpect::new();
 enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
-    PersistData
+    PersistData,
+    CacheUpdate(CacheUpdateEvent)
 }
 
 #[tokio::main]
 async fn main() {
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let http = Client::new(DISCORD_TOKEN.to_owned());
+    let (cache, mut cache_rx) = ObservableCache::new();
     OnceLockExpect::set(&STATE, State {
         client: http,
         guild_configs: PersistentData::load()
             .await
             .expect("load should work")
             .unwrap_or_default(),
+        guild_stats: PersistentData::load()
+            .await
+            .expect("load should work")
+            .unwrap_or_default(),
         takedown_locks: Default::default(),
         planned_takedowns: Default::default(),
-        cache: InMemoryCache::builder().build(),
+        cache,
         songbird: Songbird::twilight(
             Arc::new(TwilightMap::new(HashMap::from([(
                 shard.id().number(),
@@ -123,8 +134,11 @@ async fn main() {
         IntervalStream::new(tokio::time::interval(PERSIST_DATA_INTERVAL_DURATION))
             .map(|_| BotEvent::PersistData);
 
+    let cache_updates = ReceiverStream::new(cache_rx).map(BotEvent::CacheUpdate);
+
     let events = select(discord_events, random_check_interval);
-    let mut events = select(events, persist_data_interval);
+    let events = select(events, persist_data_interval);
+    let mut events = select(events, cache_updates);
 
     while let Some(event) = events.next().await {
         tokio::spawn(handle_event(event));
@@ -135,7 +149,8 @@ async fn main() {
 enum HandleEventError {
     Fatal,
     Discord(HandleDiscordEventError),
-    Persist(io::Error)
+    Persist(io::Error),
+    CheckDangerZones(CheckDangerZonesError)
 }
 
 async fn handle_event(event: BotEvent) {
@@ -147,7 +162,10 @@ async fn handle_event(event: BotEvent) {
                 Err(_) => ()
             },
             BotEvent::RandomCheck => (), // TODO: handle random checks
-            BotEvent::PersistData => handle_persist_data().await?
+            BotEvent::PersistData => handle_persist_data().await?,
+            BotEvent::CacheUpdate(update) => match update {
+                CacheUpdateEvent::VoiceChannelUpdate(update) => check_danger_zones(update).await?
+            }
         };
 
         Ok(())
@@ -163,7 +181,7 @@ enum HandleDiscordEventError {
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
     STATE.songbird.process(&event).await;
-    STATE.cache.update(&event);
+    STATE.cache.observe(&event).await;
     match event {
         // log when ready
         DiscordEvent::Ready(_) => info!("Bot is ready"),
@@ -174,11 +192,6 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         // handle interactions
         DiscordEvent::InteractionCreate(interaction_create) => {
             handle_interaction(&interaction_create).await?
-        }
-
-        // handle user joins a voice channel
-        DiscordEvent::VoiceStateUpdate(_) => {
-            // TODO
         }
 
         _ => ()

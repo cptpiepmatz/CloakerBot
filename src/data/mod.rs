@@ -8,6 +8,7 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::util::log::debug;
 
 pub mod config;
+pub mod stats;
 
 #[derive(Debug, Default)]
 pub struct PersistentData<T> {
@@ -108,6 +109,7 @@ pub enum LoadPersistentDataError {
 
 pub async fn handle_persist_data() -> io::Result<()> {
     STATE.guild_configs.store().await?;
+    STATE.guild_stats.store().await?;
 
     Ok(())
 }
