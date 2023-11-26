@@ -135,6 +135,12 @@ pub async fn action(
 
     guild_config.random = GuildConfigRandom { enabled, min, max };
 
+    {
+        // remove schedule entry so that the next check can update
+        let mut random_takedown_schedule = STATE.random_takedown_schedule.write().await;
+        random_takedown_schedule.remove(&guild_id);
+    }
+
     fn format_f64(num: f64) -> String {
         let mut formatted = format!("{:.2}", num);
         let trimmed = formatted.trim_end_matches('0').trim_end_matches('.');

@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{io, iter};
 
+use chrono::{DateTime, Local};
 use const_format::str_replace;
 use derive_more::From;
 use futures::future::FutureExt;
@@ -31,6 +33,7 @@ use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
 use crate::takedown::danger_zones::{check_danger_zones, CheckDangerZonesError};
+use crate::takedown::random::{handle_random_check, CheckRandomError};
 use crate::takedown::PlannedTakedown;
 use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
@@ -75,11 +78,14 @@ struct State {
     ///
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
+    random_takedown_schedule: PersistentData<HashMap<Id<GuildMarker>, DateTime<Local>>>,
     cache: ObservableCache,
     songbird: Songbird
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
+
+static READY: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug)]
 enum BotEvent {
@@ -106,6 +112,7 @@ async fn main() {
             .unwrap_or_default(),
         takedown_locks: Default::default(),
         planned_takedowns: Default::default(),
+        random_takedown_schedule: Default::default(),
         cache,
         songbird: Songbird::twilight(
             Arc::new(TwilightMap::new(HashMap::from([(
@@ -150,23 +157,39 @@ enum HandleEventError {
     Fatal,
     Discord(HandleDiscordEventError),
     Persist(io::Error),
-    CheckDangerZones(CheckDangerZonesError)
+    CheckDangerZones(CheckDangerZonesError),
+    RandomCheck(CheckRandomError)
 }
 
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
-        match event {
-            BotEvent::Discord(event) => match event {
-                Ok(event) => handle_discord_event(event).await?,
-                Err(source) if source.is_fatal() => return Err(HandleEventError::Fatal),
-                Err(_) => ()
-            },
-            BotEvent::RandomCheck => (), // TODO: handle random checks
-            BotEvent::PersistData => handle_persist_data().await?,
-            BotEvent::CacheUpdate(update) => match update {
-                CacheUpdateEvent::VoiceChannelUpdate(update) => check_danger_zones(update).await?
+        match (READY.load(Ordering::SeqCst), event) {
+            // Bot is not ready
+            (false, BotEvent::Discord(Err(source))) if source.is_fatal() => {
+                return Err(HandleEventError::Fatal)
             }
-        };
+            (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
+                READY.store(true, Ordering::SeqCst);
+                info!("Bot is ready");
+            }
+            (false, _) => {}
+
+            // Bot is ready
+            (true, event) => match event {
+                BotEvent::Discord(event) => match event {
+                    Ok(event) => handle_discord_event(event).await?,
+                    Err(source) if source.is_fatal() => return Err(HandleEventError::Fatal),
+                    Err(_) => ()
+                },
+                BotEvent::RandomCheck => handle_random_check().await?,
+                BotEvent::PersistData => handle_persist_data().await?,
+                BotEvent::CacheUpdate(update) => match update {
+                    CacheUpdateEvent::VoiceChannelUpdate(update) => {
+                        check_danger_zones(update).await?
+                    }
+                }
+            }
+        }
 
         Ok(())
     }
@@ -183,9 +206,6 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
     STATE.songbird.process(&event).await;
     STATE.cache.observe(&event).await;
     match event {
-        // log when ready
-        DiscordEvent::Ready(_) => info!("Bot is ready"),
-
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(_) => todo!(),
 

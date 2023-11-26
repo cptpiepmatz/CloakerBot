@@ -26,6 +26,7 @@ use crate::{util, BOT_USER_ID, STATE};
 
 pub mod counter;
 pub mod danger_zones;
+pub mod random;
 pub mod sounds;
 
 const WAIT_AFTER_QUOTE: Duration = Duration::from_millis(300);
