@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::io::Cursor;
 use std::time::Duration;
 use std::{io, mem};
@@ -18,8 +19,9 @@ pub static WULULULULU: OnceLockExpect<Sound> = OnceLockExpect::new();
 pub static FAILS: OnceLockExpect<Vec<Sound>> = OnceLockExpect::new();
 pub static TAKEDOWNS: OnceLockExpect<Vec<Sound>> = OnceLockExpect::new();
 
-// TODO: implement Debug, Decompressed doesn't, therefore custom impl needed
 pub struct Sound {
+    /// The size of the raw bytes containing that sound. Used for debugging.
+    pub raw_size: usize,
     /// The songbird needed input, this implements [`Into<Input>`].
     pub input: Decompressed,
     pub duration: Duration
@@ -27,9 +29,14 @@ pub struct Sound {
 
 impl Sound {
     async fn from_static_wav_bytes(wav_bytes: &'static [u8]) -> Result<Self, SoundFromBytesError> {
+        let raw_size = wav_bytes.len();
         let input = Decompressed::new(wav_bytes.into()).await?;
         let duration = wav::read(&mut Cursor::new(wav_bytes))?.calc_duration();
-        Ok(Sound { input, duration })
+        Ok(Sound {
+            raw_size,
+            input,
+            duration
+        })
     }
 
     pub async fn play_and_wait(
@@ -39,6 +46,39 @@ impl Sound {
     ) {
         call.play_only_input(self.input.new_handle().into());
         tokio::time::sleep(self.duration + extra_wait_time.into().unwrap_or_default()).await;
+    }
+}
+
+impl Debug for Sound {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let kb = self.raw_size as f32 / 1000.0;
+        match f.alternate() {
+            false => write!(
+                f,
+                concat!(
+                    "Sound {{",
+                    " raw_size: {kb:.1} KB,",
+                    " input: Decompressed(...),",
+                    " duration: {duration:?}",
+                    " }}"
+                ),
+                kb = kb,
+                duration = self.duration
+            ),
+
+            true => write!(
+                f,
+                concat!(
+                    "Sound {{\n",
+                    "    raw_size: {kb:.1} KB,\n",
+                    "    input: Decompressed(...),\n",
+                    "    duration: {duration:?},\n",
+                    "}}"
+                ),
+                kb = kb,
+                duration = self.duration
+            )
+        }
     }
 }
 
