@@ -15,7 +15,7 @@ use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandB
 use twilight_util::builder::InteractionResponseDataBuilder;
 
 use crate::assets::{QUOTES, REPLIES};
-use crate::data::config::GuildConfigRandom;
+use crate::data::config::{CompleteDefault, GuildConfigRandom};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::ApplicationCommand::Config;
 use crate::interaction::application_command::{
@@ -149,6 +149,7 @@ pub async fn action(
         formatted
     }
 
+    let complete_random = guild_config.random.complete();
     let content = match guild_config.random.enabled {
         None | Some(false) => REPLIES
             .config
@@ -156,9 +157,8 @@ pub async fn action(
             .disabled
             .template([&QUOTES.config.random.enabled]),
         Some(true) => REPLIES.config.random.enabled.template([
-            // TODO: somehow show default values here
-            &min.map(format_f64).unwrap_or("*[default min]*".into()),
-            &max.map(format_f64).unwrap_or("*[default max]*".into()),
+            &format_f64(complete_random.min),
+            &format_f64(complete_random.max),
             application_command::help::MENTION.deref(),
             &QUOTES.config.random.disabled
         ])
