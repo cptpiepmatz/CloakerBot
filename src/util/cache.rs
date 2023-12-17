@@ -6,6 +6,7 @@ use twilight_model::gateway::event::{Event as DiscordEvent, Event};
 use twilight_model::gateway::payload::incoming::VoiceStateUpdate;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use crate::util::ifr_some;
 
 #[derive(Debug)]
 pub struct ObservableCache {
@@ -57,10 +58,7 @@ impl ObservableCache {
 
     async fn handle_voice_state_update(&self, update: &VoiceStateUpdate) {
         let user_id = update.user_id;
-        let Some(guild_id) = update.guild_id
-        else {
-            return;
-        };
+        let guild_id = ifr_some!(update.guild_id);
 
         let event_channel_id = update.channel_id;
         let cache_channel_id = self

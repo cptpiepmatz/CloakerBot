@@ -11,7 +11,7 @@ impl<T> OnceLockExpect<T> {
     }
 
     pub fn set(once: &Self, value: T) {
-        if let Err(_) = once.0.set(value) {
+        if once.0.set(value).is_err() {
             panic!("OnceLockExpect::set called while already set");
         }
     }

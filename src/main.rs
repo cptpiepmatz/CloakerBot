@@ -207,7 +207,9 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
     STATE.cache.observe(&event).await;
     match event {
         // clear persistent data from this guild
-        DiscordEvent::GuildDelete(_) => todo!(),
+        DiscordEvent::GuildDelete(_) => {
+            // TODO: handle cleanup of deleted guild data
+        },
 
         // handle interactions
         DiscordEvent::InteractionCreate(interaction_create) => {

@@ -20,6 +20,7 @@ pub struct PersistentData<T> {
 use persist::Persist;
 
 use crate::STATE;
+use crate::util::ifr;
 
 mod persist {
     // public interfaces require public types, this makes the `Persist` trait public
@@ -90,10 +91,8 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
     }
 
     pub async fn store(&self) -> io::Result<()> {
-        if !self.dirty.load(Ordering::Relaxed) {
-            // do not store data if the data is not dirty
-            return Ok(());
-        }
+        // do not store data if the data is not dirty
+        ifr!(self.dirty.load(Ordering::Relaxed) => Ok(()));
 
         // get exclusive guard, therefore write
         let guard = self.value.write().await;

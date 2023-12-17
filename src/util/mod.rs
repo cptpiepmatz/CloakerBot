@@ -56,3 +56,23 @@ where
         Err(err) => Err(err.into())
     }
 }
+
+macro_rules! ifr {
+    ($bool:expr$( => $ret:expr)?) => {
+        if !($bool) {
+            return $($ret)?;
+        }
+    };
+}
+
+macro_rules! ifr_some {
+    ($unwrap:expr$( => $ret:expr)?) => {
+        match $unwrap {
+            Some(inner) => inner,
+            None => return $($ret)?
+        }
+    }
+}
+
+pub(crate) use {ifr, ifr_some};
+
