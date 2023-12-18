@@ -24,7 +24,7 @@ use twilight_http::Response;
 use twilight_model::application::interaction::application_command;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
-use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
+use twilight_model::id::marker::{ApplicationMarker, ChannelMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::data::config::GuildConfig;
@@ -42,6 +42,7 @@ use crate::util::trim::trim;
 mod assets;
 mod data;
 mod interaction;
+mod owner_notifications;
 mod sync;
 mod takedown;
 mod util;
@@ -209,7 +210,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(_) => {
             // TODO: handle cleanup of deleted guild data
-        },
+        }
 
         // handle interactions
         DiscordEvent::InteractionCreate(interaction_create) => {

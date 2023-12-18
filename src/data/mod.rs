@@ -8,6 +8,7 @@ use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::util::log::debug;
 
 pub mod config;
+pub mod owner_notifications;
 pub mod random;
 pub mod stats;
 
@@ -19,8 +20,8 @@ pub struct PersistentData<T> {
 
 use persist::Persist;
 
-use crate::STATE;
 use crate::util::ifr;
+use crate::STATE;
 
 mod persist {
     // public interfaces require public types, this makes the `Persist` trait public

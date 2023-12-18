@@ -1,35 +1,17 @@
-use const_format::{concatcp, formatcp, str_replace};
+use crate::assets::prepare_md;
 
-use crate::util::trim::trim;
-
-macro_rules! prepare_md {
-    ($in:expr) => {
-        str_replace!(
-            str_replace!(
-                str_replace!(
-                    str_replace!(str_replace!(trim!($in), "\r\n", "\n"), "\n\n\n", "<br><br>"),
-                    "\n\n",
-                    "<br>"
-                ),
-                "\n",
-                " "
-            ),
-            "<br>",
-            "\n"
-        )
+macro_rules! help_text {
+    ($name:literal) => {
+        prepare_md!(include_str!(concat!("../../assets/help/", $name, ".md")))
     };
 }
 
-pub const CLOAKER: &str = prepare_md!(include_str!("../../assets/help/cloaker.md"));
+pub const CLOAKER: &str = help_text!("cloaker");
+pub const CONFIG_DANGER_ZONES: &str = help_text!("config_danger_zones");
+pub const CONFIG_IMMUNITY: &str = help_text!("config_immunity");
+pub const CONFIG_LOG_CHANNEL: &str = help_text!("config_log_channel");
+pub const CONFIG_RANDOM: &str = help_text!("config_random");
+pub const COUNTER: &str = help_text!("counter");
 
-pub const CONFIG_DANGER_ZONES: &str =
-    prepare_md!(include_str!("../../assets/help/config_danger_zones.md"));
-
-pub const CONFIG_IMMUNITY: &str = prepare_md!(include_str!("../../assets/help/config_immunity.md"));
-
-pub const CONFIG_LOG_CHANNEL: &str =
-    prepare_md!(include_str!("../../assets/help/config_log_channel.md"));
-
-pub const CONFIG_RANDOM: &str = prepare_md!(include_str!("../../assets/help/config_random.md"));
-
-pub const COUNTER: &str = prepare_md!(include_str!("../../assets/help/counter.md"));
+// TODO: write a help text for ranks command
+pub const RANKS: &str = "";

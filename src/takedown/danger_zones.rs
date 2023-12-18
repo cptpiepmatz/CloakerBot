@@ -4,7 +4,7 @@ use itertools::Itertools;
 use crate::data::config::GuildConfig;
 use crate::takedown::{takedown, TakedownFail, TakedownResult, TakedownType};
 use crate::util::cache::VoiceChannelCacheUpdate;
-use crate::util::{ClientError, ifr, ifr_some};
+use crate::util::{ifr, ifr_some, ClientError};
 use crate::STATE;
 
 #[derive(Debug, From)]

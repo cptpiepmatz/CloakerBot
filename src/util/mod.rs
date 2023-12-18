@@ -75,4 +75,3 @@ macro_rules! ifr_some {
 }
 
 pub(crate) use {ifr, ifr_some};
-
