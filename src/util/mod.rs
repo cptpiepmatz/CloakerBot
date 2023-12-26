@@ -9,6 +9,7 @@ use twilight_http::Response;
 
 pub mod cache;
 pub mod log;
+pub mod ref_access_map;
 pub mod template;
 pub mod trim;
 
