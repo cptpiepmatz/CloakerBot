@@ -13,3 +13,6 @@ dev.token
 
 # Added by cargo
 /target
+
+# Old MongoDB Dump
+/dump
