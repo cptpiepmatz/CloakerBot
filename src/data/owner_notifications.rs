@@ -1,8 +1,17 @@
-use twilight_model::id::marker::UserMarker;
+use serde::{Deserialize, Serialize};
+use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use crate::data::persist::Persist;
+use crate::util::ref_access_map::RefAccessMap;
 
-// TODO: store which owners got notified and if they allow dms
-
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct OwnerNotified {
-    owner_id: Id<UserMarker>
+    allow_dms: Option<bool>,
+    latest_msg_index: usize
+}
+
+impl Persist for RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified> {
+    type Item = Self;
+
+    const DATA_PATH: &'static str = "./data/owner_notifications.json";
 }

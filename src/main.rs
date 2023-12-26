@@ -30,6 +30,7 @@ use twilight_model::id::Id;
 use crate::data::config::GuildConfig;
 use crate::data::stats::GuildStats;
 use crate::data::{handle_persist_data, PersistentData};
+use crate::data::owner_notifications::OwnerNotified;
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
 use crate::takedown::danger_zones::{check_danger_zones, CheckDangerZonesError};
@@ -37,6 +38,7 @@ use crate::takedown::random::{handle_random_check, CheckRandomError};
 use crate::takedown::PlannedTakedown;
 use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
+use crate::util::ref_access_map::RefAccessMap;
 use crate::util::trim::trim;
 
 mod assets;
@@ -81,7 +83,8 @@ struct State {
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
     random_takedown_schedule: PersistentData<HashMap<Id<GuildMarker>, DateTime<Local>>>,
     cache: ObservableCache,
-    songbird: Songbird
+    songbird: Songbird,
+    owner_notifications: PersistentData<RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified>>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -100,7 +103,7 @@ enum BotEvent {
 async fn main() {
     let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
     let http = Client::new(DISCORD_TOKEN.to_owned());
-    let (cache, mut cache_rx) = ObservableCache::new();
+    let (cache, cache_rx) = ObservableCache::new();
     OnceLockExpect::set(&STATE, State {
         client: http,
         guild_configs: PersistentData::load()
@@ -121,7 +124,8 @@ async fn main() {
                 shard.sender()
             )]))),
             BOT_USER_ID
-        )
+        ),
+        owner_notifications: Default::default()
     });
 
     takedown::sounds::prep_sounds()
