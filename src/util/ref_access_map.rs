@@ -102,6 +102,18 @@ where
     }
 }
 
+impl<R, A, V> Default for RefAccessMap<R, A, V> where
+    R: Eq + Hash + Clone,
+    A: Eq + Hash + Clone,
+    V: Clone {
+    fn default() -> Self {
+        Self {
+            reference_map: Default::default(),
+            accessor_map: Default::default()
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct RefAccessStoreEntry<R, V>
 where
