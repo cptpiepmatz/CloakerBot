@@ -49,6 +49,8 @@ mod sync;
 mod takedown;
 mod util;
 
+// TODO: log messages using allowed_mention([]) to hide mentions
+
 #[cfg(debug_assertions)]
 const DISCORD_TOKEN: &str = trim!(include_str!("../dev.token"));
 #[cfg(not(debug_assertions))]
