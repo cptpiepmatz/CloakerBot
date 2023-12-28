@@ -21,16 +21,18 @@ use twilight_http::client::Client;
 use twilight_http::request::Request;
 use twilight_http::routing::Route;
 use twilight_http::Response;
+use twilight_mention::Mention;
 use twilight_model::application::interaction::application_command;
+use twilight_model::channel::message::AllowedMentions;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::marker::{ApplicationMarker, ChannelMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::data::config::GuildConfig;
+use crate::data::owner_notifications::OwnerNotified;
 use crate::data::stats::GuildStats;
 use crate::data::{handle_persist_data, PersistentData};
-use crate::data::owner_notifications::OwnerNotified;
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
 use crate::takedown::danger_zones::{check_danger_zones, CheckDangerZonesError};
@@ -86,7 +88,8 @@ struct State {
     random_takedown_schedule: PersistentData<HashMap<Id<GuildMarker>, DateTime<Local>>>,
     cache: ObservableCache,
     songbird: Songbird,
-    owner_notifications: PersistentData<RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified>>
+    owner_notifications:
+        PersistentData<RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified>>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();

@@ -20,25 +20,19 @@ macro_rules! prepare_md {
             str_replace!(
                 str_replace!(
                     str_replace!(
-                        str_replace!(
-                            str_replace!(
-                                trim!($in),
-                                "\r\n",
-                                "\n"),
-                            "\n\n\n",
-                            "<br><br>"
-                        ),
-                    "\n\n",
-                    "<br>"
+                        str_replace!(str_replace!(trim!($in), "\r\n", "\n"), "\n\n\n", "<br><br>"),
+                        "\n\n",
+                        "<br>"
+                    ),
+                    "\n",
+                    " "
                 ),
-                "\n",
-                " "
+                "<br>",
+                "\n"
             ),
-            "<br>",
-            "\n"
-        ),
-        "  ",
-        " ")
+            "  ",
+            " "
+        )
     }};
 }
 
