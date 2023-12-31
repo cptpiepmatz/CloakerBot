@@ -93,4 +93,3 @@ mod tests {
         assert_eq!(result, "Hello, Alice! Your object is Test(42).");
     }
 }
-

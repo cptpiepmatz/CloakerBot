@@ -78,7 +78,8 @@ impl MemberTakedowns {
     }
 }
 
-impl Persist for HashMap<Id<GuildMarker>, GuildStats> {
+pub type PersistentGuildStats = HashMap<Id<GuildMarker>, GuildStats>;
+impl Persist for PersistentGuildStats {
     type Item = Self;
 
     const DATA_PATH: &'static str = "./data/guild_stats.json";

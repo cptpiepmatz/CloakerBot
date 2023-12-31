@@ -1,37 +1,27 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 use std::{io, iter};
 
-use chrono::{DateTime, Local};
-use const_format::str_replace;
 use derive_more::From;
-use futures::future::FutureExt;
 use futures::stream::{select, StreamExt};
-use serde_json::Value;
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
-use twilight_cache_inmemory::{InMemoryCache, ResourceType};
 use twilight_gateway::error::ReceiveMessageError;
 use twilight_gateway::stream::ShardEventStream;
 use twilight_gateway::Shard;
 use twilight_http::client::Client;
-use twilight_http::request::Request;
-use twilight_http::routing::Route;
-use twilight_http::Response;
-use twilight_mention::Mention;
-use twilight_model::application::interaction::application_command;
-use twilight_model::channel::message::AllowedMentions;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
-use twilight_model::id::marker::{ApplicationMarker, ChannelMarker, GuildMarker, UserMarker};
+use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
-use crate::data::config::GuildConfig;
-use crate::data::owner_notifications::OwnerNotified;
-use crate::data::stats::GuildStats;
+use crate::data::config::PersistentGuildConfig;
+use crate::data::owner_notifications::PersistentOwnerNotifications;
+use crate::data::random::PersistentTakedownSchedule;
+use crate::data::stats::PersistentGuildStats;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
 use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
@@ -40,7 +30,6 @@ use crate::takedown::random::{handle_random_check, CheckRandomError};
 use crate::takedown::PlannedTakedown;
 use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
-use crate::util::ref_access_map::RefAccessMap;
 use crate::util::trim::trim;
 
 mod assets;
@@ -77,19 +66,18 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 #[derive(Debug)]
 struct State {
     client: Client,
-    guild_configs: PersistentData<HashMap<Id<GuildMarker>, GuildConfig>>,
-    guild_stats: PersistentData<HashMap<Id<GuildMarker>, GuildStats>>,
+    guild_configs: PersistentData<PersistentGuildConfig>,
+    guild_stats: PersistentData<PersistentGuildStats>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
     /// Planned takedowns per guild.
     ///
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
-    random_takedown_schedule: PersistentData<HashMap<Id<GuildMarker>, DateTime<Local>>>,
+    random_takedown_schedule: PersistentData<PersistentTakedownSchedule>,
     cache: ObservableCache,
     songbird: Songbird,
-    owner_notifications:
-        PersistentData<RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified>>
+    owner_notifications: PersistentData<PersistentOwnerNotifications>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();

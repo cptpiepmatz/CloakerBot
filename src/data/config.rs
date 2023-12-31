@@ -5,7 +5,7 @@ use smart_default::SmartDefault;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
 
-use crate::data::Persist;
+use crate::data::{Persist, PersistentData};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct GuildConfig {
@@ -53,7 +53,8 @@ impl CompleteDefault for GuildConfigRandom {
     }
 }
 
-impl Persist for HashMap<Id<GuildMarker>, GuildConfig> {
+pub type PersistentGuildConfig = HashMap<Id<GuildMarker>, GuildConfig>;
+impl Persist for PersistentGuildConfig {
     type Item = Self;
 
     const DATA_PATH: &'static str = "./data/guild_configs.json";

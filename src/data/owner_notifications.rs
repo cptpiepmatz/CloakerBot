@@ -11,7 +11,9 @@ pub struct OwnerNotified {
     latest_msg_index: usize
 }
 
-impl Persist for RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified> {
+pub type PersistentOwnerNotifications =
+    RefAccessMap<Id<GuildMarker>, Id<UserMarker>, OwnerNotified>;
+impl Persist for PersistentOwnerNotifications {
     type Item = Self;
 
     const DATA_PATH: &'static str = "./data/owner_notifications.json";
