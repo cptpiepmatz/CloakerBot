@@ -1,8 +1,8 @@
 Counter a takedown.
 
 
-If the {} joins your voice channel and begins blaring around, you can 
-use the command {} to launch a counterattack against the person who 
+If the {CloakerBot} joins your voice channel and begins blaring around, you can 
+use the command {/counter} to launch a counterattack against the person who 
 summoned the bot.
 
 If the bot initiates an attack on its own through a random takedown, the 

@@ -1,141 +1,141 @@
 [config.danger_zones]
 select = """
 ## 🛠️ Configure Danger Zones
-Select danger zones to be observed by {}.
-For more info use {}.
+Select danger zones to be observed by {CloakerBot}.
+For more info use {/help command:config danger-zones}.
 """
 
 set = """
 ## 🪤 Configured Danger Zones
 Set the following channels as danger zones:
-{}
+{channels}
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset Danger Zones
 No danger zones are set now.
 
-> {}
+> {quote}
 """
 
 [config.immunity.general]
 select = """
 ## 🛠️ Configure General Immunity Roles
-Select what roles should be immune to **all** kind of takedowns by {}.
-For more info use {}.
+Select what roles should be immune to **all** kind of takedowns by {CloakerBot}.
+For more info use {/help command:config immunity}.
 """
 
 set = """
 ## 🛡️ Configured General Immunity Roles
-The following roles are now immune to **all** takedowns by {}:
-{}
+The following roles are now immune to **all** takedowns by {CloakerBot}:
+{roles}
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset General Immunity Roles
 No **general** immunity roles are set now.
 
-> {}
+> {quote}
 """
 
 [config.immunity.general.silent]
 select = """
 ## 🛠️ Configure General Silent Immunity Roles
-Select what roles should be immune to **all** kind of takedowns by {}.
+Select what roles should be immune to **all** kind of takedowns by {CloakerBot}.
 Takedowns targeting these roles won't even initialize.
-For more info use {}.
+For more info use {/help command:config immunity}.
 """
 
 set = """
 ## 🛡️ Configured General Immunity Roles
-The following roles are now immune to **all** takedowns by {}:
-{}
+The following roles are now immune to **all** takedowns by {CloakerBot}:
+{roles}
 
 Takedowns targeting these roles won't even initialize.
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset General Immunity Roles
 No **silent general** immunity roles are set now.
 
-> {}
+> {quote}
 """
 
 [config.immunity.random]
 select = """
 ## 🛠️ Configure Random Immunity Roles
-Select what roles should be immune to **random** takedowns by {}.
-For more info use {}.
+Select what roles should be immune to **random** takedowns by {CloakerBot}.
+For more info use {/help command:config immunity}.
 """
 
 set = """
 ## 🛡️ Configured Random Immunity Roles
-The following roles are now immune to **random** takedowns by {}:
-{}
+The following roles are now immune to **random** takedowns by {CloakerBot}:
+{roles}
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset Random Immunity Roles
 No **random** immunity roles are set now.
 
-> {}
+> {quote}
 """
 
 [config.immunity.random.silent]
 select = """
 ## 🛠️ Configure Random Silent Immunity Roles
-Select what roles should be immune to **random** takedowns by {}.
+Select what roles should be immune to **random** takedowns by {CloakerBot}.
 Takedowns targeting these roles won't even initialize.
-For more info use {}.
+For more info use {/help command: config immunity}.
 """
 
 set = """
 ## 🛡️ Configured Random Immunity Roles
-The following roles are now immune to **random** takedowns by {}:
-{}
+The following roles are now immune to **random** takedowns by {CloakerBot}:
+{roles}
 
 Takedowns targeting these roles won't even initialize.
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset Random Immunity Roles
 No **random** immunity roles are set now.
 
-> {}
+> {quote}
 """
 
 
 [config.log_channel]
 select = """
 ## 🛠️ Configure Log Channel
-Select channel for {} to log into.
-If unset this defaults to {}.
+Select channel for {CloakerBot} to log into.
+If unset this defaults to {default}.
 """
 
 set = """
 ## 📝 Configured Log Channel
-Logs will be written in {}.
-Make sure {} is allowed to chat there.
+Logs will be written in {log-channel}.
+Make sure {CloakerBot} is allowed to chat there.
 
-> {}
+> {quote}
 """
 
 unset = """
 ## 🗑️ Unset Log Channel
 No log channel is defined.
-Fallback channel is {} if {} is allowed to chat there.
+Fallback channel is {default} if {CloakerBot} is allowed to chat there.
 
-> {}
+> {quote}
 """
 
 [config.random]
@@ -143,17 +143,17 @@ disabled = """
 ## 🛑 No Random Takedowns
 Random takedowns are **disabled**.
 
-> {}
+> {quote}
 """
 
 enabled = """
 ## 💫 Random Takedowns Enabled
 Random takedowns are **enabled**.
-Takedowns are checked in an interval between **{}** hours and **{}** hours.
+Takedowns are checked in an interval between **{min}** hours and **{max}** hours.
 
-For more info use {}.
+For more info use {/help command:config random}.
 
-> {}
+> {quote}
 """
 
 [config.target_bots]
@@ -161,7 +161,7 @@ disabled = """
 ## 🚸 Don't Target Bots
 Bots are no valid targets.
 
-> {}
+> {quote}
 """
 
 enabled = """
@@ -169,7 +169,7 @@ enabled = """
 Bots are valid targets for takedowns.
 This also applies to random takedowns.
 
-> {}
+> {quote}
 """
 
 [help]
@@ -188,24 +188,24 @@ title = "## 🔎 Help on "
 [cloaker]
 success = """
 ## 🎯 Takedown Successful
-You succesfully took down {}.
+You succesfully took down {target}.
 
-> {}
+> {quote}
 """
 
 countered = """
 ## 🔄 Takedown Got Countered
-The takedown was countered by {}.
+The takedown was countered by {counterer}.
 
-> {}
+> {quote}
 """
 
 [cloaker.fail]
 template = """
 ## ❌ Takedown Failed
-{}
+{reason}
 
-> {}
+> {quote}
 """
 
 join = "Failed to join voice channel."
@@ -213,20 +213,20 @@ missing-perms = "Missing permissions to remove target from channel."
 not-found = "Could not find the target in a voice channel."
 fled = "Target fled from the channel."
 immune = "Target is immune to takedowns."
-rejected = "{} got moved from voice channel."
-other = "An error occured: \n> {}"
+rejected = "{CloakerBot} got moved from voice channel."
+other = "An error occured: \n> {error}"
 
 [counter]
 success = """
 ## 🏸 Counter Successful
-You countered the takedown on {}.
+You countered the takedown on {target}.
 
-> {}
+> {quote}
 """
 
 miss = """
 ## 🪠 Nothing to Counter
 No takedown currently happening.
 
-> {}
+> {quote}
 """
