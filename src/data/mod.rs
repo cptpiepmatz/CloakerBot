@@ -1,11 +1,8 @@
 use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 
 use derive_more::From;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-use crate::util::log::debug;
 
 pub mod config;
 pub mod owner_notifications;
@@ -15,7 +12,7 @@ pub mod stats;
 #[derive(Debug, Default)]
 pub struct PersistentData<T> {
     dirty: AtomicBool,
-    value: Arc<RwLock<T>>
+    value: RwLock<T>
 }
 
 use persist::Persist;
@@ -87,7 +84,7 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
         };
         Ok(Some(PersistentData {
             dirty: AtomicBool::new(false),
-            value: Arc::new(RwLock::new(value))
+            value: RwLock::new(value)
         }))
     }
 
