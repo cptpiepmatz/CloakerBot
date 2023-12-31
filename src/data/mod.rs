@@ -1,10 +1,12 @@
 use std::io;
+use std::ops::DerefMut;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use derive_more::From;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub mod config;
+pub mod names;
 pub mod owner_notifications;
 pub mod random;
 pub mod stats;
@@ -71,6 +73,15 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
         guard
     }
 
+    pub async fn update(&self, update: impl FnOnce(&mut T) -> bool) {
+        let mut guard = self.value.write().await;
+        let modified = update(guard.deref_mut());
+        if modified {
+            // this ensures no accidental false in dirty here
+            self.dirty.swap(true, Ordering::Release);
+        }
+    }
+
     pub async fn load() -> Result<Option<PersistentData<T>>, LoadPersistentDataError> {
         let value = match T::load().await {
             Ok(value) => value,
@@ -109,6 +120,8 @@ pub async fn handle_persist_data() -> io::Result<()> {
     STATE.guild_configs.store().await?;
     STATE.guild_stats.store().await?;
     STATE.random_takedown_schedule.store().await?;
+    STATE.owner_notifications.store().await?;
+    STATE.name_cache.store().await?;
 
     Ok(())
 }
