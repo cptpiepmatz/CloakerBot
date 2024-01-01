@@ -121,20 +121,22 @@ mod tests {
         let mut guild_takedowns = GuildTakedowns::default();
 
         macro_rules! takedowns {
-            ($caller:ident -> $target:ident = $count:literal) => {
+            [$($caller:ident -> $target:ident = $count:literal),+] => {$(
                 for _ in 0..$count {
                     guild_takedowns.increment($caller, $target);
                 }
-            };
+            )+};
         }
 
-        takedowns!(USER_1 -> USER_2 = 4);
-        takedowns!(USER_1 -> USER_3 = 7);
-        takedowns!(USER_2 -> USER_1 = 5);
-        takedowns!(USER_2 -> USER_3 = 2);
-        takedowns!(USER_3 -> USER_4 = 3);
-        takedowns!(USER_4 -> USER_5 = 8);
-        takedowns!(USER_5 -> USER_2 = 1);
+        takedowns![
+            USER_1 -> USER_2 = 4,
+            USER_1 -> USER_3 = 7,
+            USER_2 -> USER_1 = 5,
+            USER_2 -> USER_3 = 2,
+            USER_3 -> USER_4 = 3,
+            USER_4 -> USER_5 = 8,
+            USER_5 -> USER_2 = 1
+        ];
 
         guild_takedowns
     }
