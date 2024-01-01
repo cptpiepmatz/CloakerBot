@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::process::Output;
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -49,7 +48,7 @@ impl GuildTakedowns {
         self.0
             .iter()
             .map(|(id, takedowns)| (*id, takedowns.ranked(), takedowns.count()))
-            .sorted_by(|(_, _, a), (_, _, b)| a.cmp(b))
+            .sorted_by(|(_, _, a), (_, _, b)| b.cmp(a))
             .map(|(id, iter, _)| (id, iter))
     }
 }
@@ -74,7 +73,7 @@ impl MemberTakedowns {
         self.0
             .iter()
             .map(|(id, count)| (*id, *count))
-            .sorted_by(|(_, a), (_, b)| a.cmp(b))
+            .sorted_by(|(_, a), (_, b)| b.cmp(a))
     }
 }
 
@@ -94,6 +93,12 @@ mod tests {
     const TARGET_ID: Id<UserMarker> = Id::new(123);
     const CALLER_ID: Id<UserMarker> = Id::new(456);
 
+    const USER_1: Id<UserMarker> = Id::new(1);
+    const USER_2: Id<UserMarker> = Id::new(2);
+    const USER_3: Id<UserMarker> = Id::new(3);
+    const USER_4: Id<UserMarker> = Id::new(4);
+    const USER_5: Id<UserMarker> = Id::new(5);
+
     #[test]
     fn increment_works() {
         let mut stats = GuildStats::default();
@@ -110,5 +115,64 @@ mod tests {
                 .unwrap(),
             &1
         );
+    }
+
+    fn test_data() -> GuildTakedowns {
+        let mut guild_takedowns = GuildTakedowns::default();
+
+        macro_rules! takedowns {
+            ($caller:ident -> $target:ident = $count:literal) => {
+                for _ in 0..$count {
+                    guild_takedowns.increment($caller, $target);
+                }
+            };
+        }
+
+        takedowns!(USER_1 -> USER_2 = 4);
+        takedowns!(USER_1 -> USER_3 = 7);
+        takedowns!(USER_2 -> USER_1 = 5);
+        takedowns!(USER_2 -> USER_3 = 2);
+        takedowns!(USER_3 -> USER_4 = 3);
+        takedowns!(USER_4 -> USER_5 = 8);
+        takedowns!(USER_5 -> USER_2 = 1);
+
+        guild_takedowns
+    }
+
+    #[test]
+    fn count_works() {
+        let guild_takedowns = test_data();
+        assert_eq!(guild_takedowns.count(Id::new(999)), 0);
+        assert_eq!(guild_takedowns.count(USER_1), 4 + 7);
+        assert_eq!(guild_takedowns.count(USER_2), 5 + 2);
+        assert_eq!(guild_takedowns.count(USER_3), 3);
+        assert_eq!(guild_takedowns.count(USER_4), 8);
+        assert_eq!(guild_takedowns.count(USER_5), 1);
+    }
+
+    #[test]
+    fn ranked_works() {
+        let guild_takedowns = test_data();
+        let mut ranked = guild_takedowns.ranked().flat_map(|(caller_id, targets)| {
+            targets.map(move |(target_id, count)| (caller_id, target_id, count))
+        });
+
+        macro_rules! ranked {
+            [$($caller:ident -> $target:ident = $count:literal),+] => {$(
+                assert_eq!(ranked.next(), Some(($caller, $target, $count)));
+            )+}
+        }
+
+        ranked![
+            USER_1 -> USER_3 = 7,
+            USER_1 -> USER_2 = 4,
+            USER_4 -> USER_5 = 8,
+            USER_2 -> USER_1 = 5,
+            USER_2 -> USER_3 = 2,
+            USER_3 -> USER_4 = 3,
+            USER_5 -> USER_2 = 1
+        ];
+
+        assert!(ranked.next().is_none());
     }
 }
