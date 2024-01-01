@@ -6,7 +6,6 @@ use derive_more::From;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub mod config;
-pub mod names;
 pub mod owner_notifications;
 pub mod random;
 pub mod stats;
@@ -121,7 +120,6 @@ pub async fn handle_persist_data() -> io::Result<()> {
     STATE.guild_stats.store().await?;
     STATE.random_takedown_schedule.store().await?;
     STATE.owner_notifications.store().await?;
-    STATE.name_cache.store().await?;
 
     Ok(())
 }
