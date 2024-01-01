@@ -19,7 +19,6 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
 
 use crate::data::config::PersistentGuildConfig;
-use crate::data::names::PersistentNameCache;
 use crate::data::owner_notifications::PersistentOwnerNotifications;
 use crate::data::random::PersistentTakedownSchedule;
 use crate::data::stats::PersistentGuildStats;
@@ -78,8 +77,7 @@ struct State {
     random_takedown_schedule: PersistentData<PersistentTakedownSchedule>,
     cache: ObservableCache,
     songbird: Songbird,
-    owner_notifications: PersistentData<PersistentOwnerNotifications>,
-    name_cache: PersistentData<PersistentNameCache>
+    owner_notifications: PersistentData<PersistentOwnerNotifications>
 }
 
 static STATE: OnceLockExpect<State> = OnceLockExpect::new();
@@ -120,8 +118,7 @@ async fn main() {
             )]))),
             BOT_USER_ID
         ),
-        owner_notifications: Default::default(),
-        name_cache: Default::default()
+        owner_notifications: Default::default()
     });
 
     takedown::sounds::prep_sounds()
@@ -206,7 +203,6 @@ enum HandleDiscordEventError {
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
     STATE.songbird.process(&event).await;
     STATE.cache.observe(&event).await;
-    STATE.name_cache.update(|cache| cache.update(&event)).await;
     match event {
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(_) => {
