@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::DerefMut;
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -8,16 +9,16 @@ use twilight_model::id::Id;
 use crate::data::persist::Persist;
 
 /// Statistics per guild.
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GuildStats {
     /// Statistics about the takedowns on a guild.
     pub takedowns: GuildTakedowns
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GuildTakedowns(HashMap<Id<UserMarker>, MemberTakedowns>);
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct MemberTakedowns(HashMap<Id<UserMarker>, u64>);
 
 impl GuildTakedowns {
@@ -82,6 +83,23 @@ impl Persist for PersistentGuildStats {
     type Item = Self;
 
     const DATA_PATH: &'static str = "./data/guild_stats.json";
+}
+
+pub fn global_takedown_count<'s, I>(stats: I) -> HashMap<Id<UserMarker>, u64>
+where
+    I: Iterator<Item = &'s GuildStats>
+{
+    let mut takedown_count: HashMap<Id<UserMarker>, u64> = HashMap::new();
+
+    for stats in stats {
+        let guild_takedowns = &stats.takedowns;
+        for &caller_id in guild_takedowns.0.keys() {
+            *takedown_count.entry(caller_id).or_default().deref_mut() +=
+                guild_takedowns.count(caller_id);
+        }
+    }
+
+    takedown_count
 }
 
 #[cfg(test)]

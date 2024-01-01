@@ -22,7 +22,7 @@ use crate::interaction::application_command::cloaker::{CloakerActionError, Cloak
 use crate::interaction::application_command::config::{ConfigActionError, ConfigCommand};
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
-use crate::interaction::application_command::ranks::RanksCommand;
+use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
 use crate::interaction::HandleInteractionError;
 use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, STATE};
@@ -136,6 +136,7 @@ pub enum RegisterCommandsError {
 pub async fn register_commands(
     client: &InteractionClient<'_>
 ) -> Result<(), RegisterCommandsError> {
+    // TODO: check if perms are ok
     let commands = client
         .set_global_commands(&[
             cloaker::chat_input(),
@@ -265,6 +266,7 @@ pub enum HandleApplicationCommandError {
     ConfigAction(ConfigActionError),
     CloakerAction(CloakerActionError),
     CounterAction(CounterActionError),
+    RanksAction(RanksActionError),
 
     Defer(DeferError),
     UpdateDefer(UpdateDeferError),
