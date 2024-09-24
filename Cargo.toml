@@ -36,47 +36,19 @@ derive_more = "0.99"
 itertools = "0.13"
 smart-default = "0.7"
 
+# discord integration
+twilight-cache-inmemory= "=0.16.0-rc.1"
+twilight-gateway= "=0.16.0-rc.1"
+twilight-http= "=0.16.0-rc.1"
+twilight-model= "=0.16.0-rc.1"
+twilight-mention= "=0.16.0-rc.1"
+twilight-util= {version = "=0.16.0-rc.1", features = ["builder"]}
+twilight-validate= "=0.16.0-rc.1"
+
 # logging
 [dependencies.paris]
 version = "1"
 features = ["macros", "no_logger"]
-
-# discord integration
-[dependencies.twilight-cache-inmemory]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[dependencies.twilight-gateway]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[dependencies.twilight-http]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[dependencies.twilight-model]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[dependencies.twilight-mention]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[dependencies.twilight-util]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-features = ["builder"]
-
-[dependencies.twilight-validate]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
 
 # audio handling
 [dependencies.wav]
@@ -86,18 +58,8 @@ version = "1"
 version = "0.5"
 
 [dependencies.songbird]
-git = "https://github.com/serenity-rs/songbird.git"
-rev = "3ac17b62a66d22089d822962a53970bd4731ac09"
-version = "0.3"
+git = "https://github.com/Erk-/songbird.git"
+branch = "erk/twilight-0-16-rc"
+version = "0.4"
 default-features = false
-features = ["driver", "gateway", "twilight", "rustls"]
-
-[patch.crates-io.twilight-gateway]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[patch.crates-io.twilight-model]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
+features = ["driver", "gateway", "twilight", "rustls", "tws"]

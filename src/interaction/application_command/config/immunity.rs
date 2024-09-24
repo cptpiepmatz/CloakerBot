@@ -199,9 +199,8 @@ pub async fn action(
         interaction_token: interaction.token.as_str()
     })
     .json(&payload)
-    .expect("payload is serializable")
     .use_authorization_token(true)
-    .build();
+    .build()?;
 
     STATE.client.request::<CreateResponse<'_>>(request).await?;
 

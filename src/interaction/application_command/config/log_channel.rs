@@ -6,7 +6,7 @@ use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
-    CommandDataOption, CommandInteractionDataResolved, CommandOptionValue, InteractionChannel
+    CommandDataOption, /*CommandInteractionDataResolved, */CommandOptionValue, /*InteractionChannel*/
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
@@ -98,9 +98,8 @@ pub async fn action(
         interaction_token: interaction.token.as_str()
     })
     .json(&payload)
-    .expect("payload is serializable")
     .use_authorization_token(true)
-    .build();
+    .build()?;
 
     STATE.client.request::<CreateResponse<'_>>(request).await?;
 

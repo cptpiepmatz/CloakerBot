@@ -323,7 +323,7 @@ async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), Up
         .client
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
-        .content(Some(msg))?
+        .content(Some(msg))
         .await?;
 
     Ok(())
@@ -337,7 +337,7 @@ async fn update_defer_embeds(
         .client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
-        .embeds(Some(&[embed_builder.validate()?.build()]))?
+        .embeds(Some(&[embed_builder.validate()?.build()]))
         .await?;
 
     Ok(())

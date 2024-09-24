@@ -1,3 +1,6 @@
+#![allow(unused)]
+#![allow(deprecated)]
+
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -5,13 +8,12 @@ use std::time::Duration;
 use std::{io, iter};
 
 use derive_more::From;
-use futures::stream::{select, StreamExt};
+use futures::stream::{self, select, StreamExt};
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
-use twilight_gateway::error::ReceiveMessageError;
-use twilight_gateway::stream::ShardEventStream;
-use twilight_gateway::Shard;
+use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
+use twilight_gateway::{EventTypeFlags, Shard, StreamExt as TwilightStreamExt};
 use twilight_http::client::Client;
 use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
@@ -129,8 +131,9 @@ async fn main() {
         .await
         .expect("registering commands is necessary");
 
-    let discord_events =
-        ShardEventStream::new(iter::once(&mut shard)).map(|(_, event)| BotEvent::Discord(event));
+    let discord_events = stream::unfold(shard, |mut shard| async {
+        shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
+    });
 
     let random_check_interval =
         IntervalStream::new(tokio::time::interval(RANDOM_CHECK_INTERVAL_DURATION))
@@ -145,6 +148,7 @@ async fn main() {
     let events = select(events, persist_data_interval);
     let mut events = select(events, cache_updates);
 
+    futures::pin_mut!(events);
     while let Some(event) = events.next().await {
         tokio::spawn(handle_event(event));
     }
@@ -159,13 +163,21 @@ enum HandleEventError {
     RandomCheck(CheckRandomError)
 }
 
+impl HandleEventError {
+    fn check_fatal(source: ReceiveMessageError) -> Result<(), Self> {
+        type E = ReceiveMessageErrorType;
+        match source.kind() {
+            E::Reconnect | E::WebSocket => Err(HandleEventError::Fatal),
+            _ => Ok(())
+        }
+    }
+}
+
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
         match (READY.load(Ordering::SeqCst), event) {
             // Bot is not ready
-            (false, BotEvent::Discord(Err(source))) if source.is_fatal() => {
-                return Err(HandleEventError::Fatal)
-            }
+            (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
                 READY.store(true, Ordering::SeqCst);
                 info!("Bot is ready");
@@ -176,8 +188,7 @@ async fn handle_event(event: BotEvent) {
             (true, event) => match event {
                 BotEvent::Discord(event) => match event {
                     Ok(event) => handle_discord_event(event).await?,
-                    Err(source) if source.is_fatal() => return Err(HandleEventError::Fatal),
-                    Err(_) => ()
+                    Err(source) => HandleEventError::check_fatal(source)?
                 },
                 BotEvent::RandomCheck => handle_random_check().await?,
                 BotEvent::PersistData => handle_persist_data().await?,
