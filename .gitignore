@@ -5,8 +5,7 @@
 Thumbs.db
 
 # Discord Secrets
-.token
-dev.token
+*.token
 
 # Generated Data
 /data
