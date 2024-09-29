@@ -103,8 +103,11 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
 
         // get exclusive guard, therefore write
         let guard = self.value.write().await;
+        guard.store().await?;
+
+        // storing was successful, now we can mark this as clean
         self.dirty.store(false, Ordering::Relaxed);
-        guard.store().await
+        Ok(())
     }
 }
 
