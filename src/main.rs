@@ -132,7 +132,10 @@ async fn main() {
         .expect("registering commands is necessary");
 
     let discord_events = stream::unfold(shard, |mut shard| async {
-        shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
+        shard
+            .next_event(EventTypeFlags::all())
+            .await
+            .map(|event| (BotEvent::Discord(event), shard))
     });
 
     let random_check_interval =

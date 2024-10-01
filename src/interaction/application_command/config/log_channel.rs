@@ -6,7 +6,8 @@ use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::application_command::{
-    CommandDataOption, /*CommandInteractionDataResolved, */CommandOptionValue, /*InteractionChannel*/
+    CommandDataOption,
+    /* CommandInteractionDataResolved, */ CommandOptionValue /* InteractionChannel */
 };
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
