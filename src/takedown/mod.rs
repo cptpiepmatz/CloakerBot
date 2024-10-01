@@ -103,7 +103,7 @@ pub async fn takedown(
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
 
-    let _takedown_lock = STATE.takedown_locks.lock(guild_id);
+    let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
     let (_planned_takedown_guard, counter_rx) = upsert_takedown_plan(
         target_id,
         guild_id,
