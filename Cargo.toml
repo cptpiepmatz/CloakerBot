@@ -45,6 +45,12 @@ twilight-mention= "=0.16.0-rc.1"
 twilight-util= {version = "=0.16.0-rc.1", features = ["builder"]}
 twilight-validate= "=0.16.0-rc.1"
 
+# user rank images
+imageproc = "0.25"
+ab_glyph = "0.2"
+unicode-segmentation = "1"
+twemoji-assets = "1"
+
 # logging
 [dependencies.paris]
 version = "1"
