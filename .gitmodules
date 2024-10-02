@@ -1,3 +1,4 @@
 [submodule "assets/fonts/Noto"]
 	path = assets/fonts/Noto
 	url = https://github.com/notofonts/notofonts.github.io.git
+	shallow = true
