@@ -1,5 +1,8 @@
-use ab_glyph::FontRef;
-use imageproc::image::{Rgba, RgbaImage};
+use std::ops::Deref;
+
+use ab_glyph::{Font, FontRef};
+use image::{ImageBuffer, Rgba, RgbaImage};
+use resvg::{tiny_skia::PixmapMut, usvg::{self, NonZeroRect, Options, Transform, Tree}};
 use twemoji_assets::svg::SvgTwemojiAsset;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -187,21 +190,79 @@ const FONTS: &[&[u8]] = include_font_bytes![
     "NotoSansZanabazarSquare/unhinted/otf/NotoSansZanabazarSquare-Regular.otf"
 ];
 
+struct EmojiImage(ImageBuffer<Rgba<u8>, heapless::Vec<u8, { 4 * 100 * 100 }>>);
+
+impl Deref for EmojiImage {
+    type Target = ImageBuffer<Rgba<u8>, heapless::Vec<u8, { 4 * 100 * 100 }>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl EmojiImage {
+    const EDGE: u32 = 100;
+
+    fn from_svg(svg: &str) -> Result<Self, usvg::Error> {
+        let tree = Tree::from_str(svg, &Default::default())?;
+        let scale = Self::EDGE as f32 / tree.size().width();
+        let transform = Transform::from_scale(scale, scale);
+        let mut buf = heapless::Vec::new();
+        buf.resize(buf.capacity(), 0).unwrap();
+        let mut buf = ImageBuffer::from_raw(100, 100, buf).unwrap();
+        let mut pixmap = PixmapMut::from_bytes(&mut buf, 100, 100).unwrap();
+        resvg::render(&tree, transform, &mut pixmap);
+        Ok(Self(buf))
+    }
+}
+
 fn main() {
-    let noto_sans = FontRef::try_from_slice(include_bytes!(
-        "../../assets/fonts/Noto/fonts/NotoSans/unhinted/otf/NotoSans-Regular.otf"
-    ))
-    .unwrap();
+    let fonts = FONTS
+        .iter()
+        .map(|font| FontRef::try_from_slice(font).unwrap())
+        .collect::<Vec<_>>();
 
     let name = "Jäne 🅱oe Bib 🦆 🇩🇪 🗕 🗗 🗙 𓁹‿𓁹";
+
+    'outer: for c in name.chars() {
+        for (i, font) in fonts.iter().enumerate() {
+            let glyph_id = font.glyph_id(c);
+            if glyph_id.0 == 0 { continue }
+            println!("char: {c}, index: {i}, glyph: {glyph_id:?}");
+            continue 'outer;
+        }
+        println!("no glyph found for {c}");
+    }
+
     let graphemes = name.graphemes(true).collect::<Vec<&str>>();
     for grapheme in graphemes {
         dbg!(grapheme);
         // dbg!((grapheme, SvgTwemojiAsset::from_emoji(grapheme)));
     }
 
-    let mut img = RgbaImage::new(400, 400);
-    let black = Rgba([255, 255, 255, 255]);
-    imageproc::drawing::draw_text_mut(&mut img, black, 0, 0, 30.0, &noto_sans, name);
+    let mut img = RgbaImage::new(600, 200);
+    let white = Rgba([255, 255, 255, 255]);
+
+    let emoji = SvgTwemojiAsset::from_emoji("💀").unwrap();
+    let emoji = EmojiImage::from_svg(emoji).unwrap();
+    emoji.save("emoji.png").unwrap();
+
+    let mut x = 0;
+    let mut c_buf = [0u8; 4];
+    for c in name.chars() {
+        let mut font = fonts.first().expect("not emtpy");
+        for f in fonts.iter() {
+            let glyph_id = f.glyph_id(c);
+            if glyph_id.0 == 0 { continue }
+            font = f;
+            break;
+        }
+
+        let s = c.encode_utf8(&mut c_buf);
+        imageproc::drawing::draw_text_mut(&mut img, white, x, 0, 50.0, font, s);
+        let size = imageproc::drawing::text_size(50.0, font, s);
+        x += size.0 as i32;
+    }
+
     img.save("img.png").unwrap();
 }
