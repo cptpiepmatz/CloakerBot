@@ -69,16 +69,3 @@ branch = "erk/twilight-0-16-rc"
 version = "0.4"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls", "tungstenite"]
-
-[dev-dependencies]
-criterion = "0.5"
-
-[patch.crates-io.twilight-gateway]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
-
-[patch.crates-io.twilight-model]
-git = "https://github.com/twilight-rs/twilight.git"
-rev = "879bd592e85a8f64261a72622703fe548b21228a"
-version = "0.15"
