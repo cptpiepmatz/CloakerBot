@@ -13,6 +13,9 @@ path = "src/main.rs"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# http request
+reqwest = "0.12"
+
 # async
 tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1"
@@ -36,6 +39,7 @@ derive_more = "0.99"
 itertools = "0.13"
 smart-default = "0.7"
 heapless = "0.8"
+bitflags = "2.9"
 
 # discord integration
 twilight-cache-inmemory= "=0.16.0-rc.1"
@@ -49,10 +53,7 @@ twilight-validate= "=0.16.0-rc.1"
 # user rank images
 image = "0.25"
 imageproc = "0.25"
-ab_glyph = "0.2"
-unicode-segmentation = "1"
-twemoji-assets = "1"
-resvg = "0.44"
+hieroglyph = "0.1"
 
 # logging
 [dependencies.paris]

@@ -1,268 +1,179 @@
-use std::ops::Deref;
+use std::{env, iter};
 
-use ab_glyph::{Font, FontRef};
-use image::{ImageBuffer, Rgba, RgbaImage};
-use resvg::{tiny_skia::PixmapMut, usvg::{self, NonZeroRect, Options, Transform, Tree}};
-use twemoji_assets::svg::SvgTwemojiAsset;
-use unicode_segmentation::UnicodeSegmentation;
+use hieroglyph::{DrawingContext, Segments};
+use image::{Pixel, Rgba, RgbaImage};
+use twilight_model::{guild::widget, id::{marker::{GuildMarker, UserMarker}, Id}};
 
-macro_rules! include_font_bytes {
-    ($($path:literal),+) => {
-        &[$(include_bytes!(concat!("../../assets/fonts/Noto/fonts/", $path))),+]
+const GUILD_ID: Id<GuildMarker> = Id::new(581884294495207444);
+const USER_ID: Id<UserMarker> = Id::new(137280289708834816);
+
+struct Ranks {
+    victim_rank: u32,
+    punisher_rank: u32,
+    counter_rank: u32,
+}
+
+struct Counts {
+    times_smacked: u32,
+    times_called: u32,
+    times_countered: u32,
+}
+
+struct Stats {
+    global_ranks: Ranks,
+    here_ranks: Ranks,
+    global_counts: Counts,
+    here_counts: Counts,
+}
+
+bitflags::bitflags! {
+    #[derive(PartialEq, Eq)]
+    struct Badges: u8 {
+        const TOP_STRIKER = 1 << 0;
+        const TOP_VICTIM = 1 << 1;
+        const NEVER_INITIATED = 1 << 2;
+        const NEVER_TAKEN_DOWN = 1 << 3;
+        const IMMUNITY = 1 << 4;
+        const RANDOM_IMMUNITY = 1 << 5;
+        const TOP_COUNTERER = 1 << 6;
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
+    let client = twilight_http::Client::new(discord_token);
+    let member = client.guild_member(GUILD_ID, USER_ID).await.unwrap().model().await.unwrap();
+    
+    let member_avatar = member.avatar.unwrap();
+    let member_avatar = format!("https://cdn.discordapp.com/guilds/{GUILD_ID}/users/{USER_ID}/avatars/{member_avatar}.png?size=256");
+    let member_avatar = reqwest::get(member_avatar).await.unwrap().bytes().await.unwrap();
+    let member_avatar = image::load_from_memory(&member_avatar).unwrap();
+    let member_avatar = member_avatar.resize(207, 207, image::imageops::FilterType::Lanczos3);
+
+    let user_avatar = member.user.avatar.unwrap();
+    let user_avatar = format!("https://cdn.discordapp.com/avatars/{USER_ID}/{user_avatar}.png?size=64");
+    let user_avatar = reqwest::get(user_avatar).await.unwrap().bytes().await.unwrap();
+    let user_avatar = image::load_from_memory(&user_avatar).unwrap();
+    let user_avatar = user_avatar.resize(35, 35, image::imageops::FilterType::Lanczos3);
+
+    let nick = member.nick.unwrap();
+    let nick = Segments::new(&nick);
+
+    let name = member.user.name;
+    let name = Segments::new(&name);
+
+    const TEMPLATE: &[u8] = include_bytes!("../../assets/graphics/user_rank/template.png");
+    let template = image::load_from_memory(&TEMPLATE).unwrap();
+
+    let mut canvas = RgbaImage::new(template.width(), template.height());
+    image::imageops::overlay(&mut canvas, &member_avatar, 26, 75);
+    image::imageops::overlay(&mut canvas, &user_avatar, 42, 366);
+    image::imageops::overlay(&mut canvas, &template, 0, 0);
+
+    let mut ctx = DrawingContext::new();
+    ctx.rgb(255, 255, 255);
+
+    fn draw_cb(canvas: &mut RgbaImage, x_offset: i32, y_offset: i32) -> impl FnMut((i32, i32), [u8; 4]) + use<'_> {
+        move |(x, y), rgba| {
+            let color = Rgba(rgba);
+            let Ok(x) = ((x + x_offset) as i32).try_into() else { return };
+            let Ok(y) = ((y + y_offset) as i32).try_into() else { return };
+            let Some(pixel) = canvas.get_pixel_checked(x, y) else { return };
+            let mut pixel = pixel.clone();
+            pixel.blend(&color);
+            canvas.put_pixel(x, y, pixel);
+        }
+    }
+
+    ctx.font_size(50.0);
+    ctx.draw(&nick, draw_cb(&mut canvas, 45, 309));
+
+    ctx.font_size(28.0);
+    ctx.draw(&name, draw_cb(&mut canvas, 84, 373));
+
+    ctx.font_size(20.0);
+    let stats = Stats {
+        global_ranks: Ranks {
+            victim_rank: 42,
+            punisher_rank: 17,
+            counter_rank: 8,
+        },
+        here_ranks: Ranks {
+            victim_rank: 5,
+            punisher_rank: 2,
+            counter_rank: 1,
+        },
+        global_counts: Counts {
+            times_smacked: 120,
+            times_called: 85,
+            times_countered: 30,
+        },
+        here_counts: Counts {
+            times_smacked: 15,
+            times_called: 10,
+            times_countered: 3,
+        },
     };
-}
 
-const FONTS: &[&[u8]] = include_font_bytes![
-    "NotoSans/unhinted/otf/NotoSans-Regular.otf",
-    "NotoSansAdlam/unhinted/otf/NotoSansAdlam-Regular.otf",
-    "NotoSansAdlamUnjoined/unhinted/otf/NotoSansAdlamUnjoined-Regular.otf",
-    "NotoSansAnatolianHieroglyphs/unhinted/otf/NotoSansAnatolianHieroglyphs-Regular.otf",
-    "NotoSansArabic/unhinted/otf/NotoSansArabic-Regular.otf",
-    "NotoSansArabicUI/unhinted/otf/NotoSansArabicUI-Regular.otf",
-    "NotoSansArmenian/unhinted/otf/NotoSansArmenian-Regular.otf",
-    "NotoSansAvestan/unhinted/otf/NotoSansAvestan-Regular.otf",
-    "NotoSansBalinese/unhinted/otf/NotoSansBalinese-Regular.otf",
-    "NotoSansBamum/unhinted/otf/NotoSansBamum-Regular.otf",
-    "NotoSansBassaVah/unhinted/otf/NotoSansBassaVah-Regular.otf",
-    "NotoSansBatak/unhinted/otf/NotoSansBatak-Regular.otf",
-    "NotoSansBengali/unhinted/otf/NotoSansBengali-Regular.otf",
-    "NotoSansBengali/unhinted/otf/NotoSansBengaliUI-Regular.otf",
-    "NotoSansBhaiksuki/unhinted/otf/NotoSansBhaiksuki-Regular.otf",
-    "NotoSansBrahmi/unhinted/otf/NotoSansBrahmi-Regular.otf",
-    "NotoSansBuginese/unhinted/otf/NotoSansBuginese-Regular.otf",
-    "NotoSansBuhid/unhinted/otf/NotoSansBuhid-Regular.otf",
-    "NotoSansCanadianAboriginal/unhinted/otf/NotoSansCanadianAboriginal-Regular.otf",
-    "NotoSansCarian/unhinted/otf/NotoSansCarian-Regular.otf",
-    "NotoSansCaucasianAlbanian/unhinted/otf/NotoSansCaucasianAlbanian-Regular.otf",
-    "NotoSansChakma/unhinted/otf/NotoSansChakma-Regular.otf",
-    "NotoSansCham/unhinted/otf/NotoSansCham-Regular.otf",
-    "NotoSansCherokee/unhinted/otf/NotoSansCherokee-Regular.otf",
-    "NotoSansChorasmian/unhinted/otf/NotoSansChorasmian-Regular.otf",
-    "NotoSansCoptic/unhinted/otf/NotoSansCoptic-Regular.otf",
-    "NotoSansCuneiform/unhinted/otf/NotoSansCuneiform-Regular.otf",
-    "NotoSansCypriot/unhinted/otf/NotoSansCypriot-Regular.otf",
-    "NotoSansCyproMinoan/unhinted/otf/NotoSansCyproMinoan-Regular.otf",
-    "NotoSansDeseret/unhinted/otf/NotoSansDeseret-Regular.otf",
-    "NotoSansDevanagari/unhinted/otf/NotoSansDevanagari-Regular.otf",
-    "NotoSansDevanagari/unhinted/otf/NotoSansDevanagariUI-Regular.otf",
-    "NotoSansDuployan/unhinted/otf/NotoSansDuployan-Regular.otf",
-    "NotoSansEgyptianHieroglyphs/unhinted/otf/NotoSansEgyptianHieroglyphs-Regular.otf",
-    "NotoSansElbasan/unhinted/otf/NotoSansElbasan-Regular.otf",
-    "NotoSansElymaic/unhinted/otf/NotoSansElymaic-Regular.otf",
-    "NotoSansEthiopic/unhinted/otf/NotoSansEthiopic-Regular.otf",
-    "NotoSansGeorgian/unhinted/otf/NotoSansGeorgian-Regular.otf",
-    "NotoSansGlagolitic/unhinted/otf/NotoSansGlagolitic-Regular.otf",
-    "NotoSansGothic/unhinted/otf/NotoSansGothic-Regular.otf",
-    "NotoSansGrantha/unhinted/otf/NotoSansGrantha-Regular.otf",
-    "NotoSansGujarati/unhinted/otf/NotoSansGujarati-Regular.otf",
-    "NotoSansGujarati/unhinted/otf/NotoSansGujaratiUI-Regular.otf",
-    "NotoSansGunjalaGondi/unhinted/otf/NotoSansGunjalaGondi-Regular.otf",
-    "NotoSansGurmukhi/unhinted/otf/NotoSansGurmukhi-Regular.otf",
-    "NotoSansGurmukhi/unhinted/otf/NotoSansGurmukhiUI-Regular.otf",
-    "NotoSansHanifiRohingya/unhinted/otf/NotoSansHanifiRohingya-Regular.otf",
-    "NotoSansHanunoo/unhinted/otf/NotoSansHanunoo-Regular.otf",
-    "NotoSansHatran/unhinted/otf/NotoSansHatran-Regular.otf",
-    "NotoSansHebrew/unhinted/otf/NotoSansHebrew-Regular.otf",
-    "NotoSansImperialAramaic/unhinted/otf/NotoSansImperialAramaic-Regular.otf",
-    "NotoSansIndicSiyaqNumbers/unhinted/otf/NotoSansIndicSiyaqNumbers-Regular.otf",
-    "NotoSansInscriptionalPahlavi/unhinted/otf/NotoSansInscriptionalPahlavi-Regular.otf",
-    "NotoSansInscriptionalParthian/unhinted/otf/NotoSansInscriptionalParthian-Regular.otf",
-    "NotoSansJavanese/unhinted/otf/NotoSansJavanese-Regular.otf",
-    "NotoSansKaithi/unhinted/otf/NotoSansKaithi-Regular.otf",
-    "NotoSansKannada/unhinted/otf/NotoSansKannada-Regular.otf",
-    "NotoSansKannada/unhinted/otf/NotoSansKannadaUI-Regular.otf",
-    "NotoSansKawi/unhinted/otf/NotoSansKawi-Regular.otf",
-    "NotoSansKayahLi/unhinted/otf/NotoSansKayahLi-Regular.otf",
-    "NotoSansKharoshthi/unhinted/otf/NotoSansKharoshthi-Regular.otf",
-    "NotoSansKhmer/unhinted/otf/NotoSansKhmer-Regular.otf",
-    "NotoSansKhojki/unhinted/otf/NotoSansKhojki-Regular.otf",
-    "NotoSansKhudawadi/unhinted/otf/NotoSansKhudawadi-Regular.otf",
-    "NotoSansLao/unhinted/otf/NotoSansLao-Regular.otf",
-    "NotoSansLaoLooped/unhinted/otf/NotoSansLaoLooped-Regular.otf",
-    "NotoSansLepcha/unhinted/otf/NotoSansLepcha-Regular.otf",
-    "NotoSansLimbu/unhinted/otf/NotoSansLimbu-Regular.otf",
-    "NotoSansLinearA/unhinted/otf/NotoSansLinearA-Regular.otf",
-    "NotoSansLinearB/unhinted/otf/NotoSansLinearB-Regular.otf",
-    "NotoSansLisu/unhinted/otf/NotoSansLisu-Regular.otf",
-    "NotoSansLycian/unhinted/otf/NotoSansLycian-Regular.otf",
-    "NotoSansLydian/unhinted/otf/NotoSansLydian-Regular.otf",
-    "NotoSansMahajani/unhinted/otf/NotoSansMahajani-Regular.otf",
-    "NotoSansMalayalam/unhinted/otf/NotoSansMalayalam-Regular.otf",
-    "NotoSansMalayalam/unhinted/otf/NotoSansMalayalamUI-Regular.otf",
-    "NotoSansMandaic/unhinted/otf/NotoSansMandaic-Regular.otf",
-    "NotoSansManichaean/unhinted/otf/NotoSansManichaean-Regular.otf",
-    "NotoSansMarchen/unhinted/otf/NotoSansMarchen-Regular.otf",
-    "NotoSansMasaramGondi/unhinted/otf/NotoSansMasaramGondi-Regular.otf",
-    "NotoSansMath/unhinted/otf/NotoSansMath-Regular.otf",
-    "NotoSansMayanNumerals/unhinted/otf/NotoSansMayanNumerals-Regular.otf",
-    "NotoSansMedefaidrin/unhinted/otf/NotoSansMedefaidrin-Regular.otf",
-    "NotoSansMeeteiMayek/unhinted/otf/NotoSansMeeteiMayek-Regular.otf",
-    "NotoSansMendeKikakui/unhinted/otf/NotoSansMendeKikakui-Regular.otf",
-    "NotoSansMeroitic/unhinted/otf/NotoSansMeroitic-Regular.otf",
-    "NotoSansMiao/unhinted/otf/NotoSansMiao-Regular.otf",
-    "NotoSansModi/unhinted/otf/NotoSansModi-Regular.otf",
-    "NotoSansMongolian/unhinted/otf/NotoSansMongolian-Regular.otf",
-    "NotoSansMono/unhinted/otf/NotoSansMono-Regular.otf",
-    "NotoSansMro/unhinted/otf/NotoSansMro-Regular.otf",
-    "NotoSansMultani/unhinted/otf/NotoSansMultani-Regular.otf",
-    "NotoSansMyanmar/unhinted/otf/NotoSansMyanmar-Regular.otf",
-    "NotoSansNabataean/unhinted/otf/NotoSansNabataean-Regular.otf",
-    "NotoSansNagMundari/unhinted/otf/NotoSansNagMundari-Regular.otf",
-    "NotoSansNandinagari/unhinted/otf/NotoSansNandinagari-Regular.otf",
-    "NotoSansNewa/unhinted/otf/NotoSansNewa-Regular.otf",
-    "NotoSansNewTaiLue/unhinted/otf/NotoSansNewTaiLue-Regular.otf",
-    "NotoSansNKo/unhinted/otf/NotoSansNKo-Regular.otf",
-    "NotoSansNKoUnjoined/unhinted/otf/NotoSansNKoUnjoined-Regular.otf",
-    "NotoSansNushu/unhinted/otf/NotoSansNushu-Regular.otf",
-    "NotoSansOgham/unhinted/otf/NotoSansOgham-Regular.otf",
-    "NotoSansOlChiki/unhinted/otf/NotoSansOlChiki-Regular.otf",
-    "NotoSansOldHungarian/unhinted/otf/NotoSansOldHungarian-Regular.otf",
-    "NotoSansOldItalic/unhinted/otf/NotoSansOldItalic-Regular.otf",
-    "NotoSansOldNorthArabian/unhinted/otf/NotoSansOldNorthArabian-Regular.otf",
-    "NotoSansOldPermic/unhinted/otf/NotoSansOldPermic-Regular.otf",
-    "NotoSansOldPersian/unhinted/otf/NotoSansOldPersian-Regular.otf",
-    "NotoSansOldSogdian/unhinted/otf/NotoSansOldSogdian-Regular.otf",
-    "NotoSansOldSouthArabian/unhinted/otf/NotoSansOldSouthArabian-Regular.otf",
-    "NotoSansOldTurkic/unhinted/otf/NotoSansOldTurkic-Regular.otf",
-    "NotoSansOriya/unhinted/otf/NotoSansOriya-Regular.otf",
-    "NotoSansOsage/unhinted/otf/NotoSansOsage-Regular.otf",
-    "NotoSansOsmanya/unhinted/otf/NotoSansOsmanya-Regular.otf",
-    "NotoSansPahawhHmong/unhinted/otf/NotoSansPahawhHmong-Regular.otf",
-    "NotoSansPalmyrene/unhinted/otf/NotoSansPalmyrene-Regular.otf",
-    "NotoSansPauCinHau/unhinted/otf/NotoSansPauCinHau-Regular.otf",
-    "NotoSansPhagsPa/unhinted/otf/NotoSansPhagsPa-Regular.otf",
-    "NotoSansPhoenician/unhinted/otf/NotoSansPhoenician-Regular.otf",
-    "NotoSansPsalterPahlavi/unhinted/otf/NotoSansPsalterPahlavi-Regular.otf",
-    "NotoSansRejang/unhinted/otf/NotoSansRejang-Regular.otf",
-    "NotoSansRunic/unhinted/otf/NotoSansRunic-Regular.otf",
-    "NotoSansSamaritan/unhinted/otf/NotoSansSamaritan-Regular.otf",
-    "NotoSansSaurashtra/unhinted/otf/NotoSansSaurashtra-Regular.otf",
-    "NotoSansSharada/unhinted/otf/NotoSansSharada-Regular.otf",
-    "NotoSansShavian/unhinted/otf/NotoSansShavian-Regular.otf",
-    "NotoSansSiddham/unhinted/otf/NotoSansSiddham-Regular.otf",
-    "NotoSansSignWriting/unhinted/otf/NotoSansSignWriting-Regular.otf",
-    "NotoSansSinhala/unhinted/otf/NotoSansSinhala-Regular.otf",
-    "NotoSansSinhala/unhinted/otf/NotoSansSinhalaUI-Regular.otf",
-    "NotoSansSogdian/unhinted/otf/NotoSansSogdian-Regular.otf",
-    "NotoSansSoraSompeng/unhinted/otf/NotoSansSoraSompeng-Regular.otf",
-    "NotoSansSoyombo/unhinted/otf/NotoSansSoyombo-Regular.otf",
-    "NotoSansSundanese/unhinted/otf/NotoSansSundanese-Regular.otf",
-    "NotoSansSylotiNagri/unhinted/otf/NotoSansSylotiNagri-Regular.otf",
-    "NotoSansSymbols/unhinted/otf/NotoSansSymbols-Regular.otf",
-    "NotoSansSymbols2/unhinted/otf/NotoSansSymbols2-Regular.otf",
-    "NotoSansSyriac/unhinted/otf/NotoSansSyriac-Regular.otf",
-    "NotoSansSyriacEastern/unhinted/otf/NotoSansSyriacEastern-Regular.otf",
-    "NotoSansSyriacWestern/unhinted/otf/NotoSansSyriacWestern-Regular.otf",
-    "NotoSansTagalog/unhinted/otf/NotoSansTagalog-Regular.otf",
-    "NotoSansTagbanwa/unhinted/otf/NotoSansTagbanwa-Regular.otf",
-    "NotoSansTaiLe/unhinted/otf/NotoSansTaiLe-Regular.otf",
-    "NotoSansTaiTham/unhinted/otf/NotoSansTaiTham-Regular.otf",
-    "NotoSansTaiViet/unhinted/otf/NotoSansTaiViet-Regular.otf",
-    "NotoSansTakri/unhinted/otf/NotoSansTakri-Regular.otf",
-    "NotoSansTamil/unhinted/otf/NotoSansTamil-Regular.otf",
-    "NotoSansTamil/unhinted/otf/NotoSansTamilUI-Regular.otf",
-    "NotoSansTamilSupplement/unhinted/otf/NotoSansTamilSupplement-Regular.otf",
-    "NotoSansTangsa/unhinted/otf/NotoSansTangsa-Regular.otf",
-    "NotoSansTelugu/unhinted/otf/NotoSansTelugu-Regular.otf",
-    "NotoSansTelugu/unhinted/otf/NotoSansTeluguUI-Regular.otf",
-    "NotoSansThaana/unhinted/otf/NotoSansThaana-Regular.otf",
-    "NotoSansThai/unhinted/otf/NotoSansThai-Regular.otf",
-    "NotoSansThaiLooped/unhinted/otf/NotoSansThaiLooped-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinagh-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAdrar-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAgrawImazighen-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAhaggar-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAir-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAPT-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghAzawagh-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghGhat-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghHawad-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghRhissaIxa-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghSIL-Regular.otf",
-    "NotoSansTifinagh/unhinted/otf/NotoSansTifinaghTawellemmet-Regular.otf",
-    "NotoSansTirhuta/unhinted/otf/NotoSansTirhuta-Regular.otf",
-    "NotoSansUgaritic/unhinted/otf/NotoSansUgaritic-Regular.otf",
-    "NotoSansVai/unhinted/otf/NotoSansVai-Regular.otf",
-    "NotoSansVithkuqi/unhinted/otf/NotoSansVithkuqi-Regular.otf",
-    "NotoSansWancho/unhinted/otf/NotoSansWancho-Regular.otf",
-    "NotoSansWarangCiti/unhinted/otf/NotoSansWarangCiti-Regular.otf",
-    "NotoSansYi/unhinted/otf/NotoSansYi-Regular.otf",
-    "NotoSansZanabazarSquare/unhinted/otf/NotoSansZanabazarSquare-Regular.otf"
-];
-
-struct EmojiImage(ImageBuffer<Rgba<u8>, heapless::Vec<u8, { 4 * 100 * 100 }>>);
-
-impl Deref for EmojiImage {
-    type Target = ImageBuffer<Rgba<u8>, heapless::Vec<u8, { 4 * 100 * 100 }>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl EmojiImage {
-    const EDGE: u32 = 100;
-
-    fn from_svg(svg: &str) -> Result<Self, usvg::Error> {
-        let tree = Tree::from_str(svg, &Default::default())?;
-        let scale = Self::EDGE as f32 / tree.size().width();
-        let transform = Transform::from_scale(scale, scale);
-        let mut buf = heapless::Vec::new();
-        buf.resize(buf.capacity(), 0).unwrap();
-        let mut buf = ImageBuffer::from_raw(100, 100, buf).unwrap();
-        let mut pixmap = PixmapMut::from_bytes(&mut buf, 100, 100).unwrap();
-        resvg::render(&tree, transform, &mut pixmap);
-        Ok(Self(buf))
-    }
-}
-
-fn main() {
-    let fonts = FONTS
-        .iter()
-        .map(|font| FontRef::try_from_slice(font).unwrap())
-        .collect::<Vec<_>>();
-
-    let name = "Jäne 🅱oe Bib 🦆 🇩🇪 🗕 🗗 🗙 𓁹‿𓁹";
-
-    'outer: for c in name.chars() {
-        for (i, font) in fonts.iter().enumerate() {
-            let glyph_id = font.glyph_id(c);
-            if glyph_id.0 == 0 { continue }
-            println!("char: {c}, index: {i}, glyph: {glyph_id:?}");
-            continue 'outer;
-        }
-        println!("no glyph found for {c}");
+    let ranks = [
+        (stats.global_ranks.victim_rank, (347, 525)),
+        (stats.here_ranks.victim_rank, (494, 525)),
+        (stats.global_ranks.punisher_rank, (347, 564)),
+        (stats.here_ranks.punisher_rank, (494, 564)),
+        (stats.global_ranks.counter_rank, (347, 602)),
+        (stats.here_ranks.counter_rank, (494, 602)),
+    ];
+    for (rank, (x, y)) in ranks {
+        let rank = format!("#{rank}");
+        let rank = Segments::new(&rank);
+        let width = ctx.width(&rank) as i32;
+        ctx.draw(&rank, draw_cb(&mut canvas, x - width / 2, y));
     }
 
-    let graphemes = name.graphemes(true).collect::<Vec<&str>>();
-    for grapheme in graphemes {
-        dbg!(grapheme);
-        // dbg!((grapheme, SvgTwemojiAsset::from_emoji(grapheme)));
+    let counts = [
+        (stats.global_counts.times_smacked, (347, 666)),
+        (stats.here_counts.times_smacked, (494, 666)),
+        (stats.global_counts.times_called, (347, 705)),
+        (stats.here_counts.times_called, (494, 705)),
+        (stats.global_counts.times_countered, (347, 743)),
+        (stats.here_counts.times_countered, (494, 743)),
+    ];
+    for (counts, (x, y)) in counts {
+        let counts = counts.to_string();
+        let counts = Segments::new(&counts);
+        let width = ctx.width(&counts) as i32;
+        ctx.draw(&counts, draw_cb(&mut canvas, x - width / 2, y));
     }
 
-    let mut img = RgbaImage::new(600, 200);
-    let white = Rgba([255, 255, 255, 255]);
+    let badges = Badges::TOP_STRIKER | Badges::NEVER_TAKEN_DOWN | Badges::IMMUNITY | Badges::TOP_COUNTERER;
+    const BADGE_SIZE: u32 = 44;
+    const FIRST_BADGE: (i64, i64) = (526, 228);
 
-    let emoji = SvgTwemojiAsset::from_emoji("💀").unwrap();
-    let emoji = EmojiImage::from_svg(emoji).unwrap();
-    emoji.save("emoji.png").unwrap();
-
-    let mut x = 0;
-    let mut c_buf = [0u8; 4];
-    for c in name.chars() {
-        let mut font = fonts.first().expect("not emtpy");
-        for f in fonts.iter() {
-            let glyph_id = f.glyph_id(c);
-            if glyph_id.0 == 0 { continue }
-            font = f;
-            break;
-        }
-
-        let s = c.encode_utf8(&mut c_buf);
-        imageproc::drawing::draw_text_mut(&mut img, white, x, 0, 50.0, font, s);
-        let size = imageproc::drawing::text_size(50.0, font, s);
-        x += size.0 as i32;
+    // TODO: draw badges
+    let blender_x_coords = iter::successors(Some(FIRST_BADGE.0 - (BADGE_SIZE / 2) as i64), |prev| Some(prev - BADGE_SIZE as i64));
+    const BLENDER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/blender.png");
+    let blender = image::load_from_memory(BLENDER).unwrap();
+    let blender = blender.resize(BADGE_SIZE, BADGE_SIZE, image::imageops::FilterType::Triangle);
+    for x in blender_x_coords.take(badges.bits().count_ones() as usize - 1) {
+        image::imageops::overlay(&mut canvas, &blender, x, FIRST_BADGE.1);
     }
 
-    img.save("img.png").unwrap();
+    let badge_x_coords = iter::successors(Some(FIRST_BADGE.0), |prev| Some(prev - BADGE_SIZE as i64));
+    for (badge, x) in badges.iter().zip(badge_x_coords) {
+        let badge = match badge {
+            Badges::TOP_STRIKER => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/top_striker.png")).unwrap(),
+            Badges::TOP_VICTIM => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/top_victim.png")).unwrap(),
+            Badges::NEVER_INITIATED => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/never_initiated.png")).unwrap(),
+            Badges::NEVER_TAKEN_DOWN => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/never_taken_down.png")).unwrap(),
+            Badges::IMMUNITY => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/immunity.png")).unwrap(),
+            Badges::RANDOM_IMMUNITY => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/random_immunity.png")).unwrap(),
+            Badges::TOP_COUNTERER => image::load_from_memory(include_bytes!("../../assets/graphics/user_rank/badges/top_counterer.png")).unwrap(),
+            _ => unreachable!(),
+        };
+        let badge = badge.resize(BADGE_SIZE, BADGE_SIZE, image::imageops::FilterType::Triangle);
+        image::imageops::overlay(&mut canvas, &badge, x, FIRST_BADGE.1);
+    }
+
+    canvas.save("rank.png").unwrap();
 }
