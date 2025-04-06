@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use std::{io, iter};
+use std::{env, io, iter};
 
 use derive_more::From;
 use futures::stream::{self, select, StreamExt};
@@ -43,11 +43,6 @@ mod takedown;
 mod util;
 
 // TODO: log messages using allowed_mention([]) to hide mentions
-
-#[cfg(debug_assertions)]
-const DISCORD_TOKEN: &str = trim!(include_str!("../dev.token"));
-#[cfg(not(debug_assertions))]
-const DISCORD_TOKEN: &str = trim!(include_str!("../.token"));
 
 #[cfg(debug_assertions)]
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(604066644465287198);
@@ -96,8 +91,9 @@ enum BotEvent {
 
 #[tokio::main]
 async fn main() {
-    let mut shard = Shard::new(ShardId::ONE, DISCORD_TOKEN.to_string(), INTENTS);
-    let http = Client::new(DISCORD_TOKEN.to_owned());
+    let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
+    let mut shard = Shard::new(ShardId::ONE, discord_token.clone(), INTENTS);
+    let http = Client::new(discord_token);
     let (cache, cache_rx) = ObservableCache::new();
     OnceLockExpect::set(&STATE, State {
         client: http,
