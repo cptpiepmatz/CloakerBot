@@ -1,5 +1,6 @@
 use static_toml::static_toml;
 
+pub mod graphics;
 pub mod help_texts;
 pub mod owner_notifications;
 pub mod sounds;

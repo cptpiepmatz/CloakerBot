@@ -62,10 +62,7 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let guild_config = STATE.guild_configs.read().await;
-    let current = guild_config
-        .get(&guild_id)
-        .map(|config| config.log_channel)
-        .flatten();
+    let current = guild_config.get(&guild_id).map(|config| config.log_channel).flatten();
 
     let channel_select = message_component::channel_select::log_channel::component(current);
     let button = message_component::button::config::component(

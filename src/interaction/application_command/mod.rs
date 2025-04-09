@@ -56,9 +56,7 @@ impl TryFrom<&Interaction> for ApplicationCommand {
             counter::NAME => Ok(Self::Counter(CounterCommand::try_from(data.as_ref())?)),
             help::NAME => Ok(Self::Help(HelpCommand::try_from(data.as_ref())?)),
             ranks::NAME => Ok(Self::Ranks(RanksCommand::try_from(data.as_ref())?)),
-            _ => Err(TryFromInteractionError::UnknownCommandName {
-                name: data.name.clone()
-            })
+            _ => Err(TryFromInteractionError::UnknownCommandName { name: data.name.clone() })
         }
     }
 }
@@ -66,27 +64,11 @@ impl TryFrom<&Interaction> for ApplicationCommand {
 #[derive(Debug)]
 pub enum TryFromInteractionError {
     NoApplicationCommand,
-    UnknownCommandName {
-        name: String
-    },
-    MissingField {
-        command: String,
-        field: String
-    },
-    IncorrectFieldType {
-        command: String,
-        field: String,
-        value: CommandOptionValue
-    },
-    IncorrectFieldValue {
-        command: String,
-        field: String,
-        value: CommandOptionValue
-    },
-    UnknownField {
-        command: String,
-        field: String
-    }
+    UnknownCommandName { name: String },
+    MissingField { command: String, field: String },
+    IncorrectFieldType { command: String, field: String, value: CommandOptionValue },
+    IncorrectFieldValue { command: String, field: String, value: CommandOptionValue },
+    UnknownField { command: String, field: String }
 }
 
 impl Display for TryFromInteractionError {
@@ -99,24 +81,12 @@ impl Display for TryFromInteractionError {
             TryFromInteractionError::MissingField { command, field } => {
                 write!(f, "missing field {} in {}", field, command)
             }
-            TryFromInteractionError::IncorrectFieldType {
-                command,
-                field,
-                value
-            } => write!(
-                f,
-                "incorrect field type of {} in {}, got {:?}",
-                field, command, value
-            ),
-            TryFromInteractionError::IncorrectFieldValue {
-                command,
-                field,
-                value
-            } => write!(
-                f,
-                "incorrect field value of {} in {}, got {:?}",
-                field, command, value
-            ),
+            TryFromInteractionError::IncorrectFieldType { command, field, value } => {
+                write!(f, "incorrect field type of {} in {}, got {:?}", field, command, value)
+            }
+            TryFromInteractionError::IncorrectFieldValue { command, field, value } => {
+                write!(f, "incorrect field value of {} in {}, got {:?}", field, command, value)
+            }
             TryFromInteractionError::UnknownField { command, field } => {
                 write!(f, "unknown field {} in {}", field, command)
             }
@@ -161,9 +131,7 @@ pub async fn register_commands(
         }
 
         // insert newest version of a command into the map
-        let mapped_command = command_map
-            .entry(command.name.as_str())
-            .or_insert(command.clone());
+        let mapped_command = command_map.entry(command.name.as_str()).or_insert(command.clone());
         if mapped_command.version.into_nonzero() < command.version.into_nonzero() {
             command_map.insert(command.name.as_str(), command.clone());
         }
@@ -195,44 +163,32 @@ pub async fn register_commands(
                     OnceLockExpect::set(&cloaker::ID, command_id);
                     OnceLockExpect::set(
                         &cloaker::MENTION,
-                        CommandMention::Command {
-                            name: cloaker::NAME.to_owned(),
-                            id: command_id
-                        }
-                        .into_mention()
+                        CommandMention::Command { name: cloaker::NAME.to_owned(), id: command_id }
+                            .into_mention()
                     );
                 }
                 (counter::NAME, Some(command_id)) => {
                     OnceLockExpect::set(&counter::ID, command_id);
                     OnceLockExpect::set(
                         &counter::MENTION,
-                        CommandMention::Command {
-                            name: counter::NAME.to_owned(),
-                            id: command_id
-                        }
-                        .into_mention()
+                        CommandMention::Command { name: counter::NAME.to_owned(), id: command_id }
+                            .into_mention()
                     );
                 }
                 (help::NAME, Some(command_id)) => {
                     OnceLockExpect::set(&help::ID, command_id);
                     OnceLockExpect::set(
                         &help::MENTION,
-                        CommandMention::Command {
-                            name: help::NAME.to_owned(),
-                            id: command_id
-                        }
-                        .into_mention()
+                        CommandMention::Command { name: help::NAME.to_owned(), id: command_id }
+                            .into_mention()
                     );
                 }
                 (ranks::NAME, Some(command_id)) => {
                     OnceLockExpect::set(&ranks::ID, command_id);
                     OnceLockExpect::set(
                         &ranks::MENTION,
-                        CommandMention::Command {
-                            name: ranks::NAME.to_owned(),
-                            id: command_id
-                        }
-                        .into_mention()
+                        CommandMention::Command { name: ranks::NAME.to_owned(), id: command_id }
+                            .into_mention()
                     );
                 }
                 _ => ()
@@ -298,11 +254,7 @@ impl From<twilight_http::Error> for DeferError {
 async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
     let response = InteractionResponse {
         kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: Some(
-            InteractionResponseDataBuilder::new()
-                .flags(MessageFlags::EPHEMERAL)
-                .build()
-        )
+        data: Some(InteractionResponseDataBuilder::new().flags(MessageFlags::EPHEMERAL).build())
     };
     STATE
         .client

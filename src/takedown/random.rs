@@ -24,13 +24,11 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
             continue;
         }
 
-        let schedule = random_takedown_schedule
-            .entry(*guild_id)
-            .or_insert_with(|| {
-                let in_hours = rng.gen_range(config_random.min..=config_random.max);
-                let in_hours = Duration::from_secs_f64(in_hours * 3600.0);
-                Local::now() + in_hours
-            });
+        let schedule = random_takedown_schedule.entry(*guild_id).or_insert_with(|| {
+            let in_hours = rng.gen_range(config_random.min..=config_random.max);
+            let in_hours = Duration::from_secs_f64(in_hours * 3600.0);
+            Local::now() + in_hours
+        });
 
         let now = Local::now();
         if now < *schedule {
@@ -47,10 +45,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
             continue;
         };
 
-        let target_id = guild_voice_states
-            .iter()
-            .choose(&mut rng)
-            .expect("at least 3");
+        let target_id = guild_voice_states.iter().choose(&mut rng).expect("at least 3");
         // TODO: consider if this should return an error
         let _ = takedown(*target_id, *guild_id, TakedownType::Random).await;
         random_takedown_schedule.remove(guild_id);

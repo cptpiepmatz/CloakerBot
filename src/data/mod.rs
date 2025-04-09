@@ -91,10 +91,7 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
                 }
             }
         };
-        Ok(Some(PersistentData {
-            dirty: AtomicBool::new(false),
-            value: RwLock::new(value)
-        }))
+        Ok(Some(PersistentData { dirty: AtomicBool::new(false), value: RwLock::new(value) }))
     }
 
     pub async fn store(&self) -> io::Result<()> {

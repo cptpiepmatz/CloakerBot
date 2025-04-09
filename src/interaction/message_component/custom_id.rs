@@ -83,9 +83,7 @@ impl FromStr for MessageComponentCustomId {
             IMMUNITY_RANDOM_SILENT_SELECT => Ok(MCCId::ImmunityRandomSilentSelect),
             LOG_CHANNEL_SELECT => Ok(MCCId::LogChannelSelect),
 
-            _ => Err(ParseMessageComponentCustomIdError {
-                unmatched: s.to_owned()
-            })
+            _ => Err(ParseMessageComponentCustomIdError { unmatched: s.to_owned() })
         }
     }
 }

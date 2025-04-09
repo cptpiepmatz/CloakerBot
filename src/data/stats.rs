@@ -30,17 +30,11 @@ impl GuildTakedowns {
     }
 
     pub fn count(&self, caller_id: Id<UserMarker>) -> u64 {
-        self.0
-            .get(&caller_id)
-            .map(|entry| entry.count())
-            .unwrap_or_default()
+        self.0.get(&caller_id).map(|entry| entry.count()).unwrap_or_default()
     }
 
     pub fn get(&self, caller_id: Id<UserMarker>, target_id: Id<UserMarker>) -> u64 {
-        self.0
-            .get(&caller_id)
-            .map(|entry| entry.get(target_id))
-            .unwrap_or_default()
+        self.0.get(&caller_id).map(|entry| entry.get(target_id)).unwrap_or_default()
     }
 
     pub fn ranked(
@@ -71,10 +65,7 @@ impl MemberTakedowns {
 
     /// An iterator that ranks the takedown targets by their takedown count.
     pub fn ranked(&self) -> impl Iterator<Item = (Id<UserMarker>, u64)> {
-        self.0
-            .iter()
-            .map(|(id, count)| (*id, *count))
-            .sorted_by(|(_, a), (_, b)| b.cmp(a))
+        self.0.iter().map(|(id, count)| (*id, *count)).sorted_by(|(_, a), (_, b)| b.cmp(a))
     }
 }
 
@@ -122,17 +113,7 @@ mod tests {
         let mut stats = GuildStats::default();
         assert!(stats.takedowns.0.get(&CALLER_ID).is_none());
         assert_eq!(stats.takedowns.increment(CALLER_ID, TARGET_ID), 1);
-        assert_eq!(
-            stats
-                .takedowns
-                .0
-                .get(&CALLER_ID)
-                .unwrap()
-                .0
-                .get(&TARGET_ID)
-                .unwrap(),
-            &1
-        );
+        assert_eq!(stats.takedowns.0.get(&CALLER_ID).unwrap().0.get(&TARGET_ID).unwrap(), &1);
     }
 
     fn test_data() -> GuildTakedowns {

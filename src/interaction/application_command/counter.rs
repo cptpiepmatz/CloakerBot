@@ -35,21 +35,15 @@ impl TryFrom<&CommandData> for CounterCommand {
 }
 
 pub fn chat_input() -> Command {
-    CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
-        .dm_permission(false)
-        .build()
+    CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput).dm_permission(false).build()
 }
 
 pub fn user_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::User)
-        .dm_permission(false)
-        .build()
+    CommandBuilder::new(NAME, "", CommandType::User).dm_permission(false).build()
 }
 
 pub fn message_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::Message)
-        .dm_permission(false)
-        .build()
+    CommandBuilder::new(NAME, "", CommandType::Message).dm_permission(false).build()
 }
 
 #[derive(Debug)]
@@ -71,9 +65,7 @@ pub async fn action(
     _command: CounterCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CounterActionError::NotInGuild)?;
-    let author_id = interaction
-        .author_id()
-        .ok_or(CounterActionError::NoAuthor)?;
+    let author_id = interaction.author_id().ok_or(CounterActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
 
     let content = match takedown::counter::counter(guild_id, author_id) {

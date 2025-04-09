@@ -34,9 +34,7 @@ where
 {
     /// Creates a new empty `VolatileMap`.
     pub fn new() -> Self {
-        Self {
-            inner: Default::default()
-        }
+        Self { inner: Default::default() }
     }
 
     /// Inserts a value with a guard if the key is vacant.
@@ -50,10 +48,7 @@ where
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
                 entry.insert(value);
-                Some(VolatileMapGuard {
-                    key,
-                    map_ref: &self
-                })
+                Some(VolatileMapGuard { key, map_ref: &self })
             }
         }
     }

@@ -58,18 +58,14 @@ impl TryFrom<&CommandData> for ConfigCommand {
             danger_zones::NAME => Ok(ConfigCommand::DangerZones(
                 danger_zones::DangerZonesSubCommand::try_from(options)?
             )),
-            log_channel::NAME => Ok(ConfigCommand::LogChannel(
-                log_channel::LogChannelSubCommand::try_from(options)?
-            )),
-            random::NAME => Ok(ConfigCommand::Random(random::RandomSubCommand::try_from(
-                options
-            )?)),
-            immunity::NAME => Ok(ConfigCommand::Immunity(
-                immunity::ImmunitySubCommand::try_from(options)?
-            )),
-            n => Err(TryFromInteractionError::UnknownCommandName {
-                name: format!("{NAME} {}", n)
-            })
+            log_channel::NAME => {
+                Ok(ConfigCommand::LogChannel(log_channel::LogChannelSubCommand::try_from(options)?))
+            }
+            random::NAME => Ok(ConfigCommand::Random(random::RandomSubCommand::try_from(options)?)),
+            immunity::NAME => {
+                Ok(ConfigCommand::Immunity(immunity::ImmunitySubCommand::try_from(options)?))
+            }
+            n => Err(TryFromInteractionError::UnknownCommandName { name: format!("{NAME} {}", n) })
         }
     }
 }

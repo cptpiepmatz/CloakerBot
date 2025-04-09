@@ -24,11 +24,7 @@ pub async fn check_danger_zones(
     let danger_zones = &config.danger_zones;
     require!(danger_zones.contains(&channel_id) => Ok(()));
 
-    match takedown(update.user_id, update.guild_id, TakedownType::DangerZone {
-        channel_id
-    })
-    .await
-    {
+    match takedown(update.user_id, update.guild_id, TakedownType::DangerZone { channel_id }).await {
         Err(TakedownFail::Client(err)) => Err(err.into()),
         Err(_) | Ok(_) => Ok(())
     }

@@ -45,10 +45,7 @@ where
 {
     /// Creates a new, empty `RefAccessMap`.
     pub fn new() -> Self {
-        Self {
-            reference_map: Default::default(),
-            accessor_map: Default::default()
-        }
+        Self { reference_map: Default::default(), accessor_map: Default::default() }
     }
 
     /// Retrieves a reference to a value by a reference key.
@@ -109,10 +106,7 @@ where
     V: Clone
 {
     fn default() -> Self {
-        Self {
-            reference_map: Default::default(),
-            accessor_map: Default::default()
-        }
+        Self { reference_map: Default::default(), accessor_map: Default::default() }
     }
 }
 
@@ -140,19 +134,11 @@ where
     V: Clone
 {
     fn from(value: RefAccessMap<R, A, V>) -> Self {
-        let RefAccessMap {
-            reference_map,
-            accessor_map
-        } = value;
+        let RefAccessMap { reference_map, accessor_map } = value;
 
         let mut entries: HashMap<A, RefAccessStoreEntry<R, V>> = accessor_map
             .into_iter()
-            .map(|(k, v)| {
-                (k, RefAccessStoreEntry {
-                    value: v,
-                    refs: HashSet::new()
-                })
-            })
+            .map(|(k, v)| (k, RefAccessStoreEntry { value: v, refs: HashSet::new() }))
             .collect();
 
         for (ref_k, ref_v) in reference_map.into_iter() {
@@ -175,24 +161,13 @@ where
         let reference_map = value
             .0
             .iter_mut()
-            .map(|(a, entry)| {
-                mem::take(&mut entry.refs)
-                    .into_iter()
-                    .map(|r| (r, a.clone()))
-            })
+            .map(|(a, entry)| mem::take(&mut entry.refs).into_iter().map(|r| (r, a.clone())))
             .flatten()
             .collect();
 
-        let accessor_map = value
-            .0
-            .into_iter()
-            .map(|(a, entry)| (a, entry.value))
-            .collect();
+        let accessor_map = value.0.into_iter().map(|(a, entry)| (a, entry.value)).collect();
 
-        Self {
-            reference_map,
-            accessor_map
-        }
+        Self { reference_map, accessor_map }
     }
 }
 

@@ -2,11 +2,7 @@ use crate::assets::prepare_md;
 
 macro_rules! msg {
     ($name:literal) => {
-        prepare_md!(include_str!(concat!(
-            "../../assets/owner_notifications/",
-            $name,
-            ".md"
-        )))
+        prepare_md!(include_str!(concat!("../../assets/owner_notifications/", $name, ".md")))
     };
 }
 

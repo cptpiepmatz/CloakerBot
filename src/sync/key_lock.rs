@@ -39,9 +39,7 @@ where
     /// Creates a new `KeyLock`.
     /// Initializes the internal `HashMap` for storing locks.
     pub fn new() -> Self {
-        KeyLock {
-            locks: Default::default()
-        }
+        KeyLock { locks: Default::default() }
     }
 
     /// Locks the code section associated with the given key and returns a

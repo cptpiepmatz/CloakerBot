@@ -104,11 +104,8 @@ pub async fn takedown(
     let channel_id = get_channel_id(target_id, guild_id)?;
 
     let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
-    let (_planned_takedown_guard, counter_rx) = upsert_takedown_plan(
-        target_id,
-        guild_id,
-        !matches!(kind, TakedownType::DangerZone { .. })
-    );
+    let (_planned_takedown_guard, counter_rx) =
+        upsert_takedown_plan(target_id, guild_id, !matches!(kind, TakedownType::DangerZone { .. }));
 
     let call = get_call(guild_id, channel_id).await?;
     let mut call = call.lock().await;
@@ -168,9 +165,7 @@ async fn takedown_in_voice(
         }
     };
 
-    notification_track_handle
-        .stop()
-        .expect("track is owned here");
+    notification_track_handle.stop().expect("track is owned here");
 
     let caller_id = match kind {
         TakedownType::Called { caller_id } => Some(caller_id),
@@ -179,9 +174,7 @@ async fn takedown_in_voice(
     };
 
     if let Some(countered_by_id) = countered_by_id {
-        let fail = Err(TakedownFail::Countered {
-            by_id: countered_by_id
-        });
+        let fail = Err(TakedownFail::Countered { by_id: countered_by_id });
 
         let Some(caller_id) = caller_id
         else {
@@ -207,18 +200,12 @@ async fn takedown_in_voice(
             return fail;
         }
 
-        if let Err(err) = STATE
-            .client
-            .update_guild_member(guild_id, caller_id)
-            .channel_id(None)
-            .await
+        if let Err(err) =
+            STATE.client.update_guild_member(guild_id, caller_id).channel_id(None).await
         {
             // TODO: check if this code is the missing permissions code
             if matches!(err.kind(), ErrorType::Response {
-                error: ApiError::General(GeneralApiError {
-                    code: MISSING_PERMS_ERROR_CODE,
-                    ..
-                }),
+                error: ApiError::General(GeneralApiError { code: MISSING_PERMS_ERROR_CODE, .. }),
                 ..
             }) {
                 fail_sound.play_and_wait(&mut call, None).await;
@@ -232,11 +219,8 @@ async fn takedown_in_voice(
         return fail;
     }
 
-    let target_end_channel_id = STATE
-        .cache
-        .voice_state(target_id, guild_id)
-        .as_ref()
-        .map(|cvs| cvs.channel_id());
+    let target_end_channel_id =
+        STATE.cache.voice_state(target_id, guild_id).as_ref().map(|cvs| cvs.channel_id());
     if target_end_channel_id != channel_id.into() {
         fail_sound.play_and_wait(call, None).await;
         return Err(TakedownFail::Fled);
@@ -249,25 +233,15 @@ async fn takedown_in_voice(
     }
 
     // no counter, continue with takedown
-    let has_immune_role = target_roles
-        .iter()
-        .any(|role| config.immunity.general.contains(role));
+    let has_immune_role = target_roles.iter().any(|role| config.immunity.general.contains(role));
     if has_immune_role {
         fail_sound.play_and_wait(&mut call, None).await;
         return Err(TakedownFail::Immune);
     }
 
-    if let Err(err) = STATE
-        .client
-        .update_guild_member(guild_id, target_id)
-        .channel_id(None)
-        .await
-    {
+    if let Err(err) = STATE.client.update_guild_member(guild_id, target_id).channel_id(None).await {
         if matches!(err.kind(), ErrorType::Response {
-            error: ApiError::General(GeneralApiError {
-                code: MISSING_PERMS_ERROR_CODE,
-                ..
-            }),
+            error: ApiError::General(GeneralApiError { code: MISSING_PERMS_ERROR_CODE, .. }),
             ..
         }) {
             fail_sound.play_and_wait(&mut call, None).await;
@@ -277,9 +251,7 @@ async fn takedown_in_voice(
         return Err(TakedownFail::Client(err.into()));
     }
 
-    takedown_sound
-        .play_and_wait(&mut call, WAIT_AFTER_QUOTE)
-        .await;
+    takedown_sound.play_and_wait(&mut call, WAIT_AFTER_QUOTE).await;
     Ok(TakedownSuccess)
 }
 
@@ -308,18 +280,12 @@ fn preliminary_checks(
     member_roles: &[Id<RoleMarker>]
 ) -> Result<(), TakedownFail> {
     if let TakedownType::Random = kind {
-        if member_roles
-            .iter()
-            .any(|role| config.immunity.random_silent.contains(role))
-        {
+        if member_roles.iter().any(|role| config.immunity.random_silent.contains(role)) {
             return Err(TakedownFail::Immune);
         }
     }
 
-    if member_roles
-        .iter()
-        .any(|role| config.immunity.general_silent.contains(role))
-    {
+    if member_roles.iter().any(|role| config.immunity.general_silent.contains(role)) {
         return Err(TakedownFail::Immune);
     }
 
@@ -355,10 +321,7 @@ fn upsert_takedown_plan(
     (
         STATE
             .planned_takedowns
-            .upsert(guild_id, PlannedTakedown {
-                target_id,
-                counter_tx: tx
-            })
+            .upsert(guild_id, PlannedTakedown { target_id, counter_tx: tx })
             .expect("is unset as per guild this is a critical section"),
         rx
     )
@@ -369,11 +332,7 @@ async fn get_call(
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>
 ) -> Result<Arc<Mutex<Call>>, TakedownFail> {
-    Ok(STATE
-        .songbird
-        .join(guild_id, channel_id)
-        .await
-        .map_err(TakedownFail::Join)?)
+    Ok(STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)?)
 }
 
 #[inline]
@@ -381,17 +340,9 @@ fn choose_sounds(rng: &mut impl Rng) -> ((&Sound, f64), &Sound, &Sound) {
     let notification_sound = sounds::WULULULULU.deref();
     let duration_multiplier = rng.gen_range(0.3..0.8);
 
-    let takedown_sound = sounds::TAKEDOWNS
-        .choose(rng)
-        .expect("takedown sounds are not empty");
+    let takedown_sound = sounds::TAKEDOWNS.choose(rng).expect("takedown sounds are not empty");
 
-    let fail_sound = sounds::FAILS
-        .choose(rng)
-        .expect("fail sounds are not empty");
+    let fail_sound = sounds::FAILS.choose(rng).expect("fail sounds are not empty");
 
-    (
-        (notification_sound, duration_multiplier),
-        takedown_sound,
-        fail_sound
-    )
+    ((notification_sound, duration_multiplier), takedown_sound, fail_sound)
 }

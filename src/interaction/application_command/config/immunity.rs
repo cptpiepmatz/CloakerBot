@@ -75,29 +75,18 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
                         })
                     }
                 },
-                n => {
-                    return Err(TryFromInteractionError::UnknownField {
-                        command,
-                        field: n.into()
-                    })
-                }
+                n => return Err(TryFromInteractionError::UnknownField { command, field: n.into() })
             }
         }
 
-        match (
-            for_general,
-            for_random,
-            for_general_silent,
-            for_random_silent
-        ) {
+        match (for_general, for_random, for_general_silent, for_random_silent) {
             (true, _, _, _) => Ok(ImmunitySubCommand::General),
             (_, true, _, _) => Ok(ImmunitySubCommand::Random),
             (_, _, true, _) => Ok(ImmunitySubCommand::GeneralSilent),
             (_, _, _, true) => Ok(ImmunitySubCommand::RandomSilent),
-            (false, false, false, false) => Err(TryFromInteractionError::MissingField {
-                command,
-                field: "type".into()
-            })
+            (false, false, false, false) => {
+                Err(TryFromInteractionError::MissingField { command, field: "type".into() })
+            }
         }
     }
 }
@@ -133,13 +122,7 @@ pub async fn action(
     let current = match guild_configs.get(&guild_id) {
         None => &[],
         Some(GuildConfig {
-            immunity:
-                GuildConfigImmunity {
-                    general,
-                    random,
-                    general_silent,
-                    random_silent
-                },
+            immunity: GuildConfigImmunity { general, random, general_silent, random_silent },
             ..
         }) => match variant {
             ImmunitySelect::General => general.as_slice(),
@@ -171,10 +154,7 @@ pub async fn action(
         ImmunitySelect::GeneralSilent => REPLIES.config.immunity.general.silent.select,
         ImmunitySelect::RandomSilent => REPLIES.config.immunity.random.silent.select
     })
-    .template([
-        &BOT_USER_ID.mention(),
-        application_command::help::MENTION.deref()
-    ]);
+    .template([&BOT_USER_ID.mention(), application_command::help::MENTION.deref()]);
 
     let payload = json!({
         "type": InteractionResponseType::ChannelMessageWithSource,

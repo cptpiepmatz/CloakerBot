@@ -89,9 +89,7 @@ fn permissions() -> Permissions {
 }
 
 pub fn chat_input() -> Command {
-    let option = UserBuilder::new("target", "User to take down.")
-        .required(true)
-        .build();
+    let option = UserBuilder::new("target", "User to take down.").required(true).build();
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .default_member_permissions(permissions())
         .dm_permission(false)
@@ -100,15 +98,11 @@ pub fn chat_input() -> Command {
 }
 
 pub fn user_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::User)
-        .dm_permission(false)
-        .build()
+    CommandBuilder::new(NAME, "", CommandType::User).dm_permission(false).build()
 }
 
 pub fn message_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::Message)
-        .dm_permission(false)
-        .build()
+    CommandBuilder::new(NAME, "", CommandType::Message).dm_permission(false).build()
 }
 
 #[derive(Debug)]
@@ -130,9 +124,7 @@ pub async fn action(
     command: CloakerCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
-    let author_id = interaction
-        .author_id()
-        .ok_or(CloakerActionError::NoAuthor)?;
+    let author_id = interaction.author_id().ok_or(CloakerActionError::NoAuthor)?;
     application_command::defer(interaction).await?;
 
     let content = match takedown::takedown(command.target_id, guild_id, TakedownType::Called {
@@ -140,10 +132,9 @@ pub async fn action(
     })
     .await
     {
-        Ok(TakedownSuccess { .. }) => REPLIES
-            .cloaker
-            .success
-            .template([&command.target_id.mention()]),
+        Ok(TakedownSuccess { .. }) => {
+            REPLIES.cloaker.success.template([&command.target_id.mention()])
+        }
         Err(TakedownFail::Countered { by_id }) => {
             REPLIES.cloaker.countered.template([&by_id.mention()])
         }

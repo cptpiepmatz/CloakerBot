@@ -58,9 +58,7 @@ impl TryFrom<&CommandData> for RanksCommand {
 }
 
 pub fn chat_input() -> Command {
-    let option = UserBuilder::new("user", "User to show ranks for.")
-        .required(false)
-        .build();
+    let option = UserBuilder::new("user", "User to show ranks for.").required(false).build();
 
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .dm_permission(false)
@@ -88,17 +86,13 @@ pub async fn action(
     let default = GuildStats::default();
     let this_guild_stats = guild_stats.get(&guild_id).unwrap_or(&default);
     let global_takedown_count = stats::global_takedown_count(guild_stats.values());
-    let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> = global_takedown_count
-        .iter()
-        .map(|(&caller_id, &count)| (caller_id, count))
-        .collect();
+    let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> =
+        global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id, count)).collect();
     global_takedown_count_ranked.sort_by(|(_, a), (_, b)| b.cmp(a));
 
     let local_takedown_count: u64 = this_guild_stats.takedowns.count(user_id);
-    let global_takedown_count: u64 = global_takedown_count
-        .get(&user_id)
-        .copied()
-        .unwrap_or_default();
+    let global_takedown_count: u64 =
+        global_takedown_count.get(&user_id).copied().unwrap_or_default();
 
     let local_rank: Option<usize> = this_guild_stats
         .takedowns

@@ -75,12 +75,7 @@ impl TryFrom<&Vec<CommandDataOption>> for RandomSubCommand {
                         })
                     }
                 },
-                n => {
-                    return Err(TryFromInteractionError::UnknownField {
-                        command,
-                        field: n.into()
-                    })
-                }
+                n => return Err(TryFromInteractionError::UnknownField { command, field: n.into() })
             }
         }
         Ok(RandomSubCommand { enable, min, max })
@@ -91,18 +86,12 @@ pub fn chat_input() -> CommandOption {
     SubCommandBuilder::new(NAME, DESCRIPTION)
         .option(BooleanBuilder::new("enable", "Enable/disable random takedowns.").build())
         .option(
-            NumberBuilder::new(
-                "min",
-                "Minimum time between takedowns. `-1` to set default value."
-            )
-            .build()
+            NumberBuilder::new("min", "Minimum time between takedowns. `-1` to set default value.")
+                .build()
         )
         .option(
-            NumberBuilder::new(
-                "max",
-                "Maximum time between takedowns. `-1` to set default value."
-            )
-            .build()
+            NumberBuilder::new("max", "Maximum time between takedowns. `-1` to set default value.")
+                .build()
         )
         .build()
 }
@@ -151,11 +140,9 @@ pub async fn action(
 
     let complete_random = guild_config.random.complete();
     let content = match guild_config.random.enabled {
-        None | Some(false) => REPLIES
-            .config
-            .random
-            .disabled
-            .template([&QUOTES.config.random.enabled]),
+        None | Some(false) => {
+            REPLIES.config.random.disabled.template([&QUOTES.config.random.enabled])
+        }
         Some(true) => REPLIES.config.random.enabled.template([
             &format_f64(complete_random.min),
             &format_f64(complete_random.max),
@@ -172,14 +159,10 @@ pub async fn action(
     STATE
         .client
         .interaction(APPLICATION_ID)
-        .create_response(
-            interaction.id,
-            interaction.token.as_str(),
-            &InteractionResponse {
-                kind: InteractionResponseType::ChannelMessageWithSource,
-                data: Some(response_data)
-            }
-        )
+        .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response_data)
+        })
         .await?;
 
     Ok(())

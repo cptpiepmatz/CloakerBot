@@ -69,9 +69,7 @@ pub fn component(variant: ConfigUnsetButton) -> Component {
     Component::Button(Button {
         custom_id: Some(variant.to_string()),
         disabled: false,
-        emoji: Some(ReactionType::Unicode {
-            name: "🗑️".to_string()
-        }),
+        emoji: Some(ReactionType::Unicode { name: "🗑️".to_string() }),
         label: "unset".to_string().into(),
         style: ButtonStyle::Danger,
         url: None
@@ -88,9 +86,7 @@ pub async fn action(
     interaction: &Interaction,
     custom_id: MessageComponentCustomId
 ) -> Result<(), HandleMessageComponentError> {
-    let guild_id = interaction
-        .guild_id
-        .ok_or(ConfigButtonActionError::NotInGuild)?;
+    let guild_id = interaction.guild_id.ok_or(ConfigButtonActionError::NotInGuild)?;
     let mut guild_configs = STATE.guild_configs.write().await;
     let guild_config = guild_configs.entry(guild_id).or_default();
 
@@ -131,20 +127,20 @@ pub async fn action(
                     .random
                     .unset
                     .template([&QUOTES.config.immunity.random.no_roles]),
-                ConfigUnsetButton::ImmunityGeneralSilent => REPLIES
-                    .config
-                    .immunity
-                    .general
-                    .silent
-                    .unset
-                    .template([&QUOTES.config.immunity.general.no_roles]),
-                ConfigUnsetButton::ImmunityRandomSilent => REPLIES
-                    .config
-                    .immunity
-                    .random
-                    .silent
-                    .unset
-                    .template([&QUOTES.config.immunity.random.no_roles]),
+                ConfigUnsetButton::ImmunityGeneralSilent => {
+                    REPLIES.config.immunity.general.silent.unset.template([&QUOTES
+                        .config
+                        .immunity
+                        .general
+                        .no_roles])
+                }
+                ConfigUnsetButton::ImmunityRandomSilent => {
+                    REPLIES.config.immunity.random.silent.unset.template([&QUOTES
+                        .config
+                        .immunity
+                        .random
+                        .no_roles])
+                }
                 ConfigUnsetButton::LogChannel => REPLIES.config.log_channel.unset.template([
                     // TODO: insert fallback log channel here
                     &"[insert fallback log channel here]",
@@ -162,14 +158,10 @@ pub async fn action(
             STATE
                 .client
                 .interaction(APPLICATION_ID)
-                .create_response(
-                    interaction.id,
-                    interaction.token.as_str(),
-                    &InteractionResponse {
-                        kind: InteractionResponseType::UpdateMessage,
-                        data: Some(data)
-                    }
-                )
+                .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+                    kind: InteractionResponseType::UpdateMessage,
+                    data: Some(data)
+                })
                 .await?;
 
             Ok(())
@@ -202,14 +194,10 @@ pub async fn action(
             STATE
                 .client
                 .interaction(APPLICATION_ID)
-                .create_response(
-                    interaction.id,
-                    interaction.token.as_str(),
-                    &InteractionResponse {
-                        kind: InteractionResponseType::ChannelMessageWithSource,
-                        data: Some(data)
-                    }
-                )
+                .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+                    kind: InteractionResponseType::ChannelMessageWithSource,
+                    data: Some(data)
+                })
                 .await?;
 
             Ok(())

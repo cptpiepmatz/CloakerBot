@@ -32,11 +32,7 @@ impl Sound {
         let raw_size = wav_bytes.len();
         let input = Decompressed::new(wav_bytes.into()).await?;
         let duration = wav::read(&mut Cursor::new(wav_bytes))?.calc_duration();
-        Ok(Sound {
-            raw_size,
-            input,
-            duration
-        })
+        Ok(Sound { raw_size, input, duration })
     }
 
     pub async fn play_and_wait(
@@ -97,9 +93,7 @@ pub async fn prep_sounds() -> Result<(), SoundFromBytesError> {
     OnceLockExpect::set(
         &FAILS,
         try_join_all(
-            assets::sounds::FAILS
-                .into_iter()
-                .map(|bytes| Sound::from_static_wav_bytes(bytes))
+            assets::sounds::FAILS.into_iter().map(|bytes| Sound::from_static_wav_bytes(bytes))
         )
         .await?
     );
@@ -107,9 +101,7 @@ pub async fn prep_sounds() -> Result<(), SoundFromBytesError> {
     OnceLockExpect::set(
         &TAKEDOWNS,
         try_join_all(
-            assets::sounds::TAKEDOWNS
-                .into_iter()
-                .map(|bytes| Sound::from_static_wav_bytes(bytes))
+            assets::sounds::TAKEDOWNS.into_iter().map(|bytes| Sound::from_static_wav_bytes(bytes))
         )
         .await?
     );
@@ -145,9 +137,8 @@ mod tests {
 
     #[test]
     fn calc_duration_works() {
-        let duration = wav::read(&mut Cursor::new(assets::sounds::WULULULULU))
-            .unwrap()
-            .calc_duration();
+        let duration =
+            wav::read(&mut Cursor::new(assets::sounds::WULULULULU)).unwrap().calc_duration();
         // TODO: get a more precise time and check with that, use std::time::Duration
         assert_eq!(duration.as_secs(), 5);
     }

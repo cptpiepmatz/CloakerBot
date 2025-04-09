@@ -39,13 +39,7 @@ impl Deref for ObservableCache {
 impl ObservableCache {
     pub fn new() -> (Self, TokioMpscReceiver<CacheUpdateEvent>) {
         let (tx, rx) = tokio::sync::mpsc::channel(1);
-        (
-            Self {
-                inner: Default::default(),
-                emitter: tx
-            },
-            rx
-        )
+        (Self { inner: Default::default(), emitter: tx }, rx)
     }
 
     pub async fn observe(&self, event: &DiscordEvent) {
@@ -62,10 +56,8 @@ impl ObservableCache {
         let guild_id = util::require!(Some(update.guild_id));
 
         let event_channel_id = update.channel_id;
-        let cache_channel_id = self
-            .inner
-            .voice_state(user_id, guild_id)
-            .map(|cache_ref| cache_ref.channel_id());
+        let cache_channel_id =
+            self.inner.voice_state(user_id, guild_id).map(|cache_ref| cache_ref.channel_id());
 
         match (cache_channel_id, event_channel_id) {
             (None, None) => {}
@@ -73,14 +65,12 @@ impl ObservableCache {
             (old, new) => {
                 let _ = self
                     .emitter
-                    .send(CacheUpdateEvent::VoiceChannelUpdate(
-                        VoiceChannelCacheUpdate {
-                            guild_id,
-                            user_id,
-                            old,
-                            new
-                        }
-                    ))
+                    .send(CacheUpdateEvent::VoiceChannelUpdate(VoiceChannelCacheUpdate {
+                        guild_id,
+                        user_id,
+                        old,
+                        new
+                    }))
                     .await;
             }
         }

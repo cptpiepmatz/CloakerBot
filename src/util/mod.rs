@@ -66,6 +66,13 @@ macro_rules! require {
         }
     };
 
+    (Ok($unwrap:expr)$( => $ret:expr)?) => {
+        match $unwrap {
+            Ok(inner) => inner,
+            Err(_) => return $($ret)?,
+        }
+    };
+
     ($cond:expr$( => $ret:expr)?) => {
         if !($cond) {
             return $($ret)?;

@@ -38,6 +38,7 @@ mod assets;
 mod data;
 mod interaction;
 mod owner_notifications;
+mod ranks;
 mod sync;
 mod takedown;
 mod util;
@@ -97,41 +98,27 @@ async fn main() {
     let (cache, cache_rx) = ObservableCache::new();
     OnceLockExpect::set(&STATE, State {
         client: http,
-        guild_configs: PersistentData::load()
-            .await
-            .expect("load should work")
-            .unwrap_or_default(),
-        guild_stats: PersistentData::load()
-            .await
-            .expect("load should work")
-            .unwrap_or_default(),
+        guild_configs: PersistentData::load().await.expect("load should work").unwrap_or_default(),
+        guild_stats: PersistentData::load().await.expect("load should work").unwrap_or_default(),
         takedown_locks: Default::default(),
         planned_takedowns: Default::default(),
         random_takedown_schedule: Default::default(),
         cache,
         songbird: Songbird::twilight(
-            Arc::new(TwilightMap::new(HashMap::from([(
-                shard.id().number(),
-                shard.sender()
-            )]))),
+            Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
             BOT_USER_ID
         ),
         owner_notifications: Default::default()
     });
 
-    takedown::sounds::prep_sounds()
-        .await
-        .expect("prepping sounds is necessary");
+    takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
 
     interaction::register_commands(&STATE.client.interaction(APPLICATION_ID))
         .await
         .expect("registering commands is necessary");
 
     let discord_events = stream::unfold(shard, |mut shard| async {
-        shard
-            .next_event(EventTypeFlags::all())
-            .await
-            .map(|event| (BotEvent::Discord(event), shard))
+        shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
     });
 
     let random_check_interval =

@@ -58,9 +58,7 @@ pub async fn action(
     interaction: &Interaction,
     data: &MessageComponentInteractionData
 ) -> Result<(), HandleMessageComponentError> {
-    let guild_id = interaction
-        .guild_id
-        .ok_or(LogChannelSelectActionError::NotInGuild)?;
+    let guild_id = interaction.guild_id.ok_or(LogChannelSelectActionError::NotInGuild)?;
 
     type ChId = Id<ChannelMarker>;
     let channel: Option<ChId> = if let Some(raw_id) = data.values.iter().next() {
@@ -99,14 +97,10 @@ pub async fn action(
     STATE
         .client
         .interaction(APPLICATION_ID)
-        .create_response(
-            interaction.id,
-            interaction.token.as_str(),
-            &InteractionResponse {
-                kind: InteractionResponseType::UpdateMessage,
-                data: Some(data)
-            }
-        )
+        .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+            kind: InteractionResponseType::UpdateMessage,
+            data: Some(data)
+        })
         .await?;
 
     Ok(())

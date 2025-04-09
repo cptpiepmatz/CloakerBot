@@ -104,9 +104,7 @@ pub async fn action(
     custom_id: MessageComponentCustomId,
     data: &MessageComponentInteractionData
 ) -> Result<(), HandleMessageComponentError> {
-    let guild_id = interaction
-        .guild_id
-        .ok_or(ImmunitySelectActionError::NotInGuild)?;
+    let guild_id = interaction.guild_id.ok_or(ImmunitySelectActionError::NotInGuild)?;
 
     let variant = ImmunitySelect::try_from(custom_id)?;
 
@@ -123,10 +121,7 @@ pub async fn action(
         ImmunitySelect::RandomSilent => guild_config.immunity.random_silent = roles.clone()
     }
 
-    let roles_insert = roles
-        .iter()
-        .map(|r| format!("- {}", r.mention()))
-        .join("\n");
+    let roles_insert = roles.iter().map(|r| format!("- {}", r.mention())).join("\n");
     let content = match (roles.is_empty(), variant) {
         (true, ImmunitySelect::General) => REPLIES
             .config
@@ -134,25 +129,23 @@ pub async fn action(
             .general
             .unset
             .template([&QUOTES.config.immunity.general.no_roles]),
-        (true, ImmunitySelect::Random) => REPLIES.config.immunity.random.unset.template([&QUOTES
-            .config
-            .immunity
-            .random
-            .no_roles]),
-        (true, ImmunitySelect::GeneralSilent) => REPLIES
-            .config
-            .immunity
-            .general
-            .silent
-            .unset
-            .template([&QUOTES.config.immunity.general.no_roles]),
-        (true, ImmunitySelect::RandomSilent) => REPLIES
-            .config
-            .immunity
-            .random
-            .silent
-            .unset
-            .template([&QUOTES.config.immunity.random.no_roles]),
+        (true, ImmunitySelect::Random) => {
+            REPLIES.config.immunity.random.unset.template([&QUOTES.config.immunity.random.no_roles])
+        }
+        (true, ImmunitySelect::GeneralSilent) => {
+            REPLIES.config.immunity.general.silent.unset.template([&QUOTES
+                .config
+                .immunity
+                .general
+                .no_roles])
+        }
+        (true, ImmunitySelect::RandomSilent) => {
+            REPLIES.config.immunity.random.silent.unset.template([&QUOTES
+                .config
+                .immunity
+                .random
+                .no_roles])
+        }
         (false, ImmunitySelect::General) => REPLIES.config.immunity.general.set.template([
             &BOT_USER_ID.mention(),
             &roles_insert,
@@ -187,14 +180,10 @@ pub async fn action(
     STATE
         .client
         .interaction(APPLICATION_ID)
-        .create_response(
-            interaction.id,
-            interaction.token.as_str(),
-            &InteractionResponse {
-                kind: InteractionResponseType::UpdateMessage,
-                data: Some(data)
-            }
-        )
+        .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+            kind: InteractionResponseType::UpdateMessage,
+            data: Some(data)
+        })
         .await?;
 
     Ok(())

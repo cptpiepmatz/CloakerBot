@@ -155,12 +155,7 @@ pub async fn action(
                 writeln!(content, "{}", ranks::DESCRIPTION);
             }
             HelpCommand::Cloaker => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    cloaker::MENTION.deref()
-                );
+                writeln!(content, "{}{}", REPLIES.help.title, cloaker::MENTION.deref());
                 write!(
                     content,
                     "{}",
@@ -183,12 +178,7 @@ pub async fn action(
                 );
             }
             HelpCommand::Config(ConfigHelpCommand::Immunity) => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    config::immunity::MENTION.deref()
-                );
+                writeln!(content, "{}{}", REPLIES.help.title, config::immunity::MENTION.deref());
                 write!(
                     content,
                     "{}",
@@ -196,21 +186,11 @@ pub async fn action(
                 );
             }
             HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    config::log_channel::MENTION.deref()
-                );
+                writeln!(content, "{}{}", REPLIES.help.title, config::log_channel::MENTION.deref());
                 content.write_str(assets::help_texts::CONFIG_LOG_CHANNEL);
             }
             HelpCommand::Config(ConfigHelpCommand::Random) => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    config::random::MENTION.deref()
-                );
+                writeln!(content, "{}{}", REPLIES.help.title, config::random::MENTION.deref());
                 write!(
                     content,
                     "{}",
@@ -218,12 +198,7 @@ pub async fn action(
                 );
             }
             HelpCommand::Counter => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    counter::MENTION.deref()
-                );
+                writeln!(content, "{}{}", REPLIES.help.title, counter::MENTION.deref());
                 write!(
                     content,
                     "{}",

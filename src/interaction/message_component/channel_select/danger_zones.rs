@@ -57,9 +57,7 @@ pub async fn action(
     interaction: &Interaction,
     data: &MessageComponentInteractionData
 ) -> Result<(), HandleMessageComponentError> {
-    let guild_id = interaction
-        .guild_id
-        .ok_or(DangerZonesSelectActionError::NotInGuild)?;
+    let guild_id = interaction.guild_id.ok_or(DangerZonesSelectActionError::NotInGuild)?;
 
     type ChId = Id<ChannelMarker>;
     let channels: Result<Vec<ChId>, _> = data.values.iter().map(|v| v.parse::<ChId>()).collect();
@@ -71,16 +69,11 @@ pub async fn action(
     guild_config.danger_zones = channels.clone();
 
     let content = match channels.is_empty() {
-        true => REPLIES
-            .config
-            .danger_zones
-            .unset
-            .template([&QUOTES.config.danger_zones.no_channels]),
+        true => {
+            REPLIES.config.danger_zones.unset.template([&QUOTES.config.danger_zones.no_channels])
+        }
         false => REPLIES.config.danger_zones.set.template([
-            &channels
-                .iter()
-                .map(|c_id| format!("- {}", c_id.mention()))
-                .join("\n"),
+            &channels.iter().map(|c_id| format!("- {}", c_id.mention())).join("\n"),
             &QUOTES.config.danger_zones.channels
         ])
     };
@@ -93,14 +86,10 @@ pub async fn action(
     STATE
         .client
         .interaction(APPLICATION_ID)
-        .create_response(
-            interaction.id,
-            interaction.token.as_str(),
-            &InteractionResponse {
-                kind: InteractionResponseType::UpdateMessage,
-                data: Some(data)
-            }
-        )
+        .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
+            kind: InteractionResponseType::UpdateMessage,
+            data: Some(data)
+        })
         .await?;
 
     Ok(())

@@ -10,11 +10,7 @@ pub fn counter(
     STATE
         .planned_takedowns
         .apply(guild_id, |plan| {
-            match plan
-                .counter_tx
-                .take()
-                .map(|tx| tx.send(countered_by_id))
-                .and_then(|res| res.ok())
+            match plan.counter_tx.take().map(|tx| tx.send(countered_by_id)).and_then(|res| res.ok())
             {
                 Some(_) => Some(plan.target_id),
                 None => None
