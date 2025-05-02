@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use heck::ToSnakeCase;
 use itertools::Itertools;
@@ -29,7 +28,7 @@ impl Parse for Args {
             if ident != "fn_name" {
                 return Err(syn::Error::new(
                     ident.span(),
-                    &format!("expected `fn_name`, got `{ident}`")
+                    format!("expected `fn_name`, got `{ident}`")
                 ));
             }
             input.parse::<Token![=]>()?;

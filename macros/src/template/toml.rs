@@ -1,12 +1,10 @@
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use heck::ToSnakeCase;
-use proc_macro2::{Ident as Ident2, Span as Span2, TokenStream as TokenStream2};
+use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::parse::{Parse, ParseStream};
-use syn::{LitStr, Token};
+use syn::LitStr;
 
 pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
     let file_path: LitStr = syn::parse2(input)?;

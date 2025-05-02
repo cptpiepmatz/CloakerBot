@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 
 use heck::ToSnakeCase;
 use proc_macro2::{Ident as Ident2, Span as Span2, TokenStream as TokenStream2};
