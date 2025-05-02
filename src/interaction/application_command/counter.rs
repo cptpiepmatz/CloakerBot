@@ -10,7 +10,7 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
-use crate::assets::REPLIES;
+use crate::assets::replies;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -69,8 +69,15 @@ pub async fn action(
     application_command::defer(interaction).await?;
 
     let content = match takedown::counter::counter(guild_id, author_id) {
-        Ok(target_id) => REPLIES.counter.success.template([&target_id.mention()]),
-        Err(()) => REPLIES.counter.miss.template([])
+        Ok(target_id) => replies::counter::success(
+            // TODO: add quote here
+            "[insert quote here]",
+            target_id.mention()
+        ),
+        Err(()) => replies::counter::miss(
+            // TODO: add another quote here
+            "[insert quote here]"
+        )
     };
 
     application_command::update_defer_msg(interaction, &content).await?;

@@ -1,10 +1,13 @@
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use heck::ToSnakeCase;
 use itertools::Itertools;
 use proc_macro2::{Ident as Ident2, Span as Span2, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
-use syn::{parse::{Parse, ParseStream}, LitStr, Token};
+use syn::parse::{Parse, ParseStream};
+use syn::{LitStr, Token};
 
 struct Args {
     file_path: (PathBuf, Span2),
@@ -41,29 +44,33 @@ impl Parse for Args {
 }
 
 pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
-    let args: Args = syn::parse2(input)?;
+    let Args { file_path: (file_path, span), fn_name } = syn::parse2(input)?;
 
-    let content = fs::read_to_string(&args.file_path.0)
-        .map_err(|err| syn::Error::new(args.file_path.1, err))?;
+    let content = fs::read_to_string(&file_path).map_err(|err| syn::Error::new(span, err))?;
 
     let formatted = format(&content);
-    super::valid(&formatted, args.file_path.1)?;
+    super::valid(&formatted, span)?;
 
     let placeholders = super::find_placeholders(&formatted);
     let placeholders = super::normalize_placeholders(&placeholders);
 
-    let fn_name = match args.fn_name {
+    let fn_name = match fn_name {
         Some(fn_name) => fn_name,
         None => {
-            let file_name =
-                args.file_path.0.file_name().ok_or_else(|| {
-                    syn::Error::new(args.file_path.1, "could not get the file name")
-                })?;
+            let file_name = file_path
+                .file_name()
+                .ok_or_else(|| syn::Error::new(span, "could not get the file name"))?;
             format_ident!("{}", file_name.to_string_lossy().trim_end_matches(".md").to_snake_case())
         }
     };
 
-    Ok(codegen(&formatted, &fn_name, &placeholders, &args.file_path.0))
+    let file_path = file_path.to_string_lossy();
+    let tokens = super::codegen_fn(&formatted, &fn_name, &placeholders);
+    Ok(quote! {
+        const _: &str = std::include_str!(#file_path);
+
+        #tokens
+    })
 }
 
 fn format(input: &str) -> String {
@@ -75,79 +82,4 @@ fn format(input: &str) -> String {
         .replace("\n", " ")
         .replace("  ", " ")
         .replace("<br>", "\n")
-}
-
-fn codegen(
-    input: &str,
-    fn_name: &Ident2,
-    placeholders: &HashMap<String, String>,
-    file_path: &Path
-) -> TokenStream2 {
-    let mut lit = input.to_owned();
-    for (from, to) in placeholders.iter() {
-        lit = lit.replace(&format!("{{{from}}}"), &format!("{{{to}}}"));
-    }
-
-    let imports = quote! {
-        use std::borrow::Borrow;
-        use twilight_mention::fmt::{MentionFormat, CommandMention};
-        use twilight_model::id::{Id, marker::UserMarker};
-        use std::fmt::Display;
-    };
-
-    let file_path = file_path.display().to_string();
-
-    struct Mapping {
-        sort_key: String,
-        ident: Ident2,
-        ty: TokenStream2,
-        op: TokenStream2
-    }
-
-    let mut mappings: Vec<Mapping> = placeholders
-        .iter()
-        .map(|(name, ident)| {
-            let ident = format_ident!("{}", ident);
-            match name.as_str() {
-                "CloakerBot" => Mapping {
-                    sort_key: "__cloaker_bot".to_string(),
-                    ident: ident.clone(),
-                    ty: quote!(impl Borrow<MentionFormat<Id<UserMarker>>>),
-                    op: quote!(let #ident = #ident.borrow();)
-                },
-                s if s.starts_with("/") => Mapping {
-                    sort_key: format!("_{}", ident),
-                    ident: ident.clone(),
-                    ty: quote!(impl Borrow<MentionFormat<CommandMention>>),
-                    op: quote!(let #ident = #ident.borrow();)
-                },
-                _ => Mapping {
-                    sort_key: ident.to_string(),
-                    ident: ident.clone(),
-                    ty: quote!(impl Display),
-                    op: quote!()
-                }
-            }
-        })
-        .collect();
-    mappings.sort_by(|Mapping { sort_key: a, .. }, Mapping { sort_key: b, .. }| a.cmp(b));
-
-    let args = mappings.iter().map(|Mapping { ident, ty, .. }| quote!(#ident: #ty));
-
-    let ops = mappings.iter().map(|Mapping { op, .. }| op);
-
-    quote! {
-        mod #fn_name {
-            #imports
-
-            const _: &str = std::include_str!(#file_path);
-
-            pub fn #fn_name(#(#args),*) -> std::string::String {
-                #(#ops)*
-                std::format!(#lit)
-            }
-        }
-
-        pub use #fn_name::#fn_name;
-    }
 }

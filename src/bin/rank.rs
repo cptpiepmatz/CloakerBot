@@ -2,7 +2,6 @@ use std::{env, iter};
 
 use hieroglyph::{DrawingContext, Segments};
 use image::{Pixel, Rgba, RgbaImage};
-use twilight_model::guild::widget;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
 

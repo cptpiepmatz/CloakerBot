@@ -15,7 +15,6 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::SubCommandBuilder;
 
-use crate::assets::REPLIES;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -69,10 +68,10 @@ pub async fn action(
         "type": InteractionResponseType::ChannelMessageWithSource,
         "data": {
             "flags": MessageFlags::EPHEMERAL,
-            "content": REPLIES.config.danger_zones.select.template([
-                &BOT_USER_ID.mention(),
+            "content": crate::assets::replies::config::danger_zones::select(
+                BOT_USER_ID.mention(),
                 application_command::help::MENTION.deref()
-            ]),
+            ),
             "components": [
                 {
                     "type": ComponentType::ActionRow,

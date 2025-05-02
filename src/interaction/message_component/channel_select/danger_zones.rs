@@ -15,7 +15,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::{QUOTES, REPLIES};
+use crate::assets::{self, QUOTES};
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
@@ -70,12 +70,12 @@ pub async fn action(
 
     let content = match channels.is_empty() {
         true => {
-            REPLIES.config.danger_zones.unset.template([&QUOTES.config.danger_zones.no_channels])
+            assets::replies::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels)
         }
-        false => REPLIES.config.danger_zones.set.template([
-            &channels.iter().map(|c_id| format!("- {}", c_id.mention())).join("\n"),
-            &QUOTES.config.danger_zones.channels
-        ])
+        false => assets::replies::config::danger_zones::set(
+            channels.iter().map(|c_id| format!("- {}", c_id.mention())).join("\n"),
+            QUOTES.config.danger_zones.channels
+        )
     };
 
     let data = InteractionResponseDataBuilder::new()

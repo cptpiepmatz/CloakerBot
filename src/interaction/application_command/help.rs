@@ -20,7 +20,7 @@ use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::{COLORS, REPLIES};
+use crate::assets::{replies, COLORS};
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
@@ -123,13 +123,14 @@ pub async fn action(
     command: HelpCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let mut content = String::new();
+    let help_title = replies::help::title();
 
     // writing to String is infallible anyways
     #[allow(unused_must_use)]
     {
         match command {
             HelpCommand::All => {
-                writeln!(content, "{}", REPLIES.help.overview);
+                content.write_str(&replies::help::overview());
                 content.write_char('\n');
                 writeln!(content, "{}", cloaker::MENTION.deref());
                 writeln!(content, "{}", cloaker::DESCRIPTION);
@@ -155,45 +156,40 @@ pub async fn action(
                 writeln!(content, "{}", ranks::DESCRIPTION);
             }
             HelpCommand::Cloaker => {
-                writeln!(content, "{}{}", REPLIES.help.title, cloaker::MENTION.deref());
+                writeln!(content, "{}{}", help_title, cloaker::MENTION.deref());
                 content.write_str(&assets::help_texts::cloaker(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Config(ConfigHelpCommand::DangerZones) => {
-                writeln!(
-                    content,
-                    "{}{}",
-                    REPLIES.help.title,
-                    config::danger_zones::MENTION.deref()
-                );
+                writeln!(content, "{}{}", help_title, config::danger_zones::MENTION.deref());
                 content.write_str(&assets::help_texts::config_danger_zones(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Config(ConfigHelpCommand::Immunity) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::immunity::MENTION.deref());
+                writeln!(content, "{}{}", help_title, config::immunity::MENTION.deref());
                 content.write_str(&assets::help_texts::config_immunity(BOT_USER_ID.mention()));
             }
             HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::log_channel::MENTION.deref());
+                writeln!(content, "{}{}", help_title, config::log_channel::MENTION.deref());
                 content.write_str(&assets::help_texts::config_log_channel());
             }
             HelpCommand::Config(ConfigHelpCommand::Random) => {
-                writeln!(content, "{}{}", REPLIES.help.title, config::random::MENTION.deref());
+                writeln!(content, "{}{}", help_title, config::random::MENTION.deref());
                 content.write_str(&assets::help_texts::config_random(BOT_USER_ID.mention()));
             }
             HelpCommand::Counter => {
-                writeln!(content, "{}{}", REPLIES.help.title, counter::MENTION.deref());
+                writeln!(content, "{}{}", help_title, counter::MENTION.deref());
                 content.write_str(&assets::help_texts::counter(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Ranks => {
-                writeln!(content, "{}{}", REPLIES.help.title, ranks::MENTION.deref());
+                writeln!(content, "{}{}", help_title, ranks::MENTION.deref());
                 // TODO: add ranks help content here
                 write!(content, "🚧 Ranks are currently work in progress. 🚧");
             }
@@ -201,7 +197,7 @@ pub async fn action(
 
         content.write_char('\n');
         content.write_char('\n');
-        writeln!(content, "{}", REPLIES.help.support);
+        content.write_str(&replies::help::support());
     }
 
     let response = InteractionResponse {

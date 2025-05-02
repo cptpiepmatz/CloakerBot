@@ -17,7 +17,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::{COLORS, QUOTES, REPLIES};
+use crate::assets::{COLORS, QUOTES};
 use crate::interaction::message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
@@ -122,54 +122,40 @@ pub async fn action(
     }
 
     let roles_insert = roles.iter().map(|r| format!("- {}", r.mention())).join("\n");
+    use assets::replies::config;
     let content = match (roles.is_empty(), variant) {
-        (true, ImmunitySelect::General) => REPLIES
-            .config
-            .immunity
-            .general
-            .unset
-            .template([&QUOTES.config.immunity.general.no_roles]),
+        (true, ImmunitySelect::General) => {
+            config::immunity::general::unset(QUOTES.config.immunity.general.no_roles)
+        }
         (true, ImmunitySelect::Random) => {
-            REPLIES.config.immunity.random.unset.template([&QUOTES.config.immunity.random.no_roles])
+            config::immunity::random::unset(QUOTES.config.immunity.random.no_roles)
         }
         (true, ImmunitySelect::GeneralSilent) => {
-            REPLIES.config.immunity.general.silent.unset.template([&QUOTES
-                .config
-                .immunity
-                .general
-                .no_roles])
+            config::immunity::general::silent::unset(QUOTES.config.immunity.general.no_roles)
         }
         (true, ImmunitySelect::RandomSilent) => {
-            REPLIES.config.immunity.random.silent.unset.template([&QUOTES
-                .config
-                .immunity
-                .random
-                .no_roles])
+            config::immunity::random::silent::unset(QUOTES.config.immunity.random.no_roles)
         }
-        (false, ImmunitySelect::General) => REPLIES.config.immunity.general.set.template([
-            &BOT_USER_ID.mention(),
-            &roles_insert,
-            &QUOTES.config.immunity.general.roles
-        ]),
-        (false, ImmunitySelect::Random) => REPLIES.config.immunity.random.set.template([
-            &BOT_USER_ID.mention(),
-            &roles_insert,
-            &QUOTES.config.immunity.random.roles
-        ]),
-        (false, ImmunitySelect::GeneralSilent) => {
-            REPLIES.config.immunity.general.silent.set.template([
-                &BOT_USER_ID.mention(),
-                &roles_insert,
-                &QUOTES.config.immunity.general.roles
-            ])
-        }
-        (false, ImmunitySelect::RandomSilent) => {
-            REPLIES.config.immunity.random.silent.set.template([
-                &BOT_USER_ID.mention(),
-                &roles_insert,
-                &QUOTES.config.immunity.random.roles
-            ])
-        }
+        (false, ImmunitySelect::General) => config::immunity::general::set(
+            BOT_USER_ID.mention(),
+            QUOTES.config.immunity.general.roles,
+            roles_insert
+        ),
+        (false, ImmunitySelect::Random) => config::immunity::random::set(
+            BOT_USER_ID.mention(),
+            QUOTES.config.immunity.random.roles,
+            roles_insert
+        ),
+        (false, ImmunitySelect::GeneralSilent) => config::immunity::general::silent::set(
+            BOT_USER_ID.mention(),
+            QUOTES.config.immunity.general.roles,
+            roles_insert
+        ),
+        (false, ImmunitySelect::RandomSilent) => config::immunity::random::silent::set(
+            BOT_USER_ID.mention(),
+            QUOTES.config.immunity.random.roles,
+            roles_insert
+        )
     };
 
     let data = InteractionResponseDataBuilder::new()

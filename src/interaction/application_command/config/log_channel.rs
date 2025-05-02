@@ -19,7 +19,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::REPLIES;
+use crate::assets::replies;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -73,11 +73,11 @@ pub async fn action(
         "type": InteractionResponseType::ChannelMessageWithSource,
         "data": {
             "flags": MessageFlags::EPHEMERAL,
-            "content": REPLIES.config.log_channel.select.template([
-                &BOT_USER_ID.mention(),
+            "content": replies::config::log_channel::select(
+                BOT_USER_ID.mention(),
                 // TODO: get fallback log channel here
-                &"[insert channel here]"
-            ]),
+                "[insert channel here]"
+            ),
             "components": [
                 {
                     "type": ComponentType::ActionRow,

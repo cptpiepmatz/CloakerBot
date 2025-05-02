@@ -8,7 +8,6 @@ use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
-use crate::assets::REPLIES;
 use crate::data::stats;
 use crate::data::stats::GuildStats;
 use crate::interaction::application_command;

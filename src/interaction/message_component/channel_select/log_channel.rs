@@ -15,7 +15,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::{QUOTES, REPLIES};
+use crate::assets::{self, QUOTES};
 use crate::interaction::message_component::channel_select::danger_zones::DangerZonesSelectActionError;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
@@ -76,17 +76,17 @@ pub async fn action(
     guild_config.log_channel = channel;
 
     let content = match channel {
-        Some(ch_id) => REPLIES.config.log_channel.set.template([
-            &ch_id.mention(),
-            &BOT_USER_ID.mention(),
-            &QUOTES.config.log_channel.channel
-        ]),
-        None => REPLIES.config.log_channel.unset.template([
+        Some(ch_id) => assets::replies::config::log_channel::set(
+            BOT_USER_ID.mention(),
+            ch_id.mention(),
+            QUOTES.config.log_channel.channel
+        ),
+        None => assets::replies::config::log_channel::unset(
+            BOT_USER_ID.mention(),
             // TODO: insert fallback log channel here
-            &"[insert fallback here]",
-            &APPLICATION_ID.cast::<UserMarker>().mention(),
-            &QUOTES.config.log_channel.no_channel
-        ])
+            "[insert fallback here]",
+            QUOTES.config.log_channel.no_channel
+        )
     };
 
     let data = InteractionResponseDataBuilder::new()

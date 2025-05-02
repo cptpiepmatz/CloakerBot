@@ -17,7 +17,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::REPLIES;
+use crate::assets::replies::cloaker;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     update_defer_msg, HandleApplicationCommandError, TryFromInteractionError
@@ -25,7 +25,7 @@ use crate::interaction::application_command::{
 use crate::sync::OnceLockExpect;
 use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
 use crate::util::template::Template;
-use crate::{takedown, APPLICATION_ID, STATE};
+use crate::{takedown, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
@@ -132,22 +132,20 @@ pub async fn action(
     })
     .await
     {
-        Ok(TakedownSuccess { .. }) => {
-            REPLIES.cloaker.success.template([&command.target_id.mention()])
-        }
+        Ok(TakedownSuccess { .. }) => cloaker::success("TODO: quote", command.target_id.mention()),
         Err(TakedownFail::Countered { by_id }) => {
-            REPLIES.cloaker.countered.template([&by_id.mention()])
+            cloaker::countered(by_id.mention(), "TODO: quote")
         }
-        Err(fail) => REPLIES.cloaker.fail.template.template([&match fail {
+        Err(fail) => cloaker::fail::template("TODO: quote", match fail {
             TakedownFail::Countered { .. } => unreachable!(),
-            TakedownFail::Join(_) => Cow::from(REPLIES.cloaker.fail.join),
-            TakedownFail::MissingPermissions => Cow::from(REPLIES.cloaker.fail.missing_perms),
-            TakedownFail::NotFound => Cow::from(REPLIES.cloaker.fail.not_found),
-            TakedownFail::Fled => Cow::from(REPLIES.cloaker.fail.fled),
-            TakedownFail::Immune => Cow::from(REPLIES.cloaker.fail.immune),
-            TakedownFail::Rejected => Cow::from(REPLIES.cloaker.fail.rejected),
-            TakedownFail::Client(err) => Cow::from(REPLIES.cloaker.fail.other.template([&err]))
-        }])
+            TakedownFail::Join(_) => cloaker::fail::join(),
+            TakedownFail::MissingPermissions => cloaker::fail::missing_perms(),
+            TakedownFail::NotFound => cloaker::fail::not_found(),
+            TakedownFail::Fled => cloaker::fail::fled(),
+            TakedownFail::Immune => cloaker::fail::immune(),
+            TakedownFail::Rejected => cloaker::fail::rejected(BOT_USER_ID.mention()),
+            TakedownFail::Client(err) => cloaker::fail::other(err)
+        })
     };
 
     update_defer_msg(interaction, &content).await?;

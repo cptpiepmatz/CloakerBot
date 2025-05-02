@@ -17,9 +17,9 @@ use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
 use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
+use twilight_model::oauth::scope::BOT;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
-use crate::assets::REPLIES;
 use crate::data::config::{GuildConfig, GuildConfigImmunity};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
@@ -148,13 +148,15 @@ pub async fn action(
         }
     });
 
-    let content = (match variant {
-        ImmunitySelect::General => REPLIES.config.immunity.general.select,
-        ImmunitySelect::Random => REPLIES.config.immunity.random.select,
-        ImmunitySelect::GeneralSilent => REPLIES.config.immunity.general.silent.select,
-        ImmunitySelect::RandomSilent => REPLIES.config.immunity.random.silent.select
-    })
-    .template([&BOT_USER_ID.mention(), application_command::help::MENTION.deref()]);
+    use crate::assets::replies::config::immunity;
+    let bot = BOT_USER_ID.mention();
+    let cmd = application_command::help::MENTION.deref();
+    let content = match variant {
+        ImmunitySelect::General => immunity::general::select(bot, cmd),
+        ImmunitySelect::Random => immunity::random::select(bot, cmd),
+        ImmunitySelect::GeneralSilent => immunity::general::silent::select(bot, cmd),
+        ImmunitySelect::RandomSilent => immunity::random::silent::select(bot, cmd)
+    };
 
     let payload = json!({
         "type": InteractionResponseType::ChannelMessageWithSource,

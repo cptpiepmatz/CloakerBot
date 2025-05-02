@@ -10,7 +10,7 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
 
-use crate::assets::{COLORS, QUOTES, REPLIES};
+use crate::assets::{self, COLORS, QUOTES};
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
@@ -108,45 +108,32 @@ pub async fn action(
         ConfigUnsetButton::ImmunityGeneralSilent |
         ConfigUnsetButton::ImmunityRandomSilent |
         ConfigUnsetButton::LogChannel => {
+            use assets::replies::config;
             // will be pulled out, when the other variant is deprecated fully
             let reply = match variant {
-                ConfigUnsetButton::DangerZones => REPLIES
-                    .config
-                    .danger_zones
-                    .unset
-                    .template([&QUOTES.config.danger_zones.no_channels]),
-                ConfigUnsetButton::ImmunityGeneral => REPLIES
-                    .config
-                    .immunity
-                    .general
-                    .unset
-                    .template([&QUOTES.config.immunity.general.no_roles]),
-                ConfigUnsetButton::ImmunityRandom => REPLIES
-                    .config
-                    .immunity
-                    .random
-                    .unset
-                    .template([&QUOTES.config.immunity.random.no_roles]),
+                ConfigUnsetButton::DangerZones => {
+                    config::danger_zones::unset(QUOTES.config.danger_zones.no_channels)
+                }
+                ConfigUnsetButton::ImmunityGeneral => {
+                    config::immunity::general::unset(QUOTES.config.immunity.general.no_roles)
+                }
+                ConfigUnsetButton::ImmunityRandom => {
+                    config::immunity::random::unset(QUOTES.config.immunity.random.no_roles)
+                }
                 ConfigUnsetButton::ImmunityGeneralSilent => {
-                    REPLIES.config.immunity.general.silent.unset.template([&QUOTES
-                        .config
-                        .immunity
-                        .general
-                        .no_roles])
+                    config::immunity::general::silent::unset(
+                        QUOTES.config.immunity.general.no_roles
+                    )
                 }
                 ConfigUnsetButton::ImmunityRandomSilent => {
-                    REPLIES.config.immunity.random.silent.unset.template([&QUOTES
-                        .config
-                        .immunity
-                        .random
-                        .no_roles])
+                    config::immunity::random::silent::unset(QUOTES.config.immunity.random.no_roles)
                 }
-                ConfigUnsetButton::LogChannel => REPLIES.config.log_channel.unset.template([
+                ConfigUnsetButton::LogChannel => config::log_channel::unset(
+                    BOT_USER_ID.mention(),
                     // TODO: insert fallback log channel here
-                    &"[insert fallback log channel here]",
-                    &BOT_USER_ID.mention(),
-                    &QUOTES.config.log_channel.no_channel
-                ]),
+                    "[insert fallback log channel here]",
+                    QUOTES.config.log_channel.no_channel
+                ),
                 _ => unreachable!()
             };
 
