@@ -24,7 +24,7 @@ macro_rules! static_images {
 }
 
 static_images! {
-    static TEMPLATE = "template.png" ? "valid template png";    
+    static TEMPLATE = "template.png" ? "valid template png";
     static BLENDER = "badges/blender.png" * BADGE_SIZE ? "valid blender png";
 
     static TOP_STRIKER = "badges/top_striker.png" * BADGE_SIZE ? "valid badge png";
