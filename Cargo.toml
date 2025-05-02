@@ -2,6 +2,7 @@
 name = "cloaker-bot"
 version.workspace = true
 edition.workspace = true
+default-run = "CloakerBot"
 
 [[bin]]
 name = "CloakerBot"
