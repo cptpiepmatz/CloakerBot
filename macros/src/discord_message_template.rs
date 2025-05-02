@@ -4,33 +4,70 @@ use std::path::{Path, PathBuf};
 
 use heck::ToSnakeCase;
 use itertools::Itertools;
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::{Ident as Ident2, Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use regex::Regex;
-use syn::LitStr;
+use syn::parse::{Parse, ParseStream};
+use syn::{LitStr, Token};
+
+struct Args {
+    file_path: (PathBuf, Span),
+    fn_name: Option<Ident2>
+}
+
+impl Parse for Args {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let file_path: LitStr = input.parse()?;
+        let span = file_path.span();
+        let file_path = file_path.value();
+
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("set in macro");
+        let file_path = PathBuf::new().join(manifest_dir).join(file_path);
+
+        let fn_name = if input.peek(Token![,]) {
+            input.parse::<Token![,]>()?;
+            let ident: Ident2 = input.parse()?;
+            if ident != "fn_name" {
+                return Err(syn::Error::new(
+                    ident.span(),
+                    &format!("expected `fn_name`, got `{ident}`")
+                ));
+            }
+            input.parse::<Token![=]>()?;
+            Some(input.parse::<Ident2>()?)
+        }
+        else {
+            None
+        };
+
+        Ok(Args { file_path: (file_path, span), fn_name })
+    }
+}
 
 pub fn discord_message_template2(input: TokenStream2) -> Result<TokenStream2, syn::Error> {
-    let lit: LitStr = syn::parse2(input)?;
-    let span = lit.span();
-    let path = PathBuf::from(lit.value());
+    let args: Args = syn::parse2(input)?;
 
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("set in macro");
-    let file_path = AsRef::<Path>::as_ref(&manifest_dir).join(path);
-    let file_name =
-        file_path.file_name().ok_or_else(|| syn::Error::new(span, "could not get file name"))?;
-    let file_name = file_name.to_string_lossy();
-
-    let content = fs::read_to_string(&file_path).map_err(|err| syn::Error::new(span, err))?;
+    let content = fs::read_to_string(&args.file_path.0)
+        .map_err(|err| syn::Error::new(args.file_path.1, err))?;
 
     let formatted = format(&content);
-    check(&formatted, span)?;
+    check(&formatted, args.file_path.1)?;
 
     let placeholders = find_placeholders(&formatted);
     let placeholders = normalize_placeholders(&placeholders);
 
-    let fn_name = file_name.trim_end_matches(".md").to_snake_case();
+    let fn_name = match args.fn_name {
+        Some(fn_name) => fn_name,
+        None => {
+            let file_name =
+                args.file_path.0.file_name().ok_or_else(|| {
+                    syn::Error::new(args.file_path.1, "could not get the file name")
+                })?;
+            format_ident!("{}", file_name.to_string_lossy().trim_end_matches(".md").to_snake_case())
+        }
+    };
 
-    Ok(codegen(&formatted, &fn_name, &placeholders, &file_path))
+    Ok(codegen(&formatted, &fn_name, &placeholders, &args.file_path.0))
 }
 
 fn format(input: &str) -> String {
@@ -77,7 +114,7 @@ fn normalize_placeholders(placeholders: &HashSet<String>) -> HashMap<String, Str
 
 fn codegen(
     input: &str,
-    fn_name: &str,
+    fn_name: &Ident2,
     placeholders: &HashMap<String, String>,
     file_path: &Path
 ) -> TokenStream2 {
@@ -97,7 +134,7 @@ fn codegen(
 
     struct Mapping {
         sort_key: String,
-        ident: proc_macro2::Ident,
+        ident: Ident2,
         ty: TokenStream2,
         op: TokenStream2
     }
@@ -134,7 +171,6 @@ fn codegen(
 
     let ops = mappings.iter().map(|Mapping { op, .. }| op);
 
-    let fn_name = format_ident!("{}", fn_name);
     quote! {
         mod #fn_name {
             #imports
