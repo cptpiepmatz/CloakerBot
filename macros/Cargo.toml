@@ -1,0 +1,16 @@
+[package]
+name = "cloaker-bot-macros"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro-error2 = "2.0.1"
+proc-macro2 = "1"
+quote = "1"
+syn = "2"
+itertools.workspace = true
+heck = "0.5.0"
+regex = "1.11"

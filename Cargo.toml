@@ -1,11 +1,19 @@
 [package]
 name = "cloaker-bot"
-version = "3.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [[bin]]
 name = "CloakerBot"
 path = "src/main.rs"
+
+[workspace]
+members = ["macros"]
+package.version = "3.0.0"
+package.edition = "2021"
+
+[workspace.dependencies]
+itertools = "0.13"
 
 [dependencies]
 
@@ -36,11 +44,12 @@ rand = "0.8"
 toml = "0.8"
 static-toml = "1"
 derive_more = "0.99"
-itertools = "0.13"
+itertools.workspace = true
 smart-default = "0.7"
 heapless = "0.8"
 bitflags = "2.9"
 thiserror = "2"
+macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # discord integration
 twilight-cache-inmemory= "=0.16.0-rc.1"
