@@ -28,7 +28,6 @@ use crate::interaction::application_command::{
 use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
 use crate::interaction::{application_command, message_component};
 use crate::sync::OnceLockExpect;
-use crate::util::template::Template;
 use crate::{BOT_USER_ID, STATE};
 
 pub const NAME: &str = "immunity";

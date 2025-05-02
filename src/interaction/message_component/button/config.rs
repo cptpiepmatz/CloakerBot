@@ -15,7 +15,6 @@ use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
 use crate::interaction::message_component::HandleMessageComponentError;
-use crate::util::template::Template;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug, Copy, Clone)]

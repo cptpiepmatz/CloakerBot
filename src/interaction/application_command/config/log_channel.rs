@@ -26,7 +26,6 @@ use crate::interaction::application_command::{
 };
 use crate::interaction::message_component;
 use crate::sync::OnceLockExpect;
-use crate::util::template::Template;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "log-channel";

@@ -17,7 +17,6 @@ use crate::interaction::application_command::{
 };
 use crate::sync::OnceLockExpect;
 use crate::takedown;
-use crate::util::template::Template;
 
 pub const NAME: &str = "counter";
 pub const DESCRIPTION: &str = "Counter an incoming takedown.";

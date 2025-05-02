@@ -24,7 +24,6 @@ use crate::interaction::application_command::{
 };
 use crate::sync::OnceLockExpect;
 use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
-use crate::util::template::Template;
 use crate::{takedown, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "cloaker";

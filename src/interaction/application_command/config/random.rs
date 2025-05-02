@@ -22,7 +22,6 @@ use crate::interaction::application_command::{
     self, HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::util::template::Template;
 use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";

@@ -26,7 +26,6 @@ use crate::interaction::application_command::{
     TryFromInteractionError
 };
 use crate::sync::OnceLockExpect;
-use crate::util::template::Template;
 use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "help";
