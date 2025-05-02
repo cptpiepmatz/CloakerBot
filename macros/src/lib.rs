@@ -1,15 +1,24 @@
-use discord_message_template::discord_message_template2;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use proc_macro_error2::{proc_macro_error, Diagnostic};
 
-mod discord_message_template;
+mod template;
 
 #[proc_macro]
 #[proc_macro_error]
-pub fn discord_message_template(input: TokenStream) -> TokenStream {
+pub fn template_md(input: TokenStream) -> TokenStream {
+    defer(input, template::md)
+}
+
+#[proc_macro]
+#[proc_macro_error]
+pub fn template_toml(input: TokenStream) -> TokenStream {
+    defer(input, template::toml)
+}
+
+fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream2>) -> TokenStream {
     let input = TokenStream2::from(input);
-    let output = match discord_message_template2(input) {
+    let output = match f(input) {
         Ok(output) => output,
         Err(err) => Diagnostic::from(err).abort()
     };
