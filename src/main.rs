@@ -1,9 +1,10 @@
 #![allow(unused)]
-#![allow(deprecated)]
+// #![allow(deprecated)]
 
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use std::{env, io, iter};
 
@@ -11,6 +12,8 @@ use derive_more::From;
 use futures::stream::{self, select, StreamExt};
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
+use sync::Eject;
+use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
 use twilight_gateway::{EventTypeFlags, Shard, StreamExt as TwilightStreamExt};
@@ -63,6 +66,7 @@ const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
+    shard: Eject<Shard>,
     client: Client,
     guild_configs: PersistentData<PersistentGuildConfig>,
     guild_stats: PersistentData<PersistentGuildStats>,
@@ -74,11 +78,10 @@ struct State {
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
     random_takedown_schedule: PersistentData<PersistentTakedownSchedule>,
     cache: ObservableCache,
+    cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
     owner_notifications: PersistentData<PersistentOwnerNotifications>
 }
-
-static STATE: OnceLockExpect<State> = OnceLockExpect::new();
 
 static READY: AtomicBool = AtomicBool::new(false);
 
@@ -90,26 +93,50 @@ enum BotEvent {
     CacheUpdate(CacheUpdateEvent)
 }
 
-#[tokio::main]
-async fn main() {
+// static STATE: OnceLockExpect<State> = OnceLockExpect::new();
+static STATE: LazyLock<State> = LazyLock::new(|| {
     let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
     let mut shard = Shard::new(ShardId::ONE, discord_token.clone(), INTENTS);
-    let http = Client::new(discord_token);
+    let client = Client::new(discord_token);
+
+    let songbird = Songbird::twilight(
+        Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
+        BOT_USER_ID
+    );
+
+    let shard = Eject::new(shard);
+
+    let guild_configs = PersistentData::load_blocking().unwrap().unwrap_or_default();
+    let guild_stats = PersistentData::load_blocking().unwrap().unwrap_or_default();
+    let random_takedown_schedule = PersistentData::load_blocking().unwrap().unwrap_or_default();
+
+    let takedown_locks = Default::default();
+    let planned_takedowns = Default::default();
+    let owner_notifications = Default::default();
+
     let (cache, cache_rx) = ObservableCache::new();
-    OnceLockExpect::set(&STATE, State {
-        client: http,
-        guild_configs: PersistentData::load().await.expect("load should work").unwrap_or_default(),
-        guild_stats: PersistentData::load().await.expect("load should work").unwrap_or_default(),
-        takedown_locks: Default::default(),
-        planned_takedowns: Default::default(),
-        random_takedown_schedule: Default::default(),
+    let cache_rx = Eject::new(cache_rx);
+
+    State {
+        shard,
+        client,
+        guild_configs,
+        guild_stats,
+        takedown_locks,
+        planned_takedowns,
+        random_takedown_schedule,
         cache,
-        songbird: Songbird::twilight(
-            Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-            BOT_USER_ID
-        ),
-        owner_notifications: Default::default()
-    });
+        cache_rx,
+        songbird,
+        owner_notifications
+    }
+});
+
+#[tokio::main]
+async fn main() {
+    let state = STATE.deref();
+    let shard = state.shard.eject().expect("shard went missing");
+    let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
 
     takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
 

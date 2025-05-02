@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::ops::Deref;
 use std::sync::OnceLock;
 
+#[deprecated]
 #[derive(Debug)]
 pub struct OnceLockExpect<T>(OnceLock<T>);
 

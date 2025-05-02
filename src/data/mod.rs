@@ -47,6 +47,11 @@ mod persist {
             Ok(serde_json::from_str(&file_content)?)
         }
 
+        fn load_blocking() -> Result<Self::Item, LoadPersistentDataError> {
+            let file_content = std::fs::read_to_string(Self::DATA_PATH)?;
+            Ok(serde_json::from_str(&file_content)?)
+        }
+
         async fn store(&self) -> io::Result<()> {
             let data_path = Path::new(Self::DATA_PATH);
             if let Some(parent_path) = data_path.parent() {
@@ -81,7 +86,17 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
     }
 
     pub async fn load() -> Result<Option<PersistentData<T>>, LoadPersistentDataError> {
-        let value = match T::load().await {
+        Self::load_impl(T::load().await)
+    }
+
+    pub fn load_blocking() -> Result<Option<PersistentData<T>>, LoadPersistentDataError> {
+        Self::load_impl(T::load_blocking())
+    }
+
+    fn load_impl(
+        value: Result<T, LoadPersistentDataError>
+    ) -> Result<Option<PersistentData<T>>, LoadPersistentDataError> {
+        let value = match value {
             Ok(value) => value,
             Err(LoadPersistentDataError::SerdeJson(err)) => return Err(err.into()),
             Err(LoadPersistentDataError::Io(err)) => {
