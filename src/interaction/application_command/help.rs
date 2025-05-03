@@ -6,28 +6,28 @@ use const_format::{concatcp, formatcp, str_replace};
 use itertools::Itertools;
 use twilight_http::request::RequestBuilder;
 use twilight_http::routing::Route;
-use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
-use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
+use twilight_model::id::marker::CommandMarker;
+use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
-use twilight_util::builder::InteractionResponseDataBuilder;
 
 use super::COMMANDS_REGISTER;
-use crate::assets::{replies, COLORS};
+use crate::assets::{COLORS, replies};
 use crate::interaction::application_command::{
-    cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
-    TryFromInteractionError
+    HandleApplicationCommandError, TryFromInteractionError, cloaker, config, counter, defer, ranks,
+    update_defer_embeds
 };
-use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE, assets};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";

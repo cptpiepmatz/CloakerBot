@@ -2,8 +2,8 @@ use std::{env, iter};
 
 use hieroglyph::{DrawingContext, Segments};
 use image::{Pixel, Rgba, RgbaImage};
-use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 const GUILD_ID: Id<GuildMarker> = Id::new(581884294495207444);
 const USER_ID: Id<UserMarker> = Id::new(137280289708834816);

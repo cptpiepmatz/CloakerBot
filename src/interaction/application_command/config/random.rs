@@ -4,21 +4,21 @@ use std::sync::LazyLock;
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
+use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
 
 use crate::assets::{self, QUOTES};
 use crate::data::config::{CompleteDefault, GuildConfigRandom};
-use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::ApplicationCommand::Config;
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     self, HandleApplicationCommandError, TryFromInteractionError
 };
@@ -51,7 +51,7 @@ impl TryFrom<&Vec<CommandDataOption>> for RandomSubCommand {
                             command,
                             field: "allow".into(),
                             value: v.clone()
-                        })
+                        });
                     }
                 },
                 "min" => match &option.value {
@@ -61,7 +61,7 @@ impl TryFrom<&Vec<CommandDataOption>> for RandomSubCommand {
                             command,
                             field: "min".into(),
                             value: v.clone()
-                        })
+                        });
                     }
                 },
                 "max" => match &option.value {
@@ -71,7 +71,7 @@ impl TryFrom<&Vec<CommandDataOption>> for RandomSubCommand {
                             command,
                             field: "max".into(),
                             value: v.clone()
-                        })
+                        });
                     }
                 },
                 n => return Err(TryFromInteractionError::UnknownField { command, field: n.into() })

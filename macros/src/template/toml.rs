@@ -45,7 +45,7 @@ fn codegen(table: &toml::Table, key: &str, span: Span2) -> syn::Result<TokenStre
                 return Err(syn::Error::new(
                     span,
                     format!("expected string or table, got {}", v.type_str())
-                ))
+                ));
             }
         });
     }

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Local};
-use twilight_model::id::marker::GuildMarker;
 use twilight_model::id::Id;
+use twilight_model::id::marker::GuildMarker;
 
 use crate::data::persist::Persist;
 

@@ -3,21 +3,21 @@ use std::ops::Deref;
 use std::sync::LazyLock;
 
 use serde_json::json;
-use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
+use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::routing::Route;
-use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
+use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
-use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::oauth::scope::BOT;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
@@ -63,7 +63,7 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
                                 command,
                                 field: "type".into(),
                                 value: option.value.clone()
-                            })
+                            });
                         }
                     },
                     _n => {
@@ -71,7 +71,7 @@ impl TryFrom<&Vec<CommandDataOption>> for ImmunitySubCommand {
                             command,
                             field: "type".into(),
                             value: option.value.clone()
-                        })
+                        });
                     }
                 },
                 n => return Err(TryFromInteractionError::UnknownField { command, field: n.into() })

@@ -4,8 +4,8 @@ use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender
 use twilight_cache_inmemory::{InMemoryCache, UpdateCache};
 use twilight_model::gateway::event::{Event as DiscordEvent, Event};
 use twilight_model::gateway::payload::incoming::VoiceStateUpdate;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
 
 use crate::util;
 

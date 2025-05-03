@@ -4,8 +4,8 @@ use std::future::{Future, IntoFuture};
 
 use derive_more::From;
 use serde::de::DeserializeOwned;
-use twilight_http::response::DeserializeBodyError;
 use twilight_http::Response;
+use twilight_http::response::DeserializeBodyError;
 
 pub mod cache;
 pub mod log;

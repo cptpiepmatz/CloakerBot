@@ -18,7 +18,7 @@ pub struct PersistentData<T> {
 
 use persist::Persist;
 
-use crate::{util, STATE};
+use crate::{STATE, util};
 
 mod persist {
     // public interfaces require public types, this makes the `Persist` trait public
@@ -103,7 +103,7 @@ impl<T: Persist<Item = T> + Send + Sync> PersistentData<T> {
                 return match err.kind() {
                     io::ErrorKind::NotFound => Ok(None),
                     _ => Err(err.into())
-                }
+                };
             }
         };
         Ok(Some(PersistentData { dirty: AtomicBool::new(false), value: RwLock::new(value) }))

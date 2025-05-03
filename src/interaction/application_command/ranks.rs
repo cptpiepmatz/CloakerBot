@@ -1,14 +1,14 @@
 use std::sync::LazyLock;
 
-use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::Interaction;
-use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
@@ -18,7 +18,7 @@ use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::{takedown, STATE};
+use crate::{STATE, takedown};
 
 pub const NAME: &str = "ranks";
 pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
@@ -44,13 +44,13 @@ impl TryFrom<&CommandData> for RanksCommand {
                         command: NAME.into(),
                         field: name.clone(),
                         value: value.clone()
-                    })
+                    });
                 }
                 (_, _) => {
                     return Err(TryFromInteractionError::UnknownField {
                         command: NAME.into(),
                         field: name.clone()
-                    })
+                    });
                 }
             }
         }

@@ -5,24 +5,24 @@ use std::time::Duration;
 
 use derive_more::From;
 use rand::prelude::*;
+use songbird::Call;
 use songbird::error::JoinError;
 use songbird::id::ChannelId;
-use songbird::Call;
 use tokio::select;
-use tokio::sync::{oneshot, Mutex, MutexGuard};
-use twilight_cache_inmemory::model::CachedVoiceState;
+use tokio::sync::{Mutex, MutexGuard, oneshot};
 use twilight_cache_inmemory::Reference;
+use twilight_cache_inmemory::model::CachedVoiceState;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 
 use crate::data::config::GuildConfig;
 use crate::data::stats::GuildStats;
 use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
 use crate::util::ClientError;
-use crate::{util, BOT_USER_ID, STATE};
+use crate::{BOT_USER_ID, STATE, util};
 
 pub mod counter;
 pub mod danger_zones;

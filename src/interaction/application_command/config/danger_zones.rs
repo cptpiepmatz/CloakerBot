@@ -2,25 +2,25 @@ use std::ops::Deref;
 use std::sync::LazyLock;
 
 use serde_json::json;
-use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
+use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::routing::Route;
 use twilight_mention::fmt::{CommandMention, Mention, MentionFormat};
 use twilight_model::application::command::CommandOption;
-use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::application::interaction::Interaction;
+use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::http::interaction::InteractionResponseType;
-use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
+use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::{application_command, message_component, COMMANDS_REGISTER};
+use crate::interaction::{COMMANDS_REGISTER, application_command, message_component};
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";

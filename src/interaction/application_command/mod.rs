@@ -13,19 +13,19 @@ use twilight_model::application::interaction::application_command::CommandOption
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
-use twilight_util::builder::embed::EmbedBuilder;
+use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 use twilight_validate::message::MessageValidationError;
 
+use crate::interaction::HandleInteractionError;
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
 use crate::interaction::application_command::config::{ConfigActionError, ConfigCommand};
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
-use crate::interaction::HandleInteractionError;
 use crate::{APPLICATION_ID, STATE};
 
 mod cloaker;

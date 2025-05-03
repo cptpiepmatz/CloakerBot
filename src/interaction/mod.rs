@@ -2,22 +2,22 @@ use derive_more::From;
 use twilight_model::application::interaction::{Interaction, InteractionType};
 use twilight_model::gateway::payload::incoming::InteractionCreate;
 
+use crate::HandleDiscordEventError;
 use crate::interaction::application_command::{
-    handle_application_command, HandleApplicationCommandError
+    HandleApplicationCommandError, handle_application_command
 };
 use crate::interaction::application_command_autocomplete::{
-    handle_application_command_autocomplete, HandleApplicationCommandAutocompleteError
+    HandleApplicationCommandAutocompleteError, handle_application_command_autocomplete
 };
 use crate::interaction::message_component::{
-    handle_message_component, HandleMessageComponentError
+    HandleMessageComponentError, handle_message_component
 };
-use crate::HandleDiscordEventError;
 
 mod application_command;
 mod application_command_autocomplete;
 mod message_component;
 
-pub use application_command::{CommandsRegister, COMMANDS_REGISTER};
+pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
 #[derive(Debug, From)]
 pub enum HandleInteractionError {

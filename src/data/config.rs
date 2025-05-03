@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
 
 use crate::data::{Persist, PersistentData};
 

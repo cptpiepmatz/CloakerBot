@@ -6,11 +6,11 @@ use image::{DynamicImage, ImageError, Pixel, Rgba, RgbaImage};
 use thiserror::Error;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
-use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{GuildMarker, UserMarker};
 
-use crate::util::require;
 use crate::STATE;
+use crate::util::require;
 
 macro_rules! static_images {
     ($(static $name:ident = $path:literal $(* $resize:ident)? ? $expect:literal;)*) => {

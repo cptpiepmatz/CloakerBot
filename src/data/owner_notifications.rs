@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use twilight_model::id::marker::{GuildMarker, UserMarker};
 use twilight_model::id::Id;
+use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 use crate::data::persist::Persist;
 use crate::util::ref_access_map::RefAccessMap;

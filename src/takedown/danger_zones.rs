@@ -1,11 +1,11 @@
 use derive_more::From;
 use itertools::Itertools;
 
-use crate::data::config::GuildConfig;
-use crate::takedown::{takedown, TakedownFail, TakedownResult, TakedownType};
-use crate::util::cache::VoiceChannelCacheUpdate;
-use crate::util::{require, ClientError};
 use crate::STATE;
+use crate::data::config::GuildConfig;
+use crate::takedown::{TakedownFail, TakedownResult, TakedownType, takedown};
+use crate::util::cache::VoiceChannelCacheUpdate;
+use crate::util::{ClientError, require};
 
 #[derive(Debug, From)]
 pub enum CheckDangerZonesError {

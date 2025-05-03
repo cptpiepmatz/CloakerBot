@@ -4,29 +4,29 @@ use std::fmt::{Debug, Display, Formatter};
 use std::sync::LazyLock;
 
 use thiserror::Error;
-use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
+use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
+use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
-use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::command::{CommandBuilder, UserBuilder};
+use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::assets::replies::cloaker;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
-    update_defer_msg, HandleApplicationCommandError, TryFromInteractionError
+    HandleApplicationCommandError, TryFromInteractionError, update_defer_msg
 };
 use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
-use crate::{takedown, APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE, takedown};
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
@@ -53,14 +53,14 @@ impl TryFrom<&CommandData> for CloakerCommand {
                             command: NAME.into(),
                             field: name.clone(),
                             value: value.clone()
-                        })
+                        });
                     }
                 },
                 _n => {
                     return Err(TryFromInteractionError::UnknownField {
                         command: NAME.into(),
                         field: name.clone()
-                    })
+                    });
                 }
             }
         }

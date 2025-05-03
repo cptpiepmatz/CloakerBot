@@ -5,9 +5,9 @@ use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
 use rand::{Rng, SeedableRng};
 
-use crate::data::config::{CompleteDefault, GuildConfig, GuildConfigRandom};
-use crate::takedown::{takedown, TakedownResult, TakedownType};
 use crate::STATE;
+use crate::data::config::{CompleteDefault, GuildConfig, GuildConfigRandom};
+use crate::takedown::{TakedownResult, TakedownType, takedown};
 
 #[derive(Debug)]
 pub enum CheckRandomError {}

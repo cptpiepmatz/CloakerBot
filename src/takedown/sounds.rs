@@ -10,9 +10,9 @@ use std::{io, mem};
 use derive_more::From;
 use futures::future::try_join_all;
 use futures::stream::FuturesUnordered;
+use songbird::Call;
 use songbird::input::cached::{CodecCacheError, Decompressed, Memory};
 use songbird::input::{AudioStream, Input, LiveInput};
-use songbird::Call;
 use tokio::sync::MutexGuard;
 use wav::BitDepth;
 

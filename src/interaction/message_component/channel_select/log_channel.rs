@@ -1,26 +1,26 @@
 use std::num::ParseIntError;
 
 use itertools::Itertools;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData};
+use twilight_model::channel::ChannelType;
 use twilight_model::channel::message::component::{Button, ButtonStyle};
 use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
-use twilight_model::channel::ChannelType;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{ChannelMarker, UserMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::embed::EmbedBuilder;
+use twilight_model::id::marker::{ChannelMarker, UserMarker};
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::assets::{self, QUOTES};
+use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::channel_select::danger_zones::DangerZonesSelectActionError;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
-use crate::interaction::message_component::HandleMessageComponentError;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub fn component(current: Option<Id<ChannelMarker>>) -> Value {

@@ -1,12 +1,12 @@
 use derive_more::From;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 
+use crate::interaction::HandleInteractionError;
 use crate::interaction::message_component::button::config::ConfigButtonActionError;
 use crate::interaction::message_component::channel_select::danger_zones::DangerZonesSelectActionError;
 use crate::interaction::message_component::channel_select::log_channel::LogChannelSelectActionError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
-use crate::interaction::HandleInteractionError;
 
 pub mod button;
 pub mod channel_select;
