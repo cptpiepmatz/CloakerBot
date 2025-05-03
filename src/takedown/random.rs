@@ -13,7 +13,7 @@ use crate::STATE;
 pub enum CheckRandomError {}
 
 pub async fn handle_random_check() -> Result<(), CheckRandomError> {
-    let mut rng = StdRng::from_entropy();
+    let mut rng = StdRng::from_os_rng();
     let guild_configs = STATE.guild_configs.read().await;
     let mut random_takedown_schedule = STATE.random_takedown_schedule.write().await;
     for (guild_id, config) in guild_configs.iter() {

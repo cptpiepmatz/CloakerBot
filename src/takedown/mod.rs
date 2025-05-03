@@ -93,7 +93,7 @@ pub async fn takedown(
     // TODO: split this function into multiple
     // TODO: put this into inner function to allow tracking stats
 
-    let rng = &mut rand::rngs::StdRng::from_entropy();
+    let rng = &mut rand::rngs::StdRng::from_os_rng();
     let guild_configs = STATE.guild_configs.read().await;
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
