@@ -10,14 +10,14 @@ set = """
 Set the following channels as danger zones:
 {channels}
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
 ## 🗑️ Unset Danger Zones
 No danger zones are set now.
 
-> {quote}
+-# > {quote}
 """
 
 [config.immunity.general]
@@ -32,14 +32,14 @@ set = """
 The following roles are now immune to **all** takedowns by {CloakerBot}:
 {roles}
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
 ## 🗑️ Unset General Immunity Roles
 No **general** immunity roles are set now.
 
-> {quote}
+-# > {quote}
 """
 
 [config.immunity.general.silent]
@@ -57,14 +57,14 @@ The following roles are now immune to **all** takedowns by {CloakerBot}:
 
 Takedowns targeting these roles won't even initialize.
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
 ## 🗑️ Unset General Immunity Roles
 No **silent general** immunity roles are set now.
 
-> {quote}
+-# > {quote}
 """
 
 [config.immunity.random]
@@ -79,14 +79,14 @@ set = """
 The following roles are now immune to **random** takedowns by {CloakerBot}:
 {roles}
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
 ## 🗑️ Unset Random Immunity Roles
 No **random** immunity roles are set now.
 
-> {quote}
+-# > {quote}
 """
 
 [config.immunity.random.silent]
@@ -104,14 +104,14 @@ The following roles are now immune to **random** takedowns by {CloakerBot}:
 
 Takedowns targeting these roles won't even initialize.
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
 ## 🗑️ Unset Random Immunity Roles
 No **random** immunity roles are set now.
 
-> {quote}
+-# > {quote}
 """
 
 
@@ -127,7 +127,7 @@ set = """
 Logs will be written in {log-channel}.
 Make sure {CloakerBot} is allowed to chat there.
 
-> {quote}
+-# > {quote}
 """
 
 unset = """
@@ -135,7 +135,7 @@ unset = """
 No log channel is defined.
 Fallback channel is {default} if {CloakerBot} is allowed to chat there.
 
-> {quote}
+-# > {quote}
 """
 
 [config.random]
@@ -143,7 +143,7 @@ disabled = """
 ## 🛑 No Random Takedowns
 Random takedowns are **disabled**.
 
-> {quote}
+-# > {quote}
 """
 
 enabled = """
@@ -153,7 +153,7 @@ Takedowns are checked in an interval between **{min}** hours and **{max}** hours
 
 For more info use {/help command:config random}.
 
-> {quote}
+-# > {quote}
 """
 
 [config.target_bots]
@@ -161,7 +161,7 @@ disabled = """
 ## 🚸 Don't Target Bots
 Bots are no valid targets.
 
-> {quote}
+-# > {quote}
 """
 
 enabled = """
@@ -169,7 +169,7 @@ enabled = """
 Bots are valid targets for takedowns.
 This also applies to random takedowns.
 
-> {quote}
+-# > {quote}
 """
 
 [help]
@@ -190,14 +190,14 @@ success = """
 ## 🎯 Takedown Successful
 You succesfully took down {target}.
 
-> {quote}
+-# > {quote}
 """
 
 countered = """
 ## 🔄 Takedown Got Countered
 The takedown was countered by {counterer}.
 
-> {quote}
+-# > {quote}
 """
 
 [cloaker.fail]
@@ -205,7 +205,7 @@ template = """
 ## ❌ Takedown Failed
 {reason}
 
-> {quote}
+-# > {quote}
 """
 
 join = "Failed to join voice channel."
@@ -221,12 +221,12 @@ success = """
 ## 🏸 Counter Successful
 You countered the takedown on {target}.
 
-> {quote}
+-# > {quote}
 """
 
 miss = """
 ## 🪠 Nothing to Counter
 No takedown currently happening.
 
-> {quote}
+-# > {quote}
 """
