@@ -18,7 +18,6 @@ use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::sync::OnceLockExpect;
 use crate::{takedown, STATE};
 
 pub const NAME: &str = "ranks";

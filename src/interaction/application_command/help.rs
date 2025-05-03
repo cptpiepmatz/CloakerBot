@@ -27,7 +27,6 @@ use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
     TryFromInteractionError
 };
-use crate::sync::OnceLockExpect;
 use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "help";

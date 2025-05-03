@@ -1,5 +1,5 @@
 #![allow(unused)]
-// #![allow(deprecated)]
+#![allow(deprecated)]
 
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -14,6 +14,7 @@ use interaction::COMMANDS_REGISTER;
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
 use sync::Eject;
+use takedown::sounds::Sound;
 use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
@@ -30,7 +31,7 @@ use crate::data::random::PersistentTakedownSchedule;
 use crate::data::stats::PersistentGuildStats;
 use crate::data::{handle_persist_data, PersistentData};
 use crate::interaction::{handle_interaction, HandleInteractionError};
-use crate::sync::{KeyLock, OnceLockExpect, VolatileMap};
+use crate::sync::{KeyLock, VolatileMap};
 use crate::takedown::danger_zones::{check_danger_zones, CheckDangerZonesError};
 use crate::takedown::random::{handle_random_check, CheckRandomError};
 use crate::takedown::PlannedTakedown;
@@ -138,10 +139,11 @@ async fn main() {
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
 
-    takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
-
-    // ensure that commands are registered early on
+    // ensure that technically lazy elements are evaluated
+    Sound::load_eagerly();
     COMMANDS_REGISTER.deref();
+
+    return;
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))

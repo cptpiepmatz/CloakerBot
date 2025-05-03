@@ -26,7 +26,6 @@ use crate::interaction::application_command::counter::{CounterActionError, Count
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
 use crate::interaction::HandleInteractionError;
-use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, STATE};
 
 mod cloaker;

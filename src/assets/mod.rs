@@ -8,7 +8,6 @@ pub mod sounds;
 macros::template_toml!("assets/replies.toml");
 
 static_toml! {
-    // pub static REPLIES = include_toml!("assets/replies.toml");
     pub static QUOTES = include_toml!("assets/quotes.toml");
     pub static COLORS = include_toml!("assets/colors.toml");
 }

@@ -1,5 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use std::io::Cursor;
+use std::ops::Deref;
+use std::sync::LazyLock;
 use std::time::Duration;
 use std::{io, mem};
 
@@ -13,11 +15,10 @@ use tokio::sync::MutexGuard;
 use wav::BitDepth;
 
 use crate::assets;
-use crate::sync::OnceLockExpect;
 
-pub static WULULULULU: OnceLockExpect<Sound> = OnceLockExpect::new();
-pub static FAILS: OnceLockExpect<Vec<Sound>> = OnceLockExpect::new();
-pub static TAKEDOWNS: OnceLockExpect<Vec<Sound>> = OnceLockExpect::new();
+pub static WULULULULU: LazyLock<Sound> = lazy_sound!(WULULULULU);
+pub static FAILS: LazyLock<Vec<Sound>> = lazy_sound!(FAILS+);
+pub static TAKEDOWNS: LazyLock<Vec<Sound>> = lazy_sound!(TAKEDOWNS+);
 
 pub struct Sound {
     /// The size of the raw bytes containing that sound. Used for debugging.
@@ -28,11 +29,15 @@ pub struct Sound {
 }
 
 impl Sound {
-    async fn from_static_wav_bytes(wav_bytes: &'static [u8]) -> Result<Self, SoundFromBytesError> {
-        let raw_size = wav_bytes.len();
-        let input = Decompressed::new(wav_bytes.into()).await?;
-        let duration = wav::read(&mut Cursor::new(wav_bytes))?.calc_duration();
-        Ok(Sound { raw_size, input, duration })
+    fn from_static_wav_bytes(wav_bytes: &'static [u8]) -> Result<Self, SoundFromBytesError> {
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                let raw_size = wav_bytes.len();
+                let input = Decompressed::new(wav_bytes.into()).await?;
+                let duration = wav::read(&mut Cursor::new(wav_bytes))?.calc_duration();
+                Ok(Sound { raw_size, input, duration })
+            })
+        })
     }
 
     pub async fn play_and_wait(
@@ -42,6 +47,12 @@ impl Sound {
     ) {
         call.play_only_input(self.input.new_handle().into());
         tokio::time::sleep(self.duration + extra_wait_time.into().unwrap_or_default()).await;
+    }
+
+    pub fn load_eagerly() {
+        WULULULULU.deref();
+        FAILS.deref();
+        TAKEDOWNS.deref();
     }
 }
 
@@ -84,30 +95,32 @@ pub enum SoundFromBytesError {
     Io(io::Error)
 }
 
-pub async fn prep_sounds() -> Result<(), SoundFromBytesError> {
-    OnceLockExpect::set(
-        &WULULULULU,
-        Sound::from_static_wav_bytes(assets::sounds::WULULULULU).await?
-    );
+macro_rules! lazy_sound {
+    ($ident:ident) => {
+        LazyLock::new(|| {
+            Sound::from_static_wav_bytes(assets::sounds::$ident).expect(concat!(
+                "could not load ",
+                stringify!($ident),
+                " sound"
+            ))
+        })
+    };
 
-    OnceLockExpect::set(
-        &FAILS,
-        try_join_all(
-            assets::sounds::FAILS.into_iter().map(|bytes| Sound::from_static_wav_bytes(bytes))
-        )
-        .await?
-    );
-
-    OnceLockExpect::set(
-        &TAKEDOWNS,
-        try_join_all(
-            assets::sounds::TAKEDOWNS.into_iter().map(|bytes| Sound::from_static_wav_bytes(bytes))
-        )
-        .await?
-    );
-
-    Ok(())
+    ($ident:ident+) => {
+        LazyLock::new(|| {
+            assets::sounds::$ident
+                .into_iter()
+                .enumerate()
+                .map(|(i, bytes)| {
+                    Sound::from_static_wav_bytes(bytes)
+                        .expect(&format!("could not load {}[{i}] sound", stringify!($ident)))
+                })
+                .collect()
+        })
+    };
 }
+
+use lazy_sound;
 
 trait CalcDuration {
     fn calc_duration(&self) -> Duration;

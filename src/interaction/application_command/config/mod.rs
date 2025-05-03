@@ -22,7 +22,6 @@ use super::COMMANDS_REGISTER;
 use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "config";
 pub const DESCRIPTION: &str = "Configure the CloakerBot.";

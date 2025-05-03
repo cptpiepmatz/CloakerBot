@@ -27,7 +27,6 @@ use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::message_component;
-use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "log-channel";

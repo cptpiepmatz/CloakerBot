@@ -21,7 +21,6 @@ use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
 use crate::interaction::{application_command, message_component, COMMANDS_REGISTER};
-use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";

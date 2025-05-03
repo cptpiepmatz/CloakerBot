@@ -24,7 +24,6 @@ use crate::interaction::application_command;
 use crate::interaction::application_command::{
     update_defer_msg, HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::sync::OnceLockExpect;
 use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
 use crate::{takedown, APPLICATION_ID, BOT_USER_ID, STATE};
 
