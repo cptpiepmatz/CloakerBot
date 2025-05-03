@@ -14,7 +14,7 @@ package.version = "3.0.0"
 package.edition = "2021"
 
 [workspace.dependencies]
-itertools = "0.13"
+itertools = "0.14"
 
 [dependencies]
 
