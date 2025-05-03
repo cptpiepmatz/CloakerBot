@@ -20,7 +20,6 @@ pub enum MessageComponentCustomId {
     ConfigUnsetImmunityRandomSilent,
     ConfigUnsetLogChannel,
 
-    // TODO: disable enable option application_command
     ConfigEnableRandom,
     ConfigDisableRandom,
 
