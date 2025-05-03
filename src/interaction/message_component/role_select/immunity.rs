@@ -3,27 +3,27 @@ use std::num::ParseIntError;
 
 use derive_more::From;
 use itertools::Itertools;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData};
+use twilight_model::channel::ChannelType;
 use twilight_model::channel::message::component::{Button, ButtonStyle};
 use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
-use twilight_model::channel::ChannelType;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::marker::{ChannelMarker, RoleMarker, UserMarker};
 use twilight_model::id::Id;
-use twilight_util::builder::embed::EmbedBuilder;
+use twilight_model::id::marker::{ChannelMarker, RoleMarker, UserMarker};
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::assets::{COLORS, QUOTES};
+use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
-use crate::interaction::message_component::HandleMessageComponentError;
-use crate::{assets, APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE, assets};
 
 const CLOAKER_QUOTE_ROLES: &str =
     "It's like they're wrapped in bubble wrap. Oh, how I want to pop those bubbles.";
@@ -38,17 +38,34 @@ pub enum ImmunitySelect {
     RandomSilent
 }
 
-impl ToString for ImmunitySelect {
-    fn to_string(&self) -> String {
+impl ImmunitySelect {
+    pub fn as_str(&self) -> &'static str {
+        (*self).into()
+    }
+}
+
+impl From<ImmunitySelect> for MessageComponentCustomId {
+    fn from(value: ImmunitySelect) -> Self {
         type IS = ImmunitySelect;
         type MCCId = MessageComponentCustomId;
-        (match self {
+        match value {
             IS::General => MCCId::ImmunityGeneralSelect,
             IS::Random => MCCId::ImmunityRandomSelect,
             IS::GeneralSilent => MCCId::ImmunityGeneralSilentSelect,
             IS::RandomSilent => MCCId::ImmunityRandomSilentSelect
-        })
-        .to_string()
+        }
+    }
+}
+
+impl From<ImmunitySelect> for &'static str {
+    fn from(value: ImmunitySelect) -> Self {
+        MessageComponentCustomId::from(value).into()
+    }
+}
+
+impl ToString for ImmunitySelect {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
     }
 }
 

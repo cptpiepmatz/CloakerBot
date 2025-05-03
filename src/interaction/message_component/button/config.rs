@@ -7,14 +7,14 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{Button, ButtonStyle};
 use twilight_model::channel::message::{Component, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::assets::{self, COLORS, QUOTES};
+use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
-use crate::interaction::message_component::HandleMessageComponentError;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 #[derive(Debug, Copy, Clone)]
@@ -28,11 +28,17 @@ pub enum ConfigUnsetButton {
     Random
 }
 
-impl ToString for ConfigUnsetButton {
-    fn to_string(&self) -> String {
+impl ConfigUnsetButton {
+    pub fn as_str(&self) -> &'static str {
+        (*self).into()
+    }
+}
+
+impl From<ConfigUnsetButton> for MessageComponentCustomId {
+    fn from(value: ConfigUnsetButton) -> Self {
         type CUB = ConfigUnsetButton;
         type MCCId = MessageComponentCustomId;
-        (match self {
+        match value {
             CUB::DangerZones => MCCId::ConfigUnsetDangerZones,
             CUB::ImmunityGeneral => MCCId::ConfigUnsetImmunityGeneral,
             CUB::ImmunityRandom => MCCId::ConfigUnsetImmunityRandom,
@@ -40,8 +46,19 @@ impl ToString for ConfigUnsetButton {
             CUB::ImmunityRandomSilent => MCCId::ConfigUnsetImmunityRandomSilent,
             CUB::LogChannel => MCCId::ConfigUnsetLogChannel,
             CUB::Random => MCCId::ConfigUnsetRandom
-        })
-        .to_string()
+        }
+    }
+}
+
+impl From<ConfigUnsetButton> for &'static str {
+    fn from(value: ConfigUnsetButton) -> Self {
+        MessageComponentCustomId::from(value).into()
+    }
+}
+
+impl ToString for ConfigUnsetButton {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
     }
 }
 
