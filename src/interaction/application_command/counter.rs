@@ -2,6 +2,7 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::LazyLock;
 
+use thiserror::Error;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
@@ -46,19 +47,13 @@ pub fn message_context_menu() -> Command {
     CommandBuilder::new(NAME, "", CommandType::Message).dm_permission(false).build()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CounterActionError {
+    #[error("not in guild")]
     NotInGuild,
+    #[error("no author found")]
     NoAuthor
 }
-
-impl Display for CounterActionError {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-impl Error for CounterActionError {}
 
 pub async fn action(
     interaction: &Interaction,

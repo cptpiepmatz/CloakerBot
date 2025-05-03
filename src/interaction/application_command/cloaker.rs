@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::LazyLock;
 
+use thiserror::Error;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
@@ -105,19 +106,13 @@ pub fn message_context_menu() -> Command {
     CommandBuilder::new(NAME, "", CommandType::Message).dm_permission(false).build()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CloakerActionError {
+    #[error("not in guild")]
     NotInGuild,
+    #[error("author not found")]
     NoAuthor
 }
-
-impl Display for CloakerActionError {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-impl Error for CloakerActionError {}
 
 pub async fn action(
     interaction: &Interaction,

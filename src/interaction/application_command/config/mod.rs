@@ -7,6 +7,7 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::LazyLock;
 
+use thiserror::Error;
 use tokio::runtime::Handle;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
@@ -82,18 +83,11 @@ pub fn chat_input() -> Command {
         .build()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConfigActionError {
+    #[error("not in guild")]
     NotInGuild
 }
-
-impl Display for ConfigActionError {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-impl Error for ConfigActionError {}
 
 pub async fn action(
     interaction: &Interaction,
