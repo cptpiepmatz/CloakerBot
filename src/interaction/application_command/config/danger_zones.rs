@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
@@ -19,13 +20,13 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::{application_command, message_component};
+use crate::interaction::{application_command, message_component, COMMANDS_REGISTER};
 use crate::sync::OnceLockExpect;
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "danger-zones";
 pub const DESCRIPTION: &str = "Define your danger zones.";
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::super::mention![subcommand];
 
 pub struct DangerZonesSubCommand;
 

@@ -1,4 +1,7 @@
+use std::sync::LazyLock;
+
 use twilight_mention::fmt::{CommandMention, MentionFormat};
+use twilight_mention::Mention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
@@ -8,6 +11,7 @@ use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
+use super::COMMANDS_REGISTER;
 use crate::data::stats;
 use crate::data::stats::GuildStats;
 use crate::interaction::application_command;
@@ -19,8 +23,8 @@ use crate::{takedown, STATE};
 
 pub const NAME: &str = "ranks";
 pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
-pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.ranks);
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 #[derive(Debug)]
 pub struct RanksCommand {

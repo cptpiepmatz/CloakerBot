@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+use std::sync::LazyLock;
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
@@ -17,6 +18,7 @@ use twilight_model::id::Id;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use super::COMMANDS_REGISTER;
 use crate::assets::replies::cloaker;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
@@ -28,8 +30,8 @@ use crate::{takedown, APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
-pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.cloaker);
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 #[derive(Debug)]
 pub struct CloakerCommand {

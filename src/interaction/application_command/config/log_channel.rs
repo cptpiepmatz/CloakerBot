@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::request::RequestBuilder;
@@ -30,7 +32,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "log-channel";
 pub const DESCRIPTION: &str = "Define your log channel.";
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::super::mention![subcommand];
 
 pub const CLOAKER_QUOTE_LOG_CHANNEL: &str =
     "I'd rather eat glass than report in, but hey, let’s not disappoint the bureaucracy.";

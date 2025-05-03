@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::sync::LazyLock;
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_mention::Mention;
@@ -10,6 +11,7 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
+use super::COMMANDS_REGISTER;
 use crate::assets::replies;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
@@ -20,8 +22,8 @@ use crate::takedown;
 
 pub const NAME: &str = "counter";
 pub const DESCRIPTION: &str = "Counter an incoming takedown.";
-pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.counter);
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 pub struct CounterCommand;
 

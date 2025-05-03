@@ -17,7 +17,7 @@ mod application_command;
 mod application_command_autocomplete;
 mod message_component;
 
-pub use application_command::register_commands;
+pub use application_command::{register_commands, CommandsRegister, COMMANDS_REGISTER};
 
 #[derive(Debug, From)]
 pub enum HandleInteractionError {

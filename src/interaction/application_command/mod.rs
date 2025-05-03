@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+use std::sync::LazyLock;
 
 use derive_more::From;
 use twilight_http::client::InteractionClient;
@@ -12,6 +13,7 @@ use twilight_model::application::interaction::application_command::CommandOption
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
+use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_util::builder::InteractionResponseDataBuilder;
@@ -96,6 +98,14 @@ impl Display for TryFromInteractionError {
 
 impl Error for TryFromInteractionError {}
 
+pub struct CommandsRegister {
+    config: Id<CommandMarker>,
+    cloaker: Id<CommandMarker>,
+    counter: Id<CommandMarker>,
+    help: Id<CommandMarker>,
+    ranks: Id<CommandMarker>
+}
+
 #[derive(Debug, From)]
 pub enum RegisterCommandsError {
     Http(TwilightHttpError),
@@ -103,25 +113,32 @@ pub enum RegisterCommandsError {
     MissingRegistries(Vec<Command>)
 }
 
-pub async fn register_commands(
-    client: &InteractionClient<'_>
-) -> Result<(), RegisterCommandsError> {
-    // TODO: check if perms are ok
-    let commands = client
-        .set_global_commands(&[
-            cloaker::chat_input(),
-            cloaker::user_context_menu(),
-            cloaker::message_context_menu(),
-            counter::chat_input(),
-            counter::user_context_menu(),
-            counter::message_context_menu(),
-            config::chat_input(),
-            ranks::chat_input(),
-            help::chat_input()
-        ])
-        .await?
-        .models()
-        .await?;
+pub static COMMANDS_REGISTER: LazyLock<CommandsRegister> = LazyLock::new(|| {
+    let client = STATE.client.interaction(APPLICATION_ID);
+
+    let commands = tokio::task::block_in_place(|| {
+        tokio::runtime::Handle::current()
+            .block_on(async {
+                Result::<_, RegisterCommandsError>::Ok(
+                    client
+                        .set_global_commands(&[
+                            cloaker::chat_input(),
+                            cloaker::user_context_menu(),
+                            cloaker::message_context_menu(),
+                            counter::chat_input(),
+                            counter::user_context_menu(),
+                            counter::message_context_menu(),
+                            config::chat_input(),
+                            ranks::chat_input(),
+                            help::chat_input()
+                        ])
+                        .await?
+                        .models()
+                        .await?
+                )
+            })
+            .expect("registering commands did not work")
+    });
 
     let mut command_map = HashMap::new();
     for command in commands.iter() {
@@ -130,90 +147,62 @@ pub async fn register_commands(
             continue;
         }
 
-        // insert newest version of a command into the map
-        let mapped_command = command_map.entry(command.name.as_str()).or_insert(command.clone());
+        let mapped_command =
+            command_map.entry(command.name.as_str()).or_insert_with(|| command.clone());
         if mapped_command.version.into_nonzero() < command.version.into_nonzero() {
             command_map.insert(command.name.as_str(), command.clone());
         }
     }
 
+    let mut config: Option<Id<CommandMarker>> = None;
+    let mut cloaker: Option<Id<CommandMarker>> = None;
+    let mut counter: Option<Id<CommandMarker>> = None;
+    let mut help: Option<Id<CommandMarker>> = None;
+    let mut ranks: Option<Id<CommandMarker>> = None;
+
     for (command_name, command) in command_map {
-        if let None = command.guild_id {
-            match (command_name, command.id) {
-                (config::NAME, Some(command_id)) => {
-                    OnceLockExpect::set(&config::ID, command_id);
-                    for (mention, name) in [
-                        (&config::danger_zones::MENTION, config::danger_zones::NAME),
-                        (&config::immunity::MENTION, config::immunity::NAME),
-                        (&config::log_channel::MENTION, config::log_channel::NAME),
-                        (&config::random::MENTION, config::random::NAME)
-                    ] {
-                        OnceLockExpect::set(
-                            mention,
-                            CommandMention::SubCommand {
-                                name: config::NAME.to_owned(),
-                                sub_command: name.to_owned(),
-                                id: command_id
-                            }
-                            .into_mention()
-                        );
-                    }
-                }
-                (cloaker::NAME, Some(command_id)) => {
-                    OnceLockExpect::set(&cloaker::ID, command_id);
-                    OnceLockExpect::set(
-                        &cloaker::MENTION,
-                        CommandMention::Command { name: cloaker::NAME.to_owned(), id: command_id }
-                            .into_mention()
-                    );
-                }
-                (counter::NAME, Some(command_id)) => {
-                    OnceLockExpect::set(&counter::ID, command_id);
-                    OnceLockExpect::set(
-                        &counter::MENTION,
-                        CommandMention::Command { name: counter::NAME.to_owned(), id: command_id }
-                            .into_mention()
-                    );
-                }
-                (help::NAME, Some(command_id)) => {
-                    OnceLockExpect::set(&help::ID, command_id);
-                    OnceLockExpect::set(
-                        &help::MENTION,
-                        CommandMention::Command { name: help::NAME.to_owned(), id: command_id }
-                            .into_mention()
-                    );
-                }
-                (ranks::NAME, Some(command_id)) => {
-                    OnceLockExpect::set(&ranks::ID, command_id);
-                    OnceLockExpect::set(
-                        &ranks::MENTION,
-                        CommandMention::Command { name: ranks::NAME.to_owned(), id: command_id }
-                            .into_mention()
-                    );
-                }
-                _ => ()
-            }
+        if command.guild_id.is_some() {
+            continue;
+        }
+
+        match (command_name, command.id) {
+            (config::NAME, id @ Some(_)) => config = id,
+            (cloaker::NAME, id @ Some(_)) => cloaker = id,
+            (counter::NAME, id @ Some(_)) => counter = id,
+            (help::NAME, id @ Some(_)) => help = id,
+            (ranks::NAME, id @ Some(_)) => ranks = id,
+            _ => {}
         }
     }
 
-    match OnceLockExpect::is_initialized(&config::ID) &&
-        OnceLockExpect::is_initialized(&config::danger_zones::MENTION) &&
-        OnceLockExpect::is_initialized(&config::immunity::MENTION) &&
-        OnceLockExpect::is_initialized(&config::log_channel::MENTION) &&
-        OnceLockExpect::is_initialized(&config::random::MENTION) &&
-        OnceLockExpect::is_initialized(&cloaker::ID) &&
-        OnceLockExpect::is_initialized(&cloaker::MENTION) &&
-        OnceLockExpect::is_initialized(&counter::ID) &&
-        OnceLockExpect::is_initialized(&counter::MENTION) &&
-        OnceLockExpect::is_initialized(&help::ID) &&
-        OnceLockExpect::is_initialized(&help::MENTION) &&
-        OnceLockExpect::is_initialized(&ranks::ID) &&
-        OnceLockExpect::is_initialized(&ranks::MENTION)
-    {
-        true => Ok(()),
-        false => Err(RegisterCommandsError::MissingRegistries(commands))
-    }
+    let (Some(config), Some(cloaker), Some(counter), Some(help), Some(ranks)) =
+        (config, cloaker, counter, help, ranks)
+    else {
+        panic!("{:#?}", RegisterCommandsError::MissingRegistries(commands));
+    };
+
+    CommandsRegister { config, cloaker, counter, help, ranks }
+});
+
+macro_rules! mention {
+    (command) => {{
+        use twilight_mention::Mention;
+        LazyLock::new(|| CommandMention::Command { id: *ID, name: NAME.to_string() }.mention())
+    }};
+
+    (subcommand) => {{
+        use twilight_mention::Mention;
+        LazyLock::new(|| {
+            CommandMention::SubCommand {
+                id: super::super::COMMANDS_REGISTER.config,
+                name: super::NAME.to_string(),
+                sub_command: NAME.to_string()
+            }
+            .mention()
+        })
+    }};
 }
+use mention;
 
 #[derive(Debug, From)]
 pub enum HandleApplicationCommandError {

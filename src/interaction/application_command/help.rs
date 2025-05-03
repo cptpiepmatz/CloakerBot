@@ -1,5 +1,6 @@
 use std::fmt::{Display, Write};
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 use const_format::{concatcp, formatcp, str_replace};
 use itertools::Itertools;
@@ -20,6 +21,7 @@ use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 use twilight_util::builder::InteractionResponseDataBuilder;
 
+use super::COMMANDS_REGISTER;
 use crate::assets::{replies, COLORS};
 use crate::interaction::application_command::{
     cloaker, config, counter, defer, ranks, update_defer_embeds, HandleApplicationCommandError,
@@ -39,8 +41,8 @@ pub static CHOICES: &[&str] = &[
     counter::NAME,
     ranks::NAME
 ];
-pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.help);
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 pub enum HelpCommand {
     All,

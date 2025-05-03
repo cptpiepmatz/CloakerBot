@@ -10,6 +10,7 @@ use std::{env, io, iter};
 
 use derive_more::From;
 use futures::stream::{self, select, StreamExt};
+use interaction::COMMANDS_REGISTER;
 use songbird::shards::TwilightMap;
 use songbird::Songbird;
 use sync::Eject;
@@ -93,7 +94,6 @@ enum BotEvent {
     CacheUpdate(CacheUpdateEvent)
 }
 
-// static STATE: OnceLockExpect<State> = OnceLockExpect::new();
 static STATE: LazyLock<State> = LazyLock::new(|| {
     let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
     let mut shard = Shard::new(ShardId::ONE, discord_token.clone(), INTENTS);
@@ -140,9 +140,8 @@ async fn main() {
 
     takedown::sounds::prep_sounds().await.expect("prepping sounds is necessary");
 
-    interaction::register_commands(&STATE.client.interaction(APPLICATION_ID))
-        .await
-        .expect("registering commands is necessary");
+    // ensure that commands are registered early on
+    COMMANDS_REGISTER.deref();
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))

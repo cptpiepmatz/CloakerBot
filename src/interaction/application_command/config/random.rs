@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
@@ -26,7 +27,7 @@ use crate::{APPLICATION_ID, STATE};
 
 pub const NAME: &str = "random";
 pub const DESCRIPTION: &str = "Configure random takedown behavior.";
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::super::mention![subcommand];
 
 pub struct RandomSubCommand {
     enable: Option<bool>,

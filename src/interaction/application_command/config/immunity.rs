@@ -1,5 +1,6 @@
 use std::env::var;
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 use serde_json::json;
 use twilight_http::request::application::interaction::CreateResponse;
@@ -32,7 +33,7 @@ use crate::{BOT_USER_ID, STATE};
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
-pub static MENTION: OnceLockExpect<MentionFormat<CommandMention>> = OnceLockExpect::new();
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::super::mention![subcommand];
 
 pub enum ImmunitySubCommand {
     General,

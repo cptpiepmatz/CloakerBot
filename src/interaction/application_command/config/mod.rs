@@ -5,6 +5,7 @@ pub mod random;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::sync::LazyLock;
 
 use tokio::runtime::Handle;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
@@ -17,6 +18,7 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_model::id::Id;
 use twilight_util::builder::command::CommandBuilder;
 
+use super::COMMANDS_REGISTER;
 use crate::interaction::application_command::{
     defer, HandleApplicationCommandError, TryFromInteractionError
 };
@@ -24,7 +26,8 @@ use crate::sync::OnceLockExpect;
 
 pub const NAME: &str = "config";
 pub const DESCRIPTION: &str = "Configure the CloakerBot.";
-pub static ID: OnceLockExpect<Id<CommandMarker>> = OnceLockExpect::new();
+pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.config);
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 pub enum ConfigCommand {
     DangerZones(danger_zones::DangerZonesSubCommand),
