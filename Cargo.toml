@@ -43,7 +43,7 @@ const_format = { version = "0.2", features = ["rust_1_51"] }
 konst = "0.3"
 rand = "0.9"
 static-toml = "1"
-derive_more = "0.99"
+derive_more = { version = "2", features = ["full"] }
 itertools.workspace = true
 smart-default = "0.7"
 heapless = "0.8"
@@ -52,13 +52,13 @@ thiserror = "2"
 macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # discord integration
-twilight-cache-inmemory= "=0.16.0-rc.1"
-twilight-gateway= "=0.16.0-rc.1"
-twilight-http= "=0.16.0-rc.1"
-twilight-model= "=0.16.0-rc.1"
-twilight-mention= "=0.16.0-rc.1"
-twilight-util= {version = "=0.16.0-rc.1", features = ["builder"]}
-twilight-validate= "=0.16.0-rc.1"
+twilight-cache-inmemory = "=0.16.0-rc.1"
+twilight-gateway = "=0.16.0-rc.1"
+twilight-http = "=0.16.0-rc.1"
+twilight-model = "=0.16.0-rc.1"
+twilight-mention = "=0.16.0-rc.1"
+twilight-util = { version = "=0.16.0-rc.1", features = ["builder"] }
+twilight-validate = "=0.16.0-rc.1"
 
 # user rank images
 image = "0.25"
