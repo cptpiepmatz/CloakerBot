@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::fmt::{Debug, Formatter};
 use std::io::Cursor;
 use std::ops::Deref;

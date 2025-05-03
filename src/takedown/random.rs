@@ -25,7 +25,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
         }
 
         let schedule = random_takedown_schedule.entry(*guild_id).or_insert_with(|| {
-            let in_hours = rng.gen_range(config_random.min..=config_random.max);
+            let in_hours = rng.random_range(config_random.min..=config_random.max);
             let in_hours = Duration::from_secs_f64(in_hours * 3600.0);
             Local::now() + in_hours
         });

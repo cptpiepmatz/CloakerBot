@@ -338,7 +338,7 @@ async fn get_call(
 #[inline]
 fn choose_sounds(rng: &mut impl Rng) -> ((&Sound, f64), &Sound, &Sound) {
     let notification_sound = sounds::WULULULULU.deref();
-    let duration_multiplier = rng.gen_range(0.3..0.8);
+    let duration_multiplier = rng.random_range(0.3..0.8);
 
     let takedown_sound = sounds::TAKEDOWNS.choose(rng).expect("takedown sounds are not empty");
 
