@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::sync::LazyLock;
 
 use serde_json::json;
+use twilight_cache_inmemory::model::message;
 use twilight_http::request::RequestBuilder;
 use twilight_http::request::application::interaction::CreateResponse;
 use twilight_http::routing::Route;
@@ -26,6 +27,7 @@ use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::interaction::message_component::button::config::ConfigUnsetButton;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
 use crate::interaction::{application_command, message_component};
 use crate::{BOT_USER_ID, STATE};
@@ -132,20 +134,12 @@ pub async fn action(
     };
 
     let role_select = message_component::role_select::immunity::component(variant, current);
-    let button = message_component::button::config::component(match variant {
-        ImmunitySelect::General => {
-            message_component::button::config::ConfigUnsetButton::ImmunityGeneral
-        }
-        ImmunitySelect::Random => {
-            message_component::button::config::ConfigUnsetButton::ImmunityRandom
-        }
-        ImmunitySelect::GeneralSilent => {
-            message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent
-        }
-        ImmunitySelect::RandomSilent => {
-            message_component::button::config::ConfigUnsetButton::ImmunityRandomSilent
-        }
-    });
+    let button = match variant {
+        ImmunitySelect::General => ConfigUnsetButton::ImmunityGeneral.component(),
+        ImmunitySelect::Random => ConfigUnsetButton::ImmunityRandom.component(),
+        ImmunitySelect::GeneralSilent => ConfigUnsetButton::ImmunityGeneralSilent.component(),
+        ImmunitySelect::RandomSilent => ConfigUnsetButton::ImmunityRandomSilent.component()
+    };
 
     use crate::assets::replies::config::immunity;
     let bot = BOT_USER_ID.mention();

@@ -28,11 +28,11 @@ use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
 use crate::{APPLICATION_ID, STATE};
 
-mod cloaker;
-mod config;
-mod counter;
-mod help;
-mod ranks;
+pub(super) mod cloaker;
+pub(super) mod config;
+pub(super) mod counter;
+pub(super) mod help;
+pub(super) mod ranks;
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),

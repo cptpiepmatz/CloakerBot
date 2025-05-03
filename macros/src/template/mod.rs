@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use heck::ToSnakeCase;
+use heck::{ToShoutySnakeCase, ToSnakeCase};
 use proc_macro2::{Ident as Ident2, Span as Span2, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use regex::Regex;
@@ -57,37 +57,68 @@ fn codegen_fn(
         use twilight_mention::fmt::{MentionFormat, CommandMention};
         use twilight_model::id::{Id, marker::UserMarker};
         use std::fmt::Display;
+        use std::convert::AsRef;
+        use crate::util::template_format::{Template, TemplateFormat};
     };
 
     struct Mapping {
         sort_key: String,
         ident: Ident2,
         ty: TokenStream2,
-        op: TokenStream2
+        op: TokenStream2,
+        generic: Option<TokenStream2>,
+        constraints: Vec<TokenStream2>
     }
 
     let mut mappings: Vec<Mapping> = placeholders
         .iter()
         .map(|(name, ident)| {
+            let generic = format_ident!("{}", ident.to_shouty_snake_case());
             let ident = format_ident!("{}", ident);
             match name.as_str() {
                 "CloakerBot" => Mapping {
-                    sort_key: "__cloaker_bot".to_string(),
+                    sort_key: "____cloaker_bot".to_string(),
                     ident: ident.clone(),
                     ty: quote!(impl Borrow<MentionFormat<Id<UserMarker>>>),
-                    op: quote!(let #ident = #ident.borrow();)
+                    op: quote!(let #ident = #ident.borrow();),
+                    generic: None,
+                    constraints: vec![]
                 },
-                s if s.starts_with("/") => Mapping {
-                    sort_key: format!("_{}", ident),
+                s if s.starts_with('/') => Mapping {
+                    sort_key: format!("___{}", ident),
                     ident: ident.clone(),
                     ty: quote!(impl Borrow<MentionFormat<CommandMention>>),
-                    op: quote!(let #ident = #ident.borrow();)
+                    op: quote!(let #ident = #ident.borrow();),
+                    generic: None,
+                    constraints: vec![]
+                },
+                s if s.starts_with('#') => Mapping {
+                    sort_key: format!("__{}", ident),
+                    ident: ident.clone(),
+                    ty: quote!(#generic),
+                    op: quote!(let #ident = #ident.template();),
+                    generic: Some(quote!(#generic)),
+                    constraints: vec![
+                        quote!(#generic: Template),
+                        quote!(for<'t> TemplateFormat<'t, #generic>: Display),
+                    ]
+                },
+                "quote" => Mapping {
+                    // last every time
+                    sort_key: "quote".to_string(),
+                    ident: ident.clone(),
+                    ty: quote!(impl AsRef<str>),
+                    op: quote!(let #ident = #ident.as_ref();),
+                    generic: None,
+                    constraints: vec![]
                 },
                 _ => Mapping {
-                    sort_key: ident.to_string(),
+                    sort_key: format!("_{}", ident),
                     ident: ident.clone(),
                     ty: quote!(impl Display),
-                    op: quote!()
+                    op: quote!(),
+                    generic: None,
+                    constraints: vec![]
                 }
             }
         })
@@ -106,11 +137,17 @@ fn codegen_fn(
         }
     };
 
+    let generics = mappings.iter().filter_map(|Mapping { generic, .. }| generic.as_ref());
+
+    let constraints = mappings.iter().map(|Mapping { constraints, .. }| constraints).flatten();
+
     quote! {
         mod #fn_name {
             #imports
 
-            pub fn #fn_name(#(#args),*) -> Cow<'static, str> {
+            pub fn #fn_name<#(#generics),*>(#(#args),*) -> Cow<'static, str>
+                where #(#constraints),*
+            {
                 #body
             }
         }

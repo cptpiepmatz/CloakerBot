@@ -149,9 +149,11 @@ Random takedowns are **disabled**.
 enabled = """
 ## 💫 Random Takedowns Enabled
 Random takedowns are **enabled**.
-Takedowns are checked in an interval between **{min}** hours and **{max}** hours.
+Takedowns are checked in an interval between **{#min}** hours and **{#max}** \
+hours.
 
-For more info use {/help command:config random}.
+With {/help command:config random} and the `min` and `max` options you can \
+modify the time interval.
 
 -# > {quote}
 """

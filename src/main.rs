@@ -142,8 +142,6 @@ async fn main() {
     Sound::load_eagerly();
     COMMANDS_REGISTER.deref();
 
-    return;
-
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
     });

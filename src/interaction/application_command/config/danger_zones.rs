@@ -59,9 +59,7 @@ pub async fn action(
         .unwrap_or_default();
 
     let channel_select = message_component::channel_select::danger_zones::component(&current);
-    let button = message_component::button::config::component(
-        message_component::button::config::ConfigUnsetButton::DangerZones
-    );
+    let button = message_component::button::config::ConfigUnsetButton::DangerZones.component();
 
     let payload = json!({
         "type": InteractionResponseType::ChannelMessageWithSource,

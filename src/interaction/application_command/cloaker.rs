@@ -127,7 +127,7 @@ pub async fn action(
     })
     .await
     {
-        Ok(TakedownSuccess { .. }) => cloaker::success("TODO: quote", command.target_id.mention()),
+        Ok(TakedownSuccess { .. }) => cloaker::success(command.target_id.mention(), "TODO: quote"),
         Err(TakedownFail::Countered { by_id }) => {
             cloaker::countered(by_id.mention(), "TODO: quote")
         }

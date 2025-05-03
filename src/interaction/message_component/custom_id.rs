@@ -19,7 +19,10 @@ pub enum MessageComponentCustomId {
     ConfigUnsetImmunityGeneralSilent,
     ConfigUnsetImmunityRandomSilent,
     ConfigUnsetLogChannel,
-    ConfigUnsetRandom,
+
+    // TODO: disable enable option application_command
+    ConfigEnableRandom,
+    ConfigDisableRandom,
 
     DangerZonesSelect,
     ImmunityGeneralSelect,
@@ -27,6 +30,13 @@ pub enum MessageComponentCustomId {
     ImmunityGeneralSilentSelect,
     ImmunityRandomSilentSelect,
     LogChannelSelect
+}
+
+impl ToString for MessageComponentCustomId {
+    fn to_string(&self) -> String {
+        let s: &'static str = self.into();
+        s.into()
+    }
 }
 
 pub struct ParseMessageComponentCustomIdError {

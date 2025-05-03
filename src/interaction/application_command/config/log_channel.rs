@@ -65,9 +65,7 @@ pub async fn action(
     let current = guild_config.get(&guild_id).map(|config| config.log_channel).flatten();
 
     let channel_select = message_component::channel_select::log_channel::component(current);
-    let button = message_component::button::config::component(
-        message_component::button::config::ConfigUnsetButton::LogChannel
-    );
+    let button = message_component::button::config::ConfigUnsetButton::LogChannel.component();
 
     let payload = json!({
         "type": InteractionResponseType::ChannelMessageWithSource,

@@ -8,9 +8,10 @@ use crate::interaction::message_component::channel_select::log_channel::LogChann
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
 
+mod custom_id;
+
 pub mod button;
 pub mod channel_select;
-mod custom_id;
 pub mod role_select;
 
 #[derive(Debug, From)]
@@ -35,23 +36,24 @@ pub async fn handle_message_component(
     };
 
     let custom_id: MessageComponentCustomId = data.custom_id.parse()?;
-    use MessageComponentCustomId::*;
+    use MessageComponentCustomId as MCCId;
     match custom_id {
-        ConfigUnsetDangerZones |
-        ConfigUnsetImmunityGeneral |
-        ConfigUnsetImmunityRandom |
-        ConfigUnsetImmunityGeneralSilent |
-        ConfigUnsetImmunityRandomSilent |
-        ConfigUnsetLogChannel |
-        ConfigUnsetRandom => button::config::action(interaction, custom_id).await,
+        MCCId::ConfigUnsetDangerZones |
+        MCCId::ConfigUnsetImmunityGeneral |
+        MCCId::ConfigUnsetImmunityRandom |
+        MCCId::ConfigUnsetImmunityGeneralSilent |
+        MCCId::ConfigUnsetImmunityRandomSilent |
+        MCCId::ConfigUnsetLogChannel |
+        MCCId::ConfigEnableRandom |
+        MCCId::ConfigDisableRandom => button::config::action(interaction, custom_id).await,
 
-        DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await,
-        ImmunityGeneralSelect |
-        ImmunityRandomSelect |
-        ImmunityGeneralSilentSelect |
-        ImmunityRandomSilentSelect => {
+        MCCId::DangerZonesSelect => channel_select::danger_zones::action(interaction, data).await,
+        MCCId::ImmunityGeneralSelect |
+        MCCId::ImmunityRandomSelect |
+        MCCId::ImmunityGeneralSilentSelect |
+        MCCId::ImmunityRandomSilentSelect => {
             role_select::immunity::action(interaction, custom_id, data).await
         }
-        LogChannelSelect => channel_select::log_channel::action(interaction, data).await
+        MCCId::LogChannelSelect => channel_select::log_channel::action(interaction, data).await
     }
 }
