@@ -18,7 +18,6 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 
 use crate::data::config::GuildConfig;
-use crate::data::stats::GuildStats;
 use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
 use crate::util::ClientError;
@@ -97,8 +96,8 @@ pub async fn takedown(
     let guild_configs = STATE.guild_configs.read().await;
     let config = GuildConfig::default();
     let config = guild_configs.get(&guild_id).unwrap_or(&config);
-    let mut guild_stats = STATE.guild_stats.write().await;
-    let stats = guild_stats.entry(guild_id).or_default();
+    let mut guild_stats = STATE.stats.write().await;
+    let stats = guild_stats.takedowns.entry(guild_id).or_default();
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;

@@ -13,7 +13,6 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::data::stats;
-use crate::data::stats::GuildStats;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -84,13 +83,17 @@ pub async fn action(
 
     let user_id = command.user_id.unwrap_or(author_id);
 
+    // TODO: run all the stats checking code in spawn_blocking
+
     // let guild_stats = STATE.guild_stats.read().await;
     // let default = GuildStats::default();
     // let this_guild_stats = guild_stats.get(&guild_id).unwrap_or(&default);
-    // let global_takedown_count = stats::global_takedown_count(guild_stats.values());
+    // let global_takedown_count =
+    // stats::global_takedown_count(guild_stats.values());
     // let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> =
-    //     global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id, count)).collect();
-    // global_takedown_count_ranked.sort_by(|(_, a), (_, b)| b.cmp(a));
+    //     global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id,
+    // count)).collect(); global_takedown_count_ranked.sort_by(|(_, a), (_, b)|
+    // b.cmp(a));
 
     // let local_takedown_count: u64 = this_guild_stats.takedowns.count(user_id);
     // let global_takedown_count: u64 =

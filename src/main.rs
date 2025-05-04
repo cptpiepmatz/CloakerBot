@@ -27,7 +27,7 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use crate::data::config::PersistentGuildConfig;
 use crate::data::owner_notifications::PersistentOwnerNotifications;
 use crate::data::random::PersistentTakedownSchedule;
-use crate::data::stats::PersistentGuildStats;
+use crate::data::stats::PersistentAppStats;
 use crate::data::{PersistentData, handle_persist_data};
 use crate::interaction::{HandleInteractionError, handle_interaction};
 use crate::sync::{KeyLock, VolatileMap};
@@ -70,7 +70,7 @@ struct State {
     shard: Eject<Shard>,
     client: Client,
     guild_configs: PersistentData<PersistentGuildConfig>,
-    guild_stats: PersistentData<PersistentGuildStats>,
+    stats: PersistentData<PersistentAppStats>,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
     /// Planned takedowns per guild.
@@ -121,7 +121,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         shard,
         client,
         guild_configs,
-        guild_stats,
+        stats: guild_stats,
         takedown_locks,
         planned_takedowns,
         random_takedown_schedule,

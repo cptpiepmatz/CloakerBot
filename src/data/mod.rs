@@ -131,7 +131,7 @@ pub enum LoadPersistentDataError {
 
 pub async fn handle_persist_data() -> io::Result<()> {
     STATE.guild_configs.store().await?;
-    STATE.guild_stats.store().await?;
+    STATE.stats.store().await?;
     STATE.random_takedown_schedule.store().await?;
     STATE.owner_notifications.store().await?;
 
