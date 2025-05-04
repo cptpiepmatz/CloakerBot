@@ -125,7 +125,8 @@ pub async fn takedown(
 
     // TODO: track more stats
     if let (Ok(_), TakedownType::Called { caller_id }) = (&takedown_res, kind) {
-        stats.takedowns.increment(caller_id, target_id);
+        // FIXME: this tracking
+        // stats.takedowns.increment(caller_id, target_id);
     }
 
     // leave the channel after everything that happened, we cannot do a thing if it

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::ops::DerefMut;
+use std::{cmp, u64};
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -7,65 +9,190 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 use crate::data::persist::Persist;
+use crate::util::log::warn;
 
 /// Statistics per guild.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GuildStats {
-    /// Statistics about the takedowns on a guild.
-    pub takedowns: GuildTakedowns
+    /// Statistics about the takedowns within a guild.
+    pub takedowns: GuildTakedowns,
 }
 
+/// Statistics about takedowns in a guild.
+///
+/// This structure stores takedown statistics for each member of the guild.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GuildTakedowns(HashMap<Id<UserMarker>, MemberTakedowns>);
 
+/// Statistics about the takedowns of a member of a guild
+///
+/// Across multiple guilds, a user might have multiple of these entries.
+/// Random takedowns are stored by the user id of the bot.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct MemberTakedowns(HashMap<Id<UserMarker>, u64>);
-
-impl GuildTakedowns {
-    /// Increment the takedown counter for the pair of caller and target.
+pub struct MemberTakedowns {
+    /// Stores successful takedowns.
+    takedowns: HashMap<Id<UserMarker>, u64>,
+    /// Stores successful counters.
     ///
-    /// Returns the counter after incrementing it.
-    pub fn increment(&mut self, caller_id: Id<UserMarker>, target_id: Id<UserMarker>) -> u64 {
-        self.0.entry(caller_id).or_default().increment(target_id)
-    }
-
-    pub fn count(&self, caller_id: Id<UserMarker>) -> u64 {
-        self.0.get(&caller_id).map(|entry| entry.count()).unwrap_or_default()
-    }
-
-    pub fn get(&self, caller_id: Id<UserMarker>, target_id: Id<UserMarker>) -> u64 {
-        self.0.get(&caller_id).map(|entry| entry.get(target_id)).unwrap_or_default()
-    }
-
-    pub fn ranked(
-        &self
-    ) -> impl Iterator<Item = (Id<UserMarker>, impl Iterator<Item = (Id<UserMarker>, u64)>)> {
-        self.0
-            .iter()
-            .map(|(id, takedowns)| (*id, takedowns.ranked(), takedowns.count()))
-            .sorted_by(|(_, _, a), (_, _, b)| b.cmp(a))
-            .map(|(id, iter, _)| (id, iter))
-    }
+    /// A counter is a successful takedown action in response to an opponent's takedown.
+    counters: HashMap<Id<UserMarker>, u64>,
+    /// Stores the number of successful parries.
+    ///
+    /// A parry is a successful defense against a takedown where the return action did not result
+    /// in a takedown.
+    parries: u64,
 }
 
-impl MemberTakedowns {
-    pub fn increment(&mut self, target_id: Id<UserMarker>) -> u64 {
-        let entry = self.0.entry(target_id).or_default();
-        *entry = *entry + 1;
-        *entry
+impl GuildTakedowns {
+    /// Increments the takedown count for a caller targeting a specific victim.
+    ///
+    /// This method records a successful takedown initiated by the `caller_id` against the 
+    /// `target_id`. 
+    /// The takedown count for the target is incremented by 1.
+    ///
+    /// # Parameters
+    /// - `caller_id`: The ID of the user initiating the takedown.
+    /// - `target_id`: The ID of the user being taken down.
+    ///
+    /// # Returns
+    /// The updated number of successful takedowns initiated by the `caller_id` against the 
+    /// `target_id`.
+    pub fn increment_takedown(
+        &mut self,
+        caller_id: Id<UserMarker>,
+        target_id: Id<UserMarker>,
+    ) -> u64 {
+        let takedowns =
+            self.0.entry(caller_id).or_default().takedowns.entry(target_id).or_default();
+        *takedowns += 1;
+        *takedowns
     }
 
-    pub fn count(&self) -> u64 {
-        self.0.values().sum()
+    /// Increments the counter count for a member responding to an attack.
+    ///
+    /// This method records a successful counter performed by the `counterattacker_id` against the 
+    /// `attacker_id`. 
+    /// The counter count for the counterattacker is incremented by 1.
+    ///
+    /// # Parameters
+    /// - `counterattacker_id`: The ID of the user performing the counter.
+    /// - `attacker_id`: The ID of the user being countered.
+    ///
+    /// # Returns
+    /// The updated number of successful counters performed by the `counterattacker_id` against the 
+    /// `attacker_id`.
+    pub fn increment_counter(
+        &mut self,
+        counterattacker_id: Id<UserMarker>,
+        attacker_id: Id<UserMarker>,
+    ) -> u64 {
+        let counters =
+            self.0.entry(counterattacker_id).or_default().counters.entry(attacker_id).or_default();
+        *counters += 1;
+        *counters
     }
 
-    pub fn get(&self, target_id: Id<UserMarker>) -> u64 {
-        self.0.get(&target_id).copied().unwrap_or_default()
+    /// Increments the parry count for a member successfully defending a takedown.
+    ///
+    /// This method records a successful parry performed by the `parrier_id`. 
+    /// The parry count for the member is incremented by 1.
+    ///
+    /// # Parameters
+    /// - `parrier_id`: The ID of the user performing the parry.
+    ///
+    /// # Returns
+    /// The updated number of successful parries performed by the `parrier_id`.
+    pub fn increment_parry(&mut self, parrier_id: Id<UserMarker>) -> u64 {
+        let parries = &mut self.0.entry(parrier_id).or_default().parries;
+        *parries += 1;
+        *parries
     }
 
-    /// An iterator that ranks the takedown targets by their takedown count.
-    pub fn ranked(&self) -> impl Iterator<Item = (Id<UserMarker>, u64)> {
-        self.0.iter().map(|(id, count)| (*id, *count)).sorted_by(|(_, a), (_, b)| b.cmp(a))
+    /// Returns an iterator over the punisher rank positions.
+    ///
+    /// The punisher rank indicates the number of successful takedowns initiated by each member. 
+    /// This iterator provides the rank, user ID, and the number of successful takedowns initiated 
+    /// by the user.
+    ///
+    /// The rank positions may have duplicates if multiple members share the same number of 
+    /// successful takedowns.
+    ///
+    /// # Returns
+    /// An iterator of tuples, where each tuple contains:
+    /// - The rank position
+    /// - The user ID
+    /// - The score (number of successful takedowns initiated)
+    pub fn punisher_ranks(&self) -> impl Iterator<Item = (u64, (Id<UserMarker>, u64))> {
+        let mut takedown_counts: Vec<(Id<UserMarker>, u64)> = self
+            .0
+            .iter()
+            .map(|(uid, MemberTakedowns { takedowns, .. })| (*uid, takedowns.values().sum()))
+            .collect();
+        takedown_counts.sort_by(|(_, a), (_, b)| b.cmp(a));
+
+        RankIter::new(takedown_counts.into_iter(), |(_, score)| *score)
+    }
+
+    /// Returns an iterator over the victim rank positions.
+    ///
+    /// The victim rank indicates the number of times a user has been taken down, including both 
+    /// direct takedowns and counters. 
+    /// This iterator provides the rank, user ID, and the number of times the user has been taken 
+    /// down.
+    ///
+    /// The rank positions may have duplicates if multiple users share the same number of takedowns.
+    ///
+    /// # Returns
+    /// An iterator of tuples, where each tuple contains:
+    /// - The rank position
+    /// - The user ID
+    /// - The score (number of times the user was taken down)
+    pub fn victim_ranks(&self) -> impl Iterator<Item = (u64, (Id<UserMarker>, u64))> {
+        let mut takedown_counts = HashMap::<Id<UserMarker>, u64>::with_capacity(self.0.len());
+        for (_, member_takedowns) in self.0.iter() {
+            for (&victim_id, &value) in member_takedowns.takedowns.iter() {
+                let count = takedown_counts.entry(victim_id).or_default();
+                *count += value;
+            }
+
+            for (&countered_id, &value) in member_takedowns.counters.iter() {
+                let count = takedown_counts.entry(countered_id).or_default();
+                *count += value;
+            }
+        }
+
+        let mut takedown_counts = Vec::from_iter(takedown_counts);
+        takedown_counts.sort_by(|(_, a), (_, b)| b.cmp(a));
+
+        RankIter::new(takedown_counts.into_iter(), |(_, score)| *score)
+    }
+
+    /// Returns an iterator over the counter rank positions.
+    ///
+    /// The counter rank indicates the number of times a user successfully countered or parried an 
+    /// incoming takedown. 
+    /// This iterator provides the rank, user ID, and the number of successful counters and parries 
+    /// performed by the user.
+    ///
+    /// The rank positions may have duplicates if multiple users share the same number of successful 
+    /// counters and parries.
+    ///
+    /// # Returns
+    /// An iterator of tuples, where each tuple contains:
+    /// - The rank position
+    /// - The user ID
+    /// - The score (number of successful counters and parries)
+    pub fn counter_ranks(&self) -> impl Iterator<Item = (u64, (Id<UserMarker>, u64))> {
+        let mut counter_counts: Vec<(Id<UserMarker>, u64)> = self
+            .0
+            .iter()
+            .map(|(&uid, MemberTakedowns { counters, parries, .. })| {
+                (uid, counters.values().sum::<u64>() + parries)
+            })
+            .collect();
+        counter_counts.sort_by(|(_, a), (_, b)| b.cmp(a));
+
+        RankIter::new(counter_counts.into_iter(), |(_, score)| *score)
     }
 }
 
@@ -76,104 +203,94 @@ impl Persist for PersistentGuildStats {
     const DATA_PATH: &'static str = "./data/guild_stats.json";
 }
 
-pub fn global_takedown_count<'s, I>(stats: I) -> HashMap<Id<UserMarker>, u64>
+struct RankIter<T, I, F>
 where
-    I: Iterator<Item = &'s GuildStats>
+    I: Iterator<Item = T>,
+    F: Fn(&T) -> u64,
 {
-    let mut takedown_count: HashMap<Id<UserMarker>, u64> = HashMap::new();
+    iter: I,
+    score_fn: F,
 
-    for stats in stats {
-        let guild_takedowns = &stats.takedowns;
-        for &caller_id in guild_takedowns.0.keys() {
-            *takedown_count.entry(caller_id).or_default().deref_mut() +=
-                guild_takedowns.count(caller_id);
-        }
+    prev_score: u64,
+    curr_rank: u64,
+}
+
+impl<T, I, F> RankIter<T, I, F>
+where
+    I: Iterator<Item = T>,
+    F: Fn(&T) -> u64,
+{
+    pub fn new(iter: I, score_fn: F) -> Self {
+        Self { iter, score_fn, prev_score: u64::MAX, curr_rank: 0 }
     }
+}
 
-    takedown_count
+impl<T, I, F> Iterator for RankIter<T, I, F>
+where
+    I: Iterator<Item = T>,
+    F: Fn(&T) -> u64,
+{
+    type Item = (u64, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.iter.next()?;
+
+        let score = (self.score_fn)(&next);
+        match self.prev_score.cmp(&score) {
+            cmp::Ordering::Less => warn!(format!(
+                "received a higher score ({}) after a lower one ({}); input may not be sorted",
+                score, self.prev_score
+            )),
+            cmp::Ordering::Greater => {
+                // strictly lower score → move to next rank
+                self.prev_score = score;
+                self.curr_rank += 1;
+            }
+            cmp::Ordering::Equal => {
+                // tie → same rank, nothing changes
+            }
+        }
+
+        // now updated if the new value is smaller
+        let rank = self.curr_rank;
+        Some((rank, next))
+    }
 }
 
 #[cfg(test)]
-mod tests {
-    use twilight_model::id::marker::UserMarker;
-
+mod rank_iter_tests {
     use super::*;
 
-    const TARGET_ID: Id<UserMarker> = Id::new(123);
-    const CALLER_ID: Id<UserMarker> = Id::new(456);
-
-    const USER_1: Id<UserMarker> = Id::new(1);
-    const USER_2: Id<UserMarker> = Id::new(2);
-    const USER_3: Id<UserMarker> = Id::new(3);
-    const USER_4: Id<UserMarker> = Id::new(4);
-    const USER_5: Id<UserMarker> = Id::new(5);
-
     #[test]
-    fn increment_works() {
-        let mut stats = GuildStats::default();
-        assert!(stats.takedowns.0.get(&CALLER_ID).is_none());
-        assert_eq!(stats.takedowns.increment(CALLER_ID, TARGET_ID), 1);
-        assert_eq!(stats.takedowns.0.get(&CALLER_ID).unwrap().0.get(&TARGET_ID).unwrap(), &1);
-    }
-
-    fn test_data() -> GuildTakedowns {
-        let mut guild_takedowns = GuildTakedowns::default();
-
-        macro_rules! takedowns {
-            [$($caller:ident -> $target:ident = $count:literal),+] => {$(
-                for _ in 0..$count {
-                    guild_takedowns.increment($caller, $target);
-                }
-            )+};
-        }
-
-        takedowns![
-            USER_1 -> USER_2 = 4,
-            USER_1 -> USER_3 = 7,
-            USER_2 -> USER_1 = 5,
-            USER_2 -> USER_3 = 2,
-            USER_3 -> USER_4 = 3,
-            USER_4 -> USER_5 = 8,
-            USER_5 -> USER_2 = 1
-        ];
-
-        guild_takedowns
+    fn basic_descending_scores() {
+        let scores = vec![100, 90, 90, 80];
+        let result: Vec<_> = RankIter::new(scores.into_iter(), |&x| x).collect();
+        let expected = vec![(1, 100), (2, 90), (2, 90), (3, 80)];
+        assert_eq!(result, expected);
     }
 
     #[test]
-    fn count_works() {
-        let guild_takedowns = test_data();
-        assert_eq!(guild_takedowns.count(Id::new(999)), 0);
-        assert_eq!(guild_takedowns.count(USER_1), 4 + 7);
-        assert_eq!(guild_takedowns.count(USER_2), 5 + 2);
-        assert_eq!(guild_takedowns.count(USER_3), 3);
-        assert_eq!(guild_takedowns.count(USER_4), 8);
-        assert_eq!(guild_takedowns.count(USER_5), 1);
+    fn all_ties() {
+        let scores = vec![50, 50, 50];
+        let result: Vec<_> = RankIter::new(scores.into_iter(), |&x| x).collect();
+        let expected = vec![(1, 50), (1, 50), (1, 50)];
+        assert_eq!(result, expected);
     }
 
     #[test]
-    fn ranked_works() {
-        let guild_takedowns = test_data();
-        let mut ranked = guild_takedowns.ranked().flat_map(|(caller_id, targets)| {
-            targets.map(move |(target_id, count)| (caller_id, target_id, count))
-        });
+    fn unsorted_input_keeps_first_rank() {
+        // warns on higher scores after lower ones, but still returns rank=1 always
+        let scores = vec![1, 2, 3];
+        let result: Vec<_> = RankIter::new(scores.into_iter(), |&x| x).collect();
+        let expected = vec![(1, 1), (1, 2), (1, 3)];
+        assert_eq!(result, expected);
+    }
 
-        macro_rules! ranked {
-            [$($caller:ident -> $target:ident = $count:literal),+] => {$(
-                assert_eq!(ranked.next(), Some(($caller, $target, $count)));
-            )+}
-        }
-
-        ranked![
-            USER_1 -> USER_3 = 7,
-            USER_1 -> USER_2 = 4,
-            USER_4 -> USER_5 = 8,
-            USER_2 -> USER_1 = 5,
-            USER_2 -> USER_3 = 2,
-            USER_3 -> USER_4 = 3,
-            USER_5 -> USER_2 = 1
-        ];
-
-        assert!(ranked.next().is_none());
+    #[test]
+    fn empty_iterator() {
+        let scores: Vec<u64> = vec![];
+        let result: Vec<_> = RankIter::new(scores.into_iter(), |&x| x).collect();
+        let expected: Vec<(u64, u64)> = vec![];
+        assert_eq!(result, expected);
     }
 }

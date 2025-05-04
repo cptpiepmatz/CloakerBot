@@ -84,31 +84,31 @@ pub async fn action(
 
     let user_id = command.user_id.unwrap_or(author_id);
 
-    let guild_stats = STATE.guild_stats.read().await;
-    let default = GuildStats::default();
-    let this_guild_stats = guild_stats.get(&guild_id).unwrap_or(&default);
-    let global_takedown_count = stats::global_takedown_count(guild_stats.values());
-    let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> =
-        global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id, count)).collect();
-    global_takedown_count_ranked.sort_by(|(_, a), (_, b)| b.cmp(a));
+    // let guild_stats = STATE.guild_stats.read().await;
+    // let default = GuildStats::default();
+    // let this_guild_stats = guild_stats.get(&guild_id).unwrap_or(&default);
+    // let global_takedown_count = stats::global_takedown_count(guild_stats.values());
+    // let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> =
+    //     global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id, count)).collect();
+    // global_takedown_count_ranked.sort_by(|(_, a), (_, b)| b.cmp(a));
 
-    let local_takedown_count: u64 = this_guild_stats.takedowns.count(user_id);
-    let global_takedown_count: u64 =
-        global_takedown_count.get(&user_id).copied().unwrap_or_default();
+    // let local_takedown_count: u64 = this_guild_stats.takedowns.count(user_id);
+    // let global_takedown_count: u64 =
+    //     global_takedown_count.get(&user_id).copied().unwrap_or_default();
 
-    let local_rank: Option<usize> = this_guild_stats
-        .takedowns
-        .ranked()
-        .enumerate()
-        .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
-        .find(|(_, caller_id)| *caller_id == user_id)
-        .map(|(pos, _)| pos);
-    let global_rank: Option<usize> = global_takedown_count_ranked
-        .iter()
-        .enumerate()
-        .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
-        .find(|(_, caller_id)| **caller_id == user_id)
-        .map(|(pos, _)| pos);
+    // let local_rank: Option<usize> = this_guild_stats
+    //     .takedowns
+    //     .ranked()
+    //     .enumerate()
+    //     .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
+    //     .find(|(_, caller_id)| *caller_id == user_id)
+    //     .map(|(pos, _)| pos);
+    // let global_rank: Option<usize> = global_takedown_count_ranked
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
+    //     .find(|(_, caller_id)| **caller_id == user_id)
+    //     .map(|(pos, _)| pos);
 
     // let content = match takedown::counter::counter(guild_id, author_id) {
     //     Ok(target_id) =>
