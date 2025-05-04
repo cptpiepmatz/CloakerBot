@@ -122,6 +122,8 @@ impl GuildTakedowns {
     ///
     /// The rank positions may have duplicates if multiple members share the
     /// same number of successful takedowns.
+    /// 
+    /// Only members with at least one takedown (score > 0) appear here.
     ///
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
@@ -150,6 +152,8 @@ impl GuildTakedowns {
     /// The rank positions may have duplicates if multiple users share the same
     /// number of takedowns.
     ///
+    /// Only users with at least one takedown or counter (score > 0) appear here.
+    /// 
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
     /// - The rank position
@@ -185,6 +189,8 @@ impl GuildTakedowns {
     /// The rank positions may have duplicates if multiple users share the same
     /// number of successful counters and parries.
     ///
+    /// Only users with at least one counter or parry (score > 0) appear here.
+    /// 
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
     /// - The rank position
@@ -214,6 +220,8 @@ impl AppTakedowns {
     ///
     /// The rank positions may have duplicates if multiple members share the
     /// same number of successful takedowns.
+    /// 
+    /// Only users with at least one takedown (score > 0) appear here.
     ///
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
@@ -245,6 +253,8 @@ impl AppTakedowns {
     ///
     /// The rank positions may have duplicates if multiple users share the same
     /// number of takedowns.
+    /// 
+    /// Only users with at least one takedown or counter (score > 0) appear here.
     ///
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
@@ -284,6 +294,8 @@ impl AppTakedowns {
     /// The rank positions may have duplicates if multiple users share the same
     /// number of successful counters and parries.
     ///
+    /// Only users with at least one counter or parry (score > 0) appear here.
+    /// 
     /// # Returns
     /// An iterator of tuples, where each tuple contains:
     /// - The rank position
