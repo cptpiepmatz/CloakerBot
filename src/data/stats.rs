@@ -127,6 +127,7 @@ impl GuildTakedowns {
             .0
             .iter()
             .map(|(uid, MemberTakedowns { takedowns, .. })| (*uid, takedowns.values().sum()))
+            .filter(|(_, count)| *count > 0)
             .collect();
         takedown_counts.sort_by(|(_, a), (_, b)| b.cmp(a));
 
@@ -189,6 +190,7 @@ impl GuildTakedowns {
             .map(|(&uid, MemberTakedowns { counters, parries, .. })| {
                 (uid, counters.values().sum::<u64>() + parries)
             })
+            .filter(|(_, score)| *score > 0)
             .collect();
         counter_counts.sort_by(|(_, a), (_, b)| b.cmp(a));
 
@@ -201,6 +203,133 @@ impl Persist for PersistentGuildStats {
     type Item = Self;
 
     const DATA_PATH: &'static str = "./data/guild_stats.json";
+}
+
+#[cfg(test)]
+mod stats_tests {
+    use super::*;
+    use twilight_model::id::Id;
+    use twilight_model::id::marker::UserMarker;
+
+    #[test]
+    fn test_increment_methods() {
+        let mut gt = GuildTakedowns::default();
+        let u1 = Id::<UserMarker>::new(1);
+        let u2 = Id::new(2);
+        let u3 = Id::new(3);
+
+        // u1 takes down u2 twice, then u3 once
+        assert_eq!(gt.increment_takedown(u1, u2), 1);
+        assert_eq!(gt.increment_takedown(u1, u2), 2);
+        assert_eq!(gt.increment_takedown(u1, u3), 1);
+
+        // u3 takes down u2 once
+        assert_eq!(gt.increment_takedown(u3, u2), 1);
+
+        // u2 counters u1 twice
+        assert_eq!(gt.increment_counter(u2, u1), 1);
+        assert_eq!(gt.increment_counter(u2, u1), 2);
+
+        // u3 parries twice, u1 parries once
+        assert_eq!(gt.increment_parry(u3), 1);
+        assert_eq!(gt.increment_parry(u3), 2);
+        assert_eq!(gt.increment_parry(u1), 1);
+    }
+
+    #[test]
+    fn test_punisher_ranks_multiple_users_sorted() {
+        let mut gt = GuildTakedowns::default();
+        let u1 = Id::<UserMarker>::new(1);
+        let u2 = Id::new(2);
+        let u3 = Id::new(3);
+        let u_default = Id::<UserMarker>::new(99);
+
+        // mix takedowns: u1 does 5, u2 does 3, u3 does 3
+        for _ in 0..5 { gt.increment_takedown(u1, u2); }
+        for _ in 0..3 { gt.increment_takedown(u2, u3); }
+        for _ in 0..3 { gt.increment_takedown(u3, u1); }
+
+        // insert default user with no stats
+        gt.0.entry(u_default).or_default();
+
+        let mut ranks: Vec<_> = gt.punisher_ranks().collect();
+        // sort by (rank, user id) to ensure deterministic order for ties
+        ranks.sort_by_key(|&(rank, (uid, _))| (rank, uid));
+
+        let expected = vec![
+            (1, (u1, 5)),
+            (2, (u2, 3)),
+            (2, (u3, 3)),
+        ];
+        assert_eq!(ranks, expected);
+    }
+
+    #[test]
+    fn test_victim_ranks_merging_takedowns_and_counters() {
+        let mut gt = GuildTakedowns::default();
+        let v1 = Id::<UserMarker>::new(1);
+        let v2 = Id::new(2);
+        let v3 = Id::new(3);
+        let v_default = Id::<UserMarker>::new(100);
+        let a1 = Id::<UserMarker>::new(10);
+        let a2 = Id::new(20);
+
+        // v1: 2 takedowns by a1 + 1 counter by a2 = 3 total
+        for _ in 0..2 { gt.increment_takedown(a1, v1); }
+        gt.increment_counter(a2, v1);
+
+        // v2: 1 takedown by a1 only
+        gt.increment_takedown(a1, v2);
+
+        // v3: 2 counters by a2 only
+        for _ in 0..2 { gt.increment_counter(a2, v3); }
+
+        // insert default user with no stats
+        gt.0.entry(v_default).or_default();
+
+        let mut ranks: Vec<_> = gt.victim_ranks().collect();
+        // sort by (rank, user id)
+        ranks.sort_by_key(|&(rank, (uid, _))| (rank, uid));
+        let expected = vec![
+            (1, (v1, 3)),
+            (2, (v3, 2)),
+            (3, (v2, 1)),
+        ];
+        assert_eq!(ranks, expected);
+    }
+
+    #[test]
+    fn test_counter_ranks_varied_sorted() {
+        let mut gt = GuildTakedowns::default();
+        let c1 = Id::<UserMarker>::new(1);
+        let c2 = Id::new(2);
+        let c3 = Id::new(3);
+        let c_default = Id::<UserMarker>::new(101);
+
+        // c1: 3 counters + 2 parries = 5
+        for _ in 0..3 { gt.increment_counter(c1, Id::new(99)); }
+        for _ in 0..2 { gt.increment_parry(c1); }
+
+        // c2: 2 counters + 1 parry = 3
+        for _ in 0..2 { gt.increment_counter(c2, Id::new(98)); }
+        gt.increment_parry(c2);
+
+        // c3: 1 parry = 1
+        gt.increment_parry(c3);
+
+        // insert default user with no stats
+        gt.0.entry(c_default).or_default();
+
+        let mut ranks: Vec<_> = gt.counter_ranks().collect();
+        // sort by (rank, user id)
+        ranks.sort_by_key(|&(rank, (uid, _))| (rank, uid));
+        let expected = vec![
+            (1, (c1, 5)),
+            (2, (c2, 3)),
+            (3, (c3, 1)),
+        ];
+        assert_eq!(ranks, expected);
+    }
 }
 
 struct RankIter<T, I, F>
