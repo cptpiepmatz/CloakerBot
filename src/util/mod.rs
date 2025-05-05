@@ -12,6 +12,7 @@ pub mod log;
 pub mod ref_access_map;
 pub mod template_format;
 pub mod trim;
+pub mod iterator_ext;
 
 #[derive(Debug, From)]
 pub enum ClientError {
