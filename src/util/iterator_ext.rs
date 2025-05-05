@@ -11,13 +11,6 @@ pub trait IteratorExt: Iterator {
     /// - `(Some, Some)`: An element was found, but it wasn't the last one.
     /// - `(Some, None)`: The element was found, and it was the last one.
     /// - `(None, Some)`: No element was found, but the iterator wasn't empty.
-    ///
-    /// # Examples
-    /// ```
-    /// let vec = vec![1, 2, 3];
-    /// let result = vec.into_iter().find_and_last(|&x| x == 2);
-    /// assert_eq!(result, (Some(2), Some(3)));
-    /// ```
     fn find_and_last<P>(&mut self, predicate: P) -> (Option<Self::Item>, Option<Self::Item>)
     where
         P: FnMut(&Self::Item) -> bool;
@@ -47,3 +40,37 @@ where
         (found, last)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_and_last_found_not_last() {
+        let vec = vec![1, 2, 3, 4];
+        let result = vec.into_iter().find_and_last(|&x| x == 2);
+        assert_eq!(result, (Some(2), Some(4)));
+    }
+
+    #[test]
+    fn test_find_and_last_found_is_last() {
+        let vec = vec![1, 2, 3, 4];
+        let result = vec.into_iter().find_and_last(|&x| x == 4);
+        assert_eq!(result, (Some(4), None));
+    }
+
+    #[test]
+    fn test_find_and_last_not_found() {
+        let vec = vec![1, 2, 3, 4];
+        let result = vec.into_iter().find_and_last(|&x| x == 5);
+        assert_eq!(result, (None, Some(4)));
+    }
+
+    #[test]
+    fn test_find_and_last_empty() {
+        let vec: Vec<i32> = Vec::new();
+        let result = vec.into_iter().find_and_last(|&x| x == 2);
+        assert_eq!(result, (None, None));
+    }
+}
+
