@@ -6,7 +6,9 @@ use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::ChannelType;
-use twilight_model::channel::message::component::{Button, ButtonStyle};
+use twilight_model::channel::message::component::{
+    Button, ButtonStyle, SelectDefaultValue, SelectMenu, SelectMenuType
+};
 use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
@@ -22,27 +24,20 @@ use crate::interaction::message_component::custom_id::{
 };
 use crate::{APPLICATION_ID, STATE};
 
-pub fn component(current: &[Id<ChannelMarker>]) -> Value {
-    let default_values: Vec<_> = current
-        .iter()
-        .map(|channel_id| {
-            json!({
-                "id": channel_id,
-                "type": "channel"
-            })
-        })
-        .collect();
+pub fn component(current: &[Id<ChannelMarker>]) -> Component {
+    let default_values: Vec<_> =
+        current.iter().map(|cid| SelectDefaultValue::Channel(*cid)).collect();
 
-    // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
-    json!({
-        // select menu for channel select
-        "type": 8,
-        "custom_id": MessageComponentCustomId::DangerZonesSelect,
-        "channel_types": [ChannelType::GuildVoice],
-        "min_values": 0,
-        "max_values": 25,
-        "default_values": default_values,
-        "placeholder": "⚠️ Select channels as danger zones."
+    Component::SelectMenu(SelectMenu {
+        channel_types: Some(vec![ChannelType::GuildVoice]),
+        custom_id: MessageComponentCustomId::DangerZonesSelect.to_string(),
+        default_values: Some(default_values),
+        disabled: false,
+        kind: SelectMenuType::Channel,
+        max_values: Some(25),
+        min_values: Some(0),
+        options: None,
+        placeholder: Some("⚠️ Select channels as danger zones.".to_string())
     })
 }
 

@@ -6,7 +6,9 @@ use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::ChannelType;
-use twilight_model::channel::message::component::{Button, ButtonStyle};
+use twilight_model::channel::message::component::{
+    Button, ButtonStyle, SelectDefaultValue, SelectMenu, SelectMenuType
+};
 use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
@@ -23,27 +25,20 @@ use crate::interaction::message_component::custom_id::{
 };
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
-pub fn component(current: Option<Id<ChannelMarker>>) -> Value {
-    let default_values: Vec<_> = current
-        .iter()
-        .map(|channel_id| {
-            json!({
-                "id": channel_id,
-                "type": "channel"
-            })
-        })
-        .collect();
+pub fn component(current: Option<Id<ChannelMarker>>) -> Component {
+    let default_values: Vec<_> =
+        current.into_iter().map(|channel_id| SelectDefaultValue::Channel(channel_id)).collect();
 
-    // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
-    json!({
-        // select menu for channel select
-        "type": 8,
-        "custom_id": MessageComponentCustomId::LogChannelSelect,
-        "channel_types": [ChannelType::GuildText],
-        "min_values": 0,
-        "max_values": 1,
-        "default_values": default_values,
-        "placeholder": "📝 Select a channel for logging."
+    Component::SelectMenu(SelectMenu {
+        channel_types: Some(vec![ChannelType::GuildText]),
+        custom_id: MessageComponentCustomId::LogChannelSelect.to_string(),
+        default_values: Some(default_values),
+        disabled: false,
+        kind: SelectMenuType::Channel,
+        max_values: Some(1),
+        min_values: Some(0),
+        options: None,
+        placeholder: Some("📝 Select a channel for logging.".to_string())
     })
 }
 

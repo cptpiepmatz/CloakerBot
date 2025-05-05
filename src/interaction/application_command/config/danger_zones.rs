@@ -11,9 +11,10 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::CommandDataOption;
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
-use twilight_model::http::interaction::InteractionResponseType;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
+use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::SubCommandBuilder;
 
 use crate::interaction::application_command::config::ConfigActionError;
@@ -61,36 +62,26 @@ pub async fn action(
     let channel_select = message_component::channel_select::danger_zones::component(&current);
     let button = message_component::button::config::ConfigUnsetButton::DangerZones.component();
 
-    let payload = json!({
-        "type": InteractionResponseType::ChannelMessageWithSource,
-        "data": {
-            "flags": MessageFlags::EPHEMERAL,
-            "content": crate::assets::replies::config::danger_zones::select(
-                BOT_USER_ID.mention(),
-                application_command::help::MENTION.deref()
-            ),
-            "components": [
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [channel_select]
-                },
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [button]
-                }
-            ]
-        }
-    });
+    let response_data = InteractionResponseDataBuilder::new()
+        .flags(MessageFlags::EPHEMERAL)
+        .content(crate::assets::replies::config::danger_zones::select(
+            BOT_USER_ID.mention(),
+            application_command::help::MENTION.deref()
+        ))
+        .components([
+            Component::ActionRow(ActionRow { components: vec![channel_select] }),
+            Component::ActionRow(ActionRow { components: vec![button] })
+        ])
+        .build();
 
-    let request = RequestBuilder::new(&Route::InteractionCallback {
-        interaction_id: interaction.id.into(),
-        interaction_token: interaction.token.as_str()
-    })
-    .json(&payload)
-    .use_authorization_token(true)
-    .build()?;
-
-    STATE.client.request::<CreateResponse<'_>>(request).await?;
+    STATE
+        .client
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, &interaction.token, &InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response_data)
+        })
+        .await?;
 
     Ok(())
 }

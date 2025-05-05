@@ -67,112 +67,27 @@ pub async fn action(
     let channel_select = message_component::channel_select::log_channel::component(current);
     let button = message_component::button::config::ConfigUnsetButton::LogChannel.component();
 
-    let payload = json!({
-        "type": InteractionResponseType::ChannelMessageWithSource,
-        "data": {
-            "flags": MessageFlags::EPHEMERAL,
-            "content": replies::config::log_channel::select(
-                BOT_USER_ID.mention(),
-                // TODO: get fallback log channel here
-                "[insert channel here]"
-            ),
-            "components": [
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [channel_select]
-                },
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [button]
-                }
-            ]
-        }
-    });
+    let response_data = InteractionResponseDataBuilder::new()
+        .flags(MessageFlags::EPHEMERAL)
+        .content(replies::config::log_channel::select(
+            BOT_USER_ID.mention(),
+            // TODO: get fallback log channel here
+            "[insert channel here]"
+        ))
+        .components([
+            Component::ActionRow(ActionRow { components: vec![channel_select] }),
+            Component::ActionRow(ActionRow { components: vec![button] })
+        ])
+        .build();
 
-    let request = RequestBuilder::new(&Route::InteractionCallback {
-        interaction_id: interaction.id.into(),
-        interaction_token: interaction.token.as_str()
-    })
-    .json(&payload)
-    .use_authorization_token(true)
-    .build()?;
-
-    STATE.client.request::<CreateResponse<'_>>(request).await?;
+    STATE
+        .client
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, &interaction.token, &InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response_data)
+        })
+        .await?;
 
     Ok(())
 }
-
-// #[deprecated]
-// pub async fn old_action(
-//     interaction: &Interaction,
-//     LogChannelSubCommand { channel }: LogChannelSubCommand
-// ) -> Result<(), HandleApplicationCommandError> { // check if the channel is
-//   guild text or guild announcement if let Some(c) = &channel { let
-//   (ChannelType::GuildText | ChannelType::GuildAnnouncement) = c.kind else {
-//   let content = format!("{} is not a valid log channel.", c.id.mention());
-//   let response_data = InteractionResponseDataBuilder::new() .content(content)
-//   .flags(MessageFlags::EPHEMERAL) .build();
-
-//             STATE
-//                 .http
-//                 .interaction(APPLICATION_ID)
-//                 .create_response(
-//                     interaction.id,
-//                     interaction.token.as_str(),
-//                     &InteractionResponse {
-//                         kind:
-// InteractionResponseType::ChannelMessageWithSource,
-// data: Some(response_data)                     }
-//                 )
-//                 .await?;
-
-//             return Ok(());
-//         };
-//     }
-
-//     let guild_id =
-// interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;     let mut
-// guild_configs = STATE.guild_configs.write().await;     let config = &mut
-// guild_configs.entry(guild_id).or_default().log_channel;
-//     let current_log_channel_id = match &channel {
-//         None => config.clone(),
-//         Some(channel) => config.replace(channel.id)
-//     };
-
-//     let content = match (channel, current_log_channel_id) {
-//         (None, None) => "No log channel set.".to_owned(),
-//         (Some(c), None) => format!("Set {} as log channel.", c.id.mention()),
-//         (None, Some(cc_id)) => format!("Currently {} is set as log channel.",
-// cc_id.mention()),         (Some(c), Some(cc_id)) => format!(
-//             "Set {} as log channel. Previously {} was set.",
-//             c.id.mention(),
-//             cc_id.mention()
-//         )
-//     };
-
-//     let button = message_component::button::config::component(
-//         message_component::button::config::ConfigUnsetButton::LogChannel
-//     );
-//     let response_data = InteractionResponseDataBuilder::new()
-//         .content(content)
-//         .flags(MessageFlags::EPHEMERAL)
-//         .components([Component::ActionRow(ActionRow {
-//             components: vec![button]
-//         })])
-//         .build();
-
-//     STATE
-//         .http
-//         .interaction(APPLICATION_ID)
-//         .create_response(
-//             interaction.id,
-//             interaction.token.as_str(),
-//             &InteractionResponse {
-//                 kind: InteractionResponseType::ChannelMessageWithSource,
-//                 data: Some(response_data)
-//             }
-//         )
-//         .await?;
-
-//     Ok(())
-// }

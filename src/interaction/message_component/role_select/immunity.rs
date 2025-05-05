@@ -8,7 +8,9 @@ use twilight_mention::Mention;
 use twilight_model::application::interaction::message_component::MessageComponentInteractionData;
 use twilight_model::application::interaction::{Interaction, InteractionData};
 use twilight_model::channel::ChannelType;
-use twilight_model::channel::message::component::{Button, ButtonStyle};
+use twilight_model::channel::message::component::{
+    Button, ButtonStyle, SelectDefaultValue, SelectMenu, SelectMenuType
+};
 use twilight_model::channel::message::embed::EmbedField;
 use twilight_model::channel::message::{Component, Embed, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
@@ -85,26 +87,19 @@ impl TryFrom<MessageComponentCustomId> for ImmunitySelect {
     }
 }
 
-pub fn component(variant: ImmunitySelect, current: &[Id<RoleMarker>]) -> Value {
-    // TODO: update this when https://github.com/twilight-rs/twilight/issues/2047 gets resolved
-    let default_values: Vec<_> = current
-        .iter()
-        .map(|rid| {
-            json!({
-                "id": rid,
-                "type": "role"
-            })
-        })
-        .collect();
+pub fn component(variant: ImmunitySelect, current: &[Id<RoleMarker>]) -> Component {
+    let default_values: Vec<_> = current.iter().map(|rid| SelectDefaultValue::Role(*rid)).collect();
 
-    json!({
-        // select menu for channel select
-        "type": 6,
-        "custom_id": variant.to_string(),
-        "min_values": 0,
-        "max_values": 25,
-        "placeholder": "🛡️ Select roles to be immune.",
-        "default_values": default_values
+    Component::SelectMenu(SelectMenu {
+        channel_types: None,
+        custom_id: variant.to_string(),
+        default_values: Some(default_values),
+        disabled: false,
+        kind: SelectMenuType::Role,
+        max_values: Some(25),
+        min_values: Some(0),
+        options: None,
+        placeholder: Some("🛡️ Select roles to be immune.".to_string())
     })
 }
 

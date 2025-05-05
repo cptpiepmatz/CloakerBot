@@ -16,10 +16,11 @@ use twilight_model::application::interaction::application_command::{
 };
 use twilight_model::channel::message::component::{ActionRow, ComponentType};
 use twilight_model::channel::message::{Component, MessageFlags};
-use twilight_model::http::interaction::InteractionResponseType;
+use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{CommandMarker, GuildMarker};
 use twilight_model::oauth::scope::BOT;
+use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
 use crate::data::config::{GuildConfig, GuildConfigImmunity};
@@ -30,7 +31,7 @@ use crate::interaction::application_command::{
 use crate::interaction::message_component::button::config::ConfigUnsetButton;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
 use crate::interaction::{application_command, message_component};
-use crate::{BOT_USER_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -151,33 +152,23 @@ pub async fn action(
         ImmunitySelect::RandomSilent => immunity::random::silent::select(bot, cmd)
     };
 
-    let payload = json!({
-        "type": InteractionResponseType::ChannelMessageWithSource,
-        "data": {
-            "flags": MessageFlags::EPHEMERAL,
-            "content": content,
-            "components": [
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [role_select]
-                },
-                {
-                    "type": ComponentType::ActionRow,
-                    "components": [button]
-                }
-            ]
-        }
-    });
+    let response_data = InteractionResponseDataBuilder::new()
+        .flags(MessageFlags::EPHEMERAL)
+        .content(content)
+        .components([
+            Component::ActionRow(ActionRow { components: vec![role_select] }),
+            Component::ActionRow(ActionRow { components: vec![button] })
+        ])
+        .build();
 
-    let request = RequestBuilder::new(&Route::InteractionCallback {
-        interaction_id: interaction.id.into(),
-        interaction_token: interaction.token.as_str()
-    })
-    .json(&payload)
-    .use_authorization_token(true)
-    .build()?;
-
-    STATE.client.request::<CreateResponse<'_>>(request).await?;
+    STATE
+        .client
+        .interaction(APPLICATION_ID)
+        .create_response(interaction.id, &interaction.token, &InteractionResponse {
+            kind: InteractionResponseType::ChannelMessageWithSource,
+            data: Some(response_data)
+        })
+        .await?;
 
     Ok(())
 }
