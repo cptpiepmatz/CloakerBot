@@ -215,7 +215,8 @@ pub enum HandleApplicationCommandError {
     Defer(DeferError),
     UpdateDefer(UpdateDeferError),
 
-    Http(twilight_http::Error)
+    Http(twilight_http::Error),
+    DeserializeBody(DeserializeBodyError)
 }
 
 pub async fn handle_application_command(

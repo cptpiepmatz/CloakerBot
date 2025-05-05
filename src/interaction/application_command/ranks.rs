@@ -88,6 +88,8 @@ pub async fn action(
     application_command::defer(interaction).await?;
 
     let user_id = command.user_id.unwrap_or(author_id);
+    let member = STATE.client.guild_member(guild_id, user_id).await?.model().await?;
+    let name = member.nick.or(member.user.global_name).unwrap_or(member.user.name);
 
     let png = crate::ranks::create_ranks_graphic(user_id, guild_id)
         .await
@@ -98,10 +100,9 @@ pub async fn action(
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
         .attachments(&[Attachment {
-            // TODO: provide image description
-            description: None,
+            description: Some(format!("CloakerBot Ranks Profile of {name}.")),
             file: png.into(),
-            filename: format!("user_rank_{user_id}.png"),
+            filename: format!("user_rank_{guild_id}_{user_id}.png"),
             id: 0
         }])
         .await?;
