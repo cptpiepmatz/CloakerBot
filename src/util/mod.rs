@@ -4,6 +4,7 @@ use std::future::{Future, IntoFuture};
 
 use derive_more::From;
 use serde::de::DeserializeOwned;
+use thiserror::Error;
 use twilight_http::Response;
 use twilight_http::response::DeserializeBodyError;
 
@@ -14,23 +15,12 @@ pub mod ref_access_map;
 pub mod template_format;
 pub mod trim;
 
-#[derive(Debug, From)]
+#[derive(Debug, Error)]
+#[error("client error")]
 pub enum ClientError {
-    Http(twilight_http::Error),
-    DeserializeBody(DeserializeBodyError)
+    Http(#[from] twilight_http::Error),
+    DeserializeBody(#[from] DeserializeBodyError)
 }
-
-impl Display for ClientError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // TODO: print somewhere that this is a client error
-        match self {
-            ClientError::Http(err) => err.fmt(f),
-            ClientError::DeserializeBody(err) => err.fmt(f)
-        }
-    }
-}
-
-impl Error for ClientError {}
 
 pub async fn cache_or_fetch<CR, CT, FF, FR, FT, T>(
     cache_res: Option<CR>,
