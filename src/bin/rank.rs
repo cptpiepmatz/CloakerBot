@@ -150,7 +150,6 @@ async fn main() {
     const BADGE_SIZE: u32 = 44;
     const FIRST_BADGE: (i64, i64) = (526, 228);
 
-    // TODO: draw badges
     let blender_x_coords =
         iter::successors(Some(FIRST_BADGE.0 - (BADGE_SIZE / 2) as i64), |prev| {
             Some(prev - BADGE_SIZE as i64)
