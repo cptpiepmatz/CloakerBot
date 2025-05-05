@@ -3,10 +3,12 @@
     "macros": "snippet"
   },
   "cSpell.words": [
+    "bitflags",
     "cloaker",
     "counterattacker",
     "Itertools",
     "parrier",
+    "reqwest",
     "Shouty",
     "WULULULULU"
   ]
