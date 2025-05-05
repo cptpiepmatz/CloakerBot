@@ -1,13 +1,15 @@
 pub trait IteratorExt: Iterator {
-    /// Finds an element in the iterator that satisfies a predicate and returns the last element.
+    /// Finds an element in the iterator that satisfies a predicate and returns
+    /// the last element.
     ///
     /// This combines the behavior of [Iterator::find] and [Iterator::last].
     /// Using both of these methods separately can cause issues:
-    /// after using `find`, the iterator will be empty, and using `last` afterward will yield
-    /// nothing, and vice versa.
+    /// after using `find`, the iterator will be empty, and using `last`
+    /// afterward will yield nothing, and vice versa.
     ///
     /// The method has four possible outcomes:
-    /// - `(None, None)`: The iterator was empty, no element was found, and there is no last element.
+    /// - `(None, None)`: The iterator was empty, no element was found, and
+    ///   there is no last element.
     /// - `(Some, Some)`: An element was found, but it wasn't the last one.
     /// - `(Some, None)`: The element was found, and it was the last one.
     /// - `(None, Some)`: No element was found, but the iterator wasn't empty.
@@ -18,11 +20,11 @@ pub trait IteratorExt: Iterator {
 
 impl<I> IteratorExt for I
 where
-    I: Iterator,
+    I: Iterator
 {
     fn find_and_last<P>(&mut self, mut predicate: P) -> (Option<Self::Item>, Option<Self::Item>)
     where
-        P: FnMut(&Self::Item) -> bool,
+        P: FnMut(&Self::Item) -> bool
     {
         let mut found = None;
         let mut last = None;
@@ -73,4 +75,3 @@ mod tests {
         assert_eq!(result, (None, None));
     }
 }
-

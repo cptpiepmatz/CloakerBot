@@ -6,10 +6,11 @@
     "bitflags",
     "cloaker",
     "counterattacker",
-    "Itertools",
+    "counterer",
+    "itertools",
     "parrier",
     "reqwest",
-    "Shouty",
+    "shouty",
     "WULULULULU"
   ]
 }

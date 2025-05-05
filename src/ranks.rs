@@ -7,7 +7,7 @@ use thiserror::Error;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
 use twilight_model::id::Id;
-use twilight_model::id::marker::{GuildMarker, UserMarker};
+use twilight_model::id::marker::{GuildMarker, RoleMarker, UserMarker};
 
 use crate::STATE;
 use crate::assets::graphics::user_rank::{self, badges};
@@ -97,8 +97,9 @@ pub async fn create_ranks_graphic(
     guild_id: Id<GuildMarker>,
 ) -> Result<RgbaImage, CreateRanksGraphicError> {
     let member_data = fetch_member_data(user_id, guild_id).await?;
-    let stats = calculate_ranks(user_id, guild_id).await;
-    let badges = determine_badges();
+    let stats = calculate_ranks(user_id, guild_id).await?;
+    let immunity = has_immunity(guild_id, &member_data.roles).await;
+    let badges = determine_badges(&stats, &immunity);
 
     let mut canvas = RgbaImage::new(TEMPLATE.width(), TEMPLATE.height());
     image::imageops::overlay(&mut canvas, &member_data.big_avatar, 26, 75);
@@ -131,38 +132,38 @@ pub async fn create_ranks_graphic(
     let name = Segments::new(&member_data.name);
     ctx.draw(&name, draw_cb(&mut canvas, 84, 373));
 
-    // ctx.font_size(20.0);
-    // let ranks = [
-    //     (stats.global_ranks.victim_rank, (347, 525)),
-    //     (stats.here_ranks.victim_rank, (494, 525)),
-    //     (stats.global_ranks.punisher_rank, (347, 564)),
-    //     (stats.here_ranks.punisher_rank, (494, 564)),
-    //     (stats.global_ranks.counter_rank, (347, 602)),
-    //     (stats.here_ranks.counter_rank, (494, 602)),
-    // ];
-    // for (rank, (x, y)) in ranks {
-    //     let rank = format!("#{rank}");
-    //     let rank = Segments::new(&rank);
-    //     let width = ctx.width(&rank) as i32;
-    //     ctx.draw(&rank, draw_cb(&mut canvas, x - width / 2, y));
-    // }
+    ctx.font_size(20.0);
+    let ranks = [
+        (stats.global_ranks.victim_rank, (347, 525)),
+        (stats.here_ranks.victim_rank, (494, 525)),
+        (stats.global_ranks.punisher_rank, (347, 564)),
+        (stats.here_ranks.punisher_rank, (494, 564)),
+        (stats.global_ranks.counter_rank, (347, 602)),
+        (stats.here_ranks.counter_rank, (494, 602)),
+    ];
+    for (rank, (x, y)) in ranks {
+        let rank = format!("#{rank}");
+        let rank = Segments::new(&rank);
+        let width = ctx.width(&rank) as i32;
+        ctx.draw(&rank, draw_cb(&mut canvas, x - width / 2, y));
+    }
 
-    // let times = [
-    //     (stats.global_counters.times_smacked, (347, 666)),
-    //     (stats.here_counters.times_smacked, (494, 666)),
-    //     (stats.global_counters.times_called, (347, 705)),
-    //     (stats.here_counters.times_called, (494, 705)),
-    //     (stats.global_counters.times_countered, (347, 743)),
-    //     (stats.here_counters.times_countered, (494, 743)),
-    // ];
-    // for (times, (x, y)) in times {
-    //     let times = times.to_string();
-    //     let times = Segments::new(&times);
-    //     let width = ctx.width(&times) as i32;
-    //     ctx.draw(&times, draw_cb(&mut canvas, x - width / 2, y));
-    // }
+    let times = [
+        (stats.global_times.times_smacked, (347, 666)),
+        (stats.here_times.times_smacked, (494, 666)),
+        (stats.global_times.times_called, (347, 705)),
+        (stats.here_times.times_called, (494, 705)),
+        (stats.global_times.times_countered, (347, 743)),
+        (stats.here_times.times_countered, (494, 743)),
+    ];
+    for (times, (x, y)) in times {
+        let times = times.to_string();
+        let times = Segments::new(&times);
+        let width = ctx.width(&times) as i32;
+        ctx.draw(&times, draw_cb(&mut canvas, x - width / 2, y));
+    }
 
-    todo!()
+    Ok(canvas)
 }
 
 struct MemberData {
@@ -170,6 +171,7 @@ struct MemberData {
     small_avatar: DynamicImage,
     nick: String,
     name: String,
+    roles: Vec<Id<RoleMarker>>,
 }
 
 async fn fetch_member_data(
@@ -209,7 +211,9 @@ async fn fetch_member_data(
         member.nick.and(member.user.global_name).unwrap_or_else(|| member.user.name.to_string());
     let name = member.user.name;
 
-    Ok(MemberData { big_avatar, small_avatar, nick, name })
+    let roles = member.roles.clone();
+
+    Ok(MemberData { big_avatar, small_avatar, nick, name, roles })
 }
 
 async fn calculate_ranks(
@@ -218,10 +222,11 @@ async fn calculate_ranks(
 ) -> Result<Stats, tokio::task::JoinError> {
     let stats = STATE.stats.read().await;
 
-    // Running these calculations can be CPU-intensive, which would bog down the current worker 
-    // thread. If the heavy work runs on this thread, other Tokio tasks won't be able to run. 
-    // By using `spawn_blocking`, we move the calculation to a separate thread, allowing the worker 
-    // thread to keep processing other tasks.
+    // Running these calculations can be CPU-intensive, which would bog down the
+    // current worker thread. If the heavy work runs on this thread, other Tokio
+    // tasks won't be able to run. By using `spawn_blocking`, we move the
+    // calculation to a separate thread, allowing the worker thread to keep
+    // processing other tasks.
     tokio::task::spawn_blocking(move || {
         let is_user = |(_, (uid, _)): &(u32, (Id<UserMarker>, u32))| *uid == user_id;
         type RankEntry = (u32, (Id<UserMarker>, u32));
@@ -246,31 +251,31 @@ async fn calculate_ranks(
             let counter_rank = counter_ranks.find_and_last(is_user);
             let (counter_rank, times_countered) = match_rank(counter_rank);
 
-            let ranks = Ranks {victim_rank, punisher_rank, counter_rank};
+            let ranks = Ranks { victim_rank, punisher_rank, counter_rank };
             let times = Times { times_smacked, times_called, times_countered };
             (ranks, times)
         };
 
         let here = match stats.takedowns.get(&guild_id) {
             None => {
-                let ranks = Ranks {victim_rank: 1, punisher_rank: 1, counter_rank: 1};
+                let ranks = Ranks { victim_rank: 1, punisher_rank: 1, counter_rank: 1 };
                 let times = Times { times_smacked: 0, times_called: 0, times_countered: 0 };
                 (ranks, times)
-            },
+            }
             Some(takedowns) => {
                 let mut victim_ranks = takedowns.victim_ranks();
                 let victim_rank = victim_ranks.find_and_last(is_user);
                 let (victim_rank, times_smacked) = match_rank(victim_rank);
-    
+
                 let mut punisher_ranks = takedowns.punisher_ranks();
                 let punisher_rank = punisher_ranks.find_and_last(is_user);
                 let (punisher_rank, times_called) = match_rank(punisher_rank);
-    
+
                 let mut counter_ranks = takedowns.counter_ranks();
                 let counter_rank = counter_ranks.find_and_last(is_user);
                 let (counter_rank, times_countered) = match_rank(counter_rank);
-    
-                let ranks = Ranks {victim_rank, punisher_rank, counter_rank};
+
+                let ranks = Ranks { victim_rank, punisher_rank, counter_rank };
                 let times = Times { times_smacked, times_called, times_countered };
                 (ranks, times)
             }
@@ -286,6 +291,63 @@ async fn calculate_ranks(
     .await
 }
 
-fn determine_badges() -> Badges {
-    todo!()
+struct Immunity {
+    general: bool,
+    random: bool,
+}
+
+async fn has_immunity(guild_id: Id<GuildMarker>, user_roles: &[Id<RoleMarker>]) -> Immunity {
+    let guild_configs = STATE.guild_configs.read().await;
+    let Some(guild_config) = guild_configs.get(&guild_id) else {
+        return Immunity { general: false, random: false };
+    };
+
+    let contains_any = |immunity_roles: &[Id<RoleMarker>]| {
+        user_roles.into_iter().any(|user_role| immunity_roles.contains(user_role))
+    };
+
+    let immunity = &guild_config.immunity;
+    let general_immunity = contains_any(&immunity.general);
+    let general_silent_immunity = contains_any(&immunity.general_silent);
+    let random_immunity = contains_any(&immunity.random);
+    let random_silent_immunity = contains_any(&immunity.random_silent);
+
+    Immunity {
+        general: general_immunity || general_silent_immunity,
+        random: random_immunity || random_silent_immunity,
+    }
+}
+
+fn determine_badges(stats: &Stats, immunity: &Immunity) -> Badges {
+    let mut badges = Badges::empty();
+
+    if stats.here_ranks.punisher_rank == 1 {
+        badges.insert(Badges::TOP_STRIKER);
+    }
+
+    if stats.here_ranks.victim_rank == 1 {
+        badges.insert(Badges::TOP_VICTIM);
+    }
+
+    if stats.here_times.times_called == 0 {
+        badges.insert(Badges::NEVER_INITIATED);
+    }
+
+    if stats.here_times.times_smacked == 0 {
+        badges.insert(Badges::NEVER_TAKEN_DOWN);
+    }
+
+    if immunity.general {
+        badges.insert(Badges::IMMUNITY);
+    }
+
+    if immunity.random {
+        badges.insert(Badges::RANDOM_IMMUNITY);
+    }
+
+    if stats.here_ranks.counter_rank == 1 {
+        badges.insert(Badges::TOP_COUNTERER);
+    }
+
+    badges
 }
