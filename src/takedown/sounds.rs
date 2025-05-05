@@ -18,8 +18,6 @@ use wav::BitDepth;
 
 use crate::assets;
 
-// TODO: scale sound loudness
-
 pub static WULULULULU: LazyLock<Sound> = lazy_sound!(WULULULULU);
 pub static FAILS: LazyLock<Vec<Sound>> = lazy_sound!(FAILS+);
 pub static TAKEDOWNS: LazyLock<Vec<Sound>> = lazy_sound!(TAKEDOWNS+);
