@@ -24,7 +24,7 @@ use crate::ranks::CreateRanksGraphicError;
 use crate::{APPLICATION_ID, STATE, takedown};
 
 pub const NAME: &str = "ranks";
-pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
+pub const DESCRIPTION: &str = "Show off your takedown stats in a rank profile.";
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.ranks);
 pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 

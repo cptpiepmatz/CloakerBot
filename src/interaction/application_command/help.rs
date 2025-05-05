@@ -190,8 +190,7 @@ pub async fn action(
             }
             HelpCommand::Ranks => {
                 writeln!(content, "{}{}", help_title, ranks::MENTION.deref());
-                // TODO: add ranks help content here
-                write!(content, "🚧 Ranks are currently work in progress. 🚧");
+                content.write_str(&assets::help_texts::ranks(BOT_USER_ID.mention()));
             }
         }
 
