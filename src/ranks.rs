@@ -11,6 +11,7 @@ use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 use crate::STATE;
 use crate::assets::graphics::user_rank::{self, badges};
+use crate::util::iterator_ext::IteratorExt;
 use crate::util::require;
 
 macro_rules! lazy_images {
@@ -54,7 +55,7 @@ pub struct Ranks {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct Counters {
+pub struct Times {
     pub times_smacked: u32,
     pub times_called: u32,
     pub times_countered: u32,
@@ -64,8 +65,8 @@ pub struct Counters {
 pub struct Stats {
     pub global_ranks: Ranks,
     pub here_ranks: Ranks,
-    pub global_counters: Counters,
-    pub here_counters: Counters,
+    pub global_times: Times,
+    pub here_times: Times,
 }
 
 bitflags::bitflags! {
@@ -211,21 +212,78 @@ async fn fetch_member_data(
     Ok(MemberData { big_avatar, small_avatar, nick, name })
 }
 
-async fn calculate_ranks(user_id: Id<UserMarker>, guild_id: Id<GuildMarker>) -> Result<Stats, tokio::task::JoinError> {
+async fn calculate_ranks(
+    user_id: Id<UserMarker>,
+    guild_id: Id<GuildMarker>,
+) -> Result<Stats, tokio::task::JoinError> {
     let stats = STATE.stats.read().await;
+
+    // Running these calculations can be CPU-intensive, which would bog down the current worker 
+    // thread. If the heavy work runs on this thread, other Tokio tasks won't be able to run. 
+    // By using `spawn_blocking`, we move the calculation to a separate thread, allowing the worker 
+    // thread to keep processing other tasks.
     tokio::task::spawn_blocking(move || {
-        let global = {
-            let takedowns = &stats.takedowns;
-            
-            let mut victim_ranks = takedowns.victim_ranks();
-            let victim_rank = victim_ranks.find(|(_, (uid, _))| *uid == user_id);
-            // TODO: add a find_and_last method to iterator for this
+        let is_user = |(_, (uid, _)): &(u32, (Id<UserMarker>, u32))| *uid == user_id;
+        type RankEntry = (u32, (Id<UserMarker>, u32));
+        let match_rank = |rank: (Option<RankEntry>, Option<RankEntry>)| match rank {
+            (None, None) => (1, 0),
+            (None, Some((last_rank, _))) => (last_rank + 1, 0),
+            (Some((rank, (_, count))), _) => (rank, count),
         };
 
-        let guild_takedowns = &stats.takedowns.get(&guild_id);
+        let global = {
+            let takedowns = &stats.takedowns;
 
-        todo!()
-    }).await
+            let mut victim_ranks = takedowns.victim_ranks();
+            let victim_rank = victim_ranks.find_and_last(is_user);
+            let (victim_rank, times_smacked) = match_rank(victim_rank);
+
+            let mut punisher_ranks = takedowns.punisher_ranks();
+            let punisher_rank = punisher_ranks.find_and_last(is_user);
+            let (punisher_rank, times_called) = match_rank(punisher_rank);
+
+            let mut counter_ranks = takedowns.counter_ranks();
+            let counter_rank = counter_ranks.find_and_last(is_user);
+            let (counter_rank, times_countered) = match_rank(counter_rank);
+
+            let ranks = Ranks {victim_rank, punisher_rank, counter_rank};
+            let times = Times { times_smacked, times_called, times_countered };
+            (ranks, times)
+        };
+
+        let here = match stats.takedowns.get(&guild_id) {
+            None => {
+                let ranks = Ranks {victim_rank: 1, punisher_rank: 1, counter_rank: 1};
+                let times = Times { times_smacked: 0, times_called: 0, times_countered: 0 };
+                (ranks, times)
+            },
+            Some(takedowns) => {
+                let mut victim_ranks = takedowns.victim_ranks();
+                let victim_rank = victim_ranks.find_and_last(is_user);
+                let (victim_rank, times_smacked) = match_rank(victim_rank);
+    
+                let mut punisher_ranks = takedowns.punisher_ranks();
+                let punisher_rank = punisher_ranks.find_and_last(is_user);
+                let (punisher_rank, times_called) = match_rank(punisher_rank);
+    
+                let mut counter_ranks = takedowns.counter_ranks();
+                let counter_rank = counter_ranks.find_and_last(is_user);
+                let (counter_rank, times_countered) = match_rank(counter_rank);
+    
+                let ranks = Ranks {victim_rank, punisher_rank, counter_rank};
+                let times = Times { times_smacked, times_called, times_countered };
+                (ranks, times)
+            }
+        };
+
+        Stats {
+            global_ranks: global.0,
+            here_ranks: here.0,
+            global_times: global.1,
+            here_times: here.1,
+        }
+    })
+    .await
 }
 
 fn determine_badges() -> Badges {
