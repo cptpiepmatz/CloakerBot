@@ -8,7 +8,7 @@ use derive_more::From;
 use twilight_mention::Mention;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle};
-use twilight_model::channel::message::{Component, MessageFlags, ReactionType};
+use twilight_model::channel::message::{Component, EmojiReactionType, MessageFlags, ReactionType};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::embed::EmbedBuilder;
@@ -107,10 +107,11 @@ impl ConfigUnsetButton {
         Component::Button(Button {
             custom_id: Some(custom_id),
             disabled: false,
-            emoji: Some(ReactionType::Unicode { name: "🗑️".to_string() }),
+            emoji: Some(EmojiReactionType::Unicode { name: "🗑️".to_string() }),
             label: "unset".to_string().into(),
             style: ButtonStyle::Danger,
-            url: None
+            url: None,
+            sku_id: None
         })
     }
 }
@@ -122,18 +123,20 @@ impl ConfigRandomButton {
             ConfigRandomButton::Enable => Button {
                 custom_id: Some(custom_id),
                 disabled: false,
-                emoji: Some(ReactionType::Unicode { name: "💫".to_string() }),
+                emoji: Some(EmojiReactionType::Unicode { name: "💫".to_string() }),
                 label: Some("enable".to_string()),
                 style: ButtonStyle::Primary,
-                url: None
+                url: None,
+                sku_id: None
             },
             ConfigRandomButton::Disable => Button {
                 custom_id: Some(custom_id),
                 disabled: false,
-                emoji: Some(ReactionType::Unicode { name: "🛑".to_string() }),
+                emoji: Some(EmojiReactionType::Unicode { name: "🛑".to_string() }),
                 label: Some("disable".to_string()),
                 style: ButtonStyle::Danger,
-                url: None
+                url: None,
+                sku_id: None
             }
         })
     }

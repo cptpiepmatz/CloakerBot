@@ -54,13 +54,13 @@ strum = { version = "0.27", features = ["derive"] }
 thiserror = "2"
 
 # discord integration
-twilight-cache-inmemory = "=0.16.0-rc.1"
-twilight-gateway = "=0.16.0-rc.1"
-twilight-http = "=0.16.0-rc.1"
-twilight-mention = "=0.16.0-rc.1"
-twilight-model = "=0.16.0-rc.1"
-twilight-util = { version = "=0.16.0-rc.1", features = ["builder"] }
-twilight-validate = "=0.16.0-rc.1"
+twilight-cache-inmemory = "0.16.0"
+twilight-gateway = "0.16.0"
+twilight-http = "0.16.0"
+twilight-mention = "0.16.0"
+twilight-model = "0.16.0"
+twilight-util = { version = "0.16.0", features = ["builder"] }
+twilight-validate = "0.16.0"
 
 # user rank images
 hieroglyph = "0.1"
@@ -73,9 +73,7 @@ hound.workspace = true
 symphonia = "0.5"
 
 [dependencies.songbird]
-git = "https://github.com/Erk-/songbird.git"
-branch = "erk/twilight-0-16-rc"
-version = "0.4"
+version = "0.5"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls", "tungstenite"]
 

@@ -9,10 +9,10 @@ use twilight_http::routing::Route;
 use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandOptionValue
 };
+use twilight_model::application::interaction::{Interaction, InteractionContextType};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
@@ -108,7 +108,7 @@ impl TryFrom<&CommandData> for HelpCommand {
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
-        .dm_permission(false)
+        .contexts([InteractionContextType::Guild])
         .option(
             StringBuilder::new("command", "Shows help for a command.")
                 .choices(CHOICES.iter().map(|c| (c.to_owned(), c.to_owned())))

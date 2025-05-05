@@ -7,10 +7,10 @@ use thiserror::Error;
 use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
+use twilight_model::application::interaction::{Interaction, InteractionContextType};
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
@@ -93,17 +93,21 @@ pub fn chat_input() -> Command {
     let option = UserBuilder::new("target", "User to take down.").required(true).build();
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .default_member_permissions(permissions())
-        .dm_permission(false)
+        .contexts([InteractionContextType::Guild])
         .option(option)
         .build()
 }
 
 pub fn user_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::User).dm_permission(false).build()
+    CommandBuilder::new(NAME, "", CommandType::User)
+        .contexts([InteractionContextType::Guild])
+        .build()
 }
 
 pub fn message_context_menu() -> Command {
-    CommandBuilder::new(NAME, "", CommandType::Message).dm_permission(false).build()
+    CommandBuilder::new(NAME, "", CommandType::Message)
+        .contexts([InteractionContextType::Guild])
+        .build()
 }
 
 #[derive(Debug, Error)]

@@ -5,10 +5,10 @@ use thiserror::Error;
 use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
+use twilight_model::application::interaction::{Interaction, InteractionContextType};
 use twilight_model::http::attachment::Attachment;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{CommandMarker, UserMarker};
@@ -66,7 +66,7 @@ pub fn chat_input() -> Command {
     let option = UserBuilder::new("user", "User to show ranks for.").required(false).build();
 
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
-        .dm_permission(false)
+        .contexts([InteractionContextType::Guild])
         .option(option)
         .build()
 }

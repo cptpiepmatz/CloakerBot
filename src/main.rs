@@ -178,7 +178,7 @@ impl HandleEventError {
     fn check_fatal(source: ReceiveMessageError) -> Result<(), Self> {
         type E = ReceiveMessageErrorType;
         match source.kind() {
-            E::Reconnect | E::WebSocket => Err(HandleEventError::Fatal),
+            E::Reconnect => Err(HandleEventError::Fatal),
             _ => Ok(())
         }
     }

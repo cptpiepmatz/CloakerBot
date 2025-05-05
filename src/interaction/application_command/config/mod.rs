@@ -11,10 +11,10 @@ use thiserror::Error;
 use tokio::runtime::Handle;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
-use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
+use twilight_model::application::interaction::{Interaction, InteractionContextType};
 use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::command::CommandBuilder;
@@ -75,7 +75,7 @@ impl TryFrom<&CommandData> for ConfigCommand {
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
-        .dm_permission(false)
+        .contexts([InteractionContextType::Guild])
         .option(log_channel::chat_input())
         .option(danger_zones::chat_input())
         .option(random::chat_input())
