@@ -8,5 +8,5 @@ pub enum HandleApplicationCommandAutocompleteError {}
 pub fn handle_application_command_autocomplete(
     interaction: &Interaction
 ) -> Result<(), HandleApplicationCommandAutocompleteError> {
-    todo!()
+    todo!("implement autocomplete")
 }
