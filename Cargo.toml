@@ -15,6 +15,7 @@ package.edition = "2024"
 
 [workspace.dependencies]
 itertools = "0.14"
+hound = "3.5"
 
 [dependencies]
 
@@ -66,17 +67,10 @@ hieroglyph = "0.1"
 image = "0.25"
 imageproc = "0.25"
 
-# logging
-[dependencies.paris]
-version = "1"
-features = ["macros", "no_logger"]
-
 # audio handling
-[dependencies.wav]
-version = "1"
-
-[dependencies.symphonia]
-version = "0.5"
+wav = "1"
+hound.workspace = true
+symphonia = "0.5"
 
 [dependencies.songbird]
 git = "https://github.com/Erk-/songbird.git"
@@ -84,3 +78,11 @@ branch = "erk/twilight-0-16-rc"
 version = "0.4"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls", "tungstenite"]
+
+# logging
+[dependencies.paris]
+version = "1"
+features = ["macros", "no_logger"]
+
+[build-dependencies]
+hound.workspace = true
