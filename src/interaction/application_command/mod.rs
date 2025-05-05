@@ -226,7 +226,7 @@ pub async fn handle_application_command(
         ApplicationCommand::Config(command) => config::action(interaction, command).await,
         ApplicationCommand::Counter(command) => counter::action(interaction, command).await,
         ApplicationCommand::Help(command) => help::action(interaction, command).await,
-        ApplicationCommand::Ranks(_) => todo!()
+        ApplicationCommand::Ranks(command) => ranks::action(interaction, command).await
     }
 }
 

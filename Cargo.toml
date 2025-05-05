@@ -39,6 +39,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # utility
 bitflags = "2.9"
+bytes = "1.10"
 const_format = { version = "0.2", features = ["rust_1_51"] }
 derive_more = { version = "2", features = ["full"] }
 heapless = "0.8"

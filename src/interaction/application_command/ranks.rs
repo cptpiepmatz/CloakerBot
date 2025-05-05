@@ -1,5 +1,7 @@
 use std::sync::LazyLock;
 
+use derive_more::From;
+use thiserror::Error;
 use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
@@ -7,6 +9,7 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandData, CommandDataOption, CommandOptionValue
 };
+use twilight_model::http::attachment::Attachment;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
@@ -17,7 +20,8 @@ use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::{STATE, takedown};
+use crate::ranks::CreateRanksGraphicError;
+use crate::{APPLICATION_ID, STATE, takedown};
 
 pub const NAME: &str = "ranks";
 pub const DESCRIPTION: &str = "Display your takedown stats in a rank badge.";
@@ -67,10 +71,12 @@ pub fn chat_input() -> Command {
         .build()
 }
 
-#[derive(Debug)]
+// TODO: implement Error
+#[derive(Debug, From)]
 pub enum RanksActionError {
     NotInGuild,
-    NoAuthor
+    NoAuthor,
+    CreateRanksGraphic(CreateRanksGraphicError)
 }
 
 pub async fn action(
@@ -83,44 +89,22 @@ pub async fn action(
 
     let user_id = command.user_id.unwrap_or(author_id);
 
-    // TODO: run all the stats checking code in spawn_blocking
+    let png = crate::ranks::create_ranks_graphic(user_id, guild_id)
+        .await
+        .map_err(RanksActionError::CreateRanksGraphic)?;
 
-    // let guild_stats = STATE.guild_stats.read().await;
-    // let default = GuildStats::default();
-    // let this_guild_stats = guild_stats.get(&guild_id).unwrap_or(&default);
-    // let global_takedown_count =
-    // stats::global_takedown_count(guild_stats.values());
-    // let mut global_takedown_count_ranked: Vec<(Id<UserMarker>, u64)> =
-    //     global_takedown_count.iter().map(|(&caller_id, &count)| (caller_id,
-    // count)).collect(); global_takedown_count_ranked.sort_by(|(_, a), (_, b)|
-    // b.cmp(a));
+    STATE
+        .client
+        .interaction(APPLICATION_ID)
+        .update_response(interaction.token.as_str())
+        .attachments(&[Attachment {
+            // TODO: provide image description
+            description: None,
+            file: png.into(),
+            filename: format!("user_rank_{user_id}.png"),
+            id: 0
+        }])
+        .await?;
 
-    // let local_takedown_count: u64 = this_guild_stats.takedowns.count(user_id);
-    // let global_takedown_count: u64 =
-    //     global_takedown_count.get(&user_id).copied().unwrap_or_default();
-
-    // let local_rank: Option<usize> = this_guild_stats
-    //     .takedowns
-    //     .ranked()
-    //     .enumerate()
-    //     .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
-    //     .find(|(_, caller_id)| *caller_id == user_id)
-    //     .map(|(pos, _)| pos);
-    // let global_rank: Option<usize> = global_takedown_count_ranked
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(pos, (caller_id, _))| (pos + 1, caller_id))
-    //     .find(|(_, caller_id)| **caller_id == user_id)
-    //     .map(|(pos, _)| pos);
-
-    // let content = match takedown::counter::counter(guild_id, author_id) {
-    //     Ok(target_id) =>
-    // REPLIES.counter.success.template([&target_id.mention()]),     Err(()) =>
-    // REPLIES.counter.miss.template([]) };
-    //
-    // application_command::update_defer_msg(interaction, &content).await?;
-    //
-    // Ok(())
-
-    todo!()
+    Ok(())
 }

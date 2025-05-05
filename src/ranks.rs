@@ -1,8 +1,12 @@
+use std::iter;
+use std::ops::Deref;
 use std::sync::LazyLock;
 
+use bytes::{BufMut, Bytes, BytesMut};
 use hieroglyph::{DrawingContext, Segments};
+use image::codecs::png::PngEncoder;
 use image::imageops::FilterType;
-use image::{DynamicImage, ImageError, Pixel, Rgba, RgbaImage};
+use image::{DynamicImage, ExtendedColorType, ImageEncoder, ImageError, Pixel, Rgba, RgbaImage};
 use thiserror::Error;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
@@ -51,14 +55,14 @@ const FIRST_BADGE: (i64, i64) = (526, 228);
 pub struct Ranks {
     pub victim_rank: u32,
     pub punisher_rank: u32,
-    pub counter_rank: u32,
+    pub counter_rank: u32
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Times {
     pub times_smacked: u32,
     pub times_called: u32,
-    pub times_countered: u32,
+    pub times_countered: u32
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -66,7 +70,7 @@ pub struct Stats {
     pub global_ranks: Ranks,
     pub here_ranks: Ranks,
     pub global_times: Times,
-    pub here_times: Times,
+    pub here_times: Times
 }
 
 bitflags::bitflags! {
@@ -89,13 +93,13 @@ pub enum CreateRanksGraphicError {
     DeserializeBody(#[from] DeserializeBodyError),
     Reqwest(#[from] reqwest::Error),
     Image(#[from] ImageError),
-    Join(#[from] tokio::task::JoinError),
+    Join(#[from] tokio::task::JoinError)
 }
 
 pub async fn create_ranks_graphic(
     user_id: Id<UserMarker>,
-    guild_id: Id<GuildMarker>,
-) -> Result<RgbaImage, CreateRanksGraphicError> {
+    guild_id: Id<GuildMarker>
+) -> Result<Bytes, CreateRanksGraphicError> {
     let member_data = fetch_member_data(user_id, guild_id).await?;
     let stats = calculate_ranks(user_id, guild_id).await?;
     let immunity = has_immunity(guild_id, &member_data.roles).await;
@@ -106,12 +110,36 @@ pub async fn create_ranks_graphic(
     image::imageops::overlay(&mut canvas, &member_data.small_avatar, 42, 366);
     image::imageops::overlay(&mut canvas, &*TEMPLATE, 0, 0);
 
+    let blender_x_coords =
+        iter::successors(Some(FIRST_BADGE.0 - (BADGE_SIZE / 2) as i64), |prev| {
+            Some(prev - BADGE_SIZE as i64)
+        });
+    for x in blender_x_coords.take(badges.bits().count_ones() as usize - 1) {
+        image::imageops::overlay(&mut canvas, BLENDER.deref(), x, FIRST_BADGE.1);
+    }
+
+    let badge_x_coords =
+        iter::successors(Some(FIRST_BADGE.0), |prev| Some(prev - BADGE_SIZE as i64));
+    for (badge, x) in badges.iter().zip(badge_x_coords) {
+        let badge = match badge {
+            Badges::TOP_STRIKER => TOP_STRIKER.deref(),
+            Badges::TOP_VICTIM => TOP_VICTIM.deref(),
+            Badges::NEVER_INITIATED => NEVER_INITIATED.deref(),
+            Badges::NEVER_TAKEN_DOWN => NEVER_TAKEN_DOWN.deref(),
+            Badges::IMMUNITY => IMMUNITY.deref(),
+            Badges::RANDOM_IMMUNITY => RANDOM_IMMUNITY.deref(),
+            Badges::TOP_COUNTERER => TOP_COUNTERER.deref(),
+            _ => unreachable!()
+        };
+        image::imageops::overlay(&mut canvas, badge, x, FIRST_BADGE.1);
+    }
+
     let mut ctx = DRAWING_CONTEXT.lock().await;
 
     fn draw_cb(
         canvas: &mut RgbaImage,
         x_offset: i32,
-        y_offset: i32,
+        y_offset: i32
     ) -> impl FnMut((i32, i32), [u8; 4]) + use<'_> {
         move |(x, y), rgba| {
             let color = Rgba(rgba);
@@ -139,7 +167,7 @@ pub async fn create_ranks_graphic(
         (stats.global_ranks.punisher_rank, (347, 564)),
         (stats.here_ranks.punisher_rank, (494, 564)),
         (stats.global_ranks.counter_rank, (347, 602)),
-        (stats.here_ranks.counter_rank, (494, 602)),
+        (stats.here_ranks.counter_rank, (494, 602))
     ];
     for (rank, (x, y)) in ranks {
         let rank = format!("#{rank}");
@@ -154,7 +182,7 @@ pub async fn create_ranks_graphic(
         (stats.global_times.times_called, (347, 705)),
         (stats.here_times.times_called, (494, 705)),
         (stats.global_times.times_countered, (347, 743)),
-        (stats.here_times.times_countered, (494, 743)),
+        (stats.here_times.times_countered, (494, 743))
     ];
     for (times, (x, y)) in times {
         let times = times.to_string();
@@ -163,7 +191,12 @@ pub async fn create_ranks_graphic(
         ctx.draw(&times, draw_cb(&mut canvas, x - width / 2, y));
     }
 
-    Ok(canvas)
+    let bytes = BytesMut::new();
+    let mut writer = bytes.writer();
+    let encoder = PngEncoder::new(&mut writer);
+    encoder.write_image(&canvas, canvas.width(), canvas.height(), ExtendedColorType::Rgba8)?;
+
+    Ok(Bytes::from(writer.into_inner()))
 }
 
 struct MemberData {
@@ -171,12 +204,12 @@ struct MemberData {
     small_avatar: DynamicImage,
     nick: String,
     name: String,
-    roles: Vec<Id<RoleMarker>>,
+    roles: Vec<Id<RoleMarker>>
 }
 
 async fn fetch_member_data(
     user_id: Id<UserMarker>,
-    guild_id: Id<GuildMarker>,
+    guild_id: Id<GuildMarker>
 ) -> Result<MemberData, CreateRanksGraphicError> {
     let member = STATE.client.guild_member(guild_id, user_id).await?.model().await?;
 
@@ -195,6 +228,7 @@ async fn fetch_member_data(
     };
     let big_avatar = http_client.get(big_avatar).send().await?.bytes().await?;
     let big_avatar = image::load_from_memory(&big_avatar)?;
+    let big_avatar = big_avatar.resize(207, 207, image::imageops::FilterType::Lanczos3);
 
     let small_avatar = match member.user.avatar {
         Some(avatar) => {
@@ -206,9 +240,10 @@ async fn fetch_member_data(
     };
     let small_avatar = http_client.get(small_avatar).send().await?.bytes().await?;
     let small_avatar = image::load_from_memory(&small_avatar)?;
+    let small_avatar = small_avatar.resize(35, 35, image::imageops::FilterType::Lanczos3);
 
     let nick =
-        member.nick.and(member.user.global_name).unwrap_or_else(|| member.user.name.to_string());
+        member.nick.or(member.user.global_name).unwrap_or_else(|| member.user.name.to_string());
     let name = member.user.name;
 
     let roles = member.roles.clone();
@@ -218,7 +253,7 @@ async fn fetch_member_data(
 
 async fn calculate_ranks(
     user_id: Id<UserMarker>,
-    guild_id: Id<GuildMarker>,
+    guild_id: Id<GuildMarker>
 ) -> Result<Stats, tokio::task::JoinError> {
     let stats = STATE.stats.read().await;
 
@@ -233,7 +268,7 @@ async fn calculate_ranks(
         let match_rank = |rank: (Option<RankEntry>, Option<RankEntry>)| match rank {
             (None, None) => (1, 0),
             (None, Some((last_rank, _))) => (last_rank + 1, 0),
-            (Some((rank, (_, count))), _) => (rank, count),
+            (Some((rank, (_, count))), _) => (rank, count)
         };
 
         let global = {
@@ -285,7 +320,7 @@ async fn calculate_ranks(
             global_ranks: global.0,
             here_ranks: here.0,
             global_times: global.1,
-            here_times: here.1,
+            here_times: here.1
         }
     })
     .await
@@ -293,12 +328,13 @@ async fn calculate_ranks(
 
 struct Immunity {
     general: bool,
-    random: bool,
+    random: bool
 }
 
 async fn has_immunity(guild_id: Id<GuildMarker>, user_roles: &[Id<RoleMarker>]) -> Immunity {
     let guild_configs = STATE.guild_configs.read().await;
-    let Some(guild_config) = guild_configs.get(&guild_id) else {
+    let Some(guild_config) = guild_configs.get(&guild_id)
+    else {
         return Immunity { general: false, random: false };
     };
 
@@ -314,7 +350,7 @@ async fn has_immunity(guild_id: Id<GuildMarker>, user_roles: &[Id<RoleMarker>]) 
 
     Immunity {
         general: general_immunity || general_silent_immunity,
-        random: random_immunity || random_silent_immunity,
+        random: random_immunity || random_silent_immunity
     }
 }
 
