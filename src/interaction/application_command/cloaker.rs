@@ -85,8 +85,8 @@ impl TryFrom<&CommandData> for CloakerCommand {
     }
 }
 
-fn permissions() -> Permissions {
-    Permissions::ADMINISTRATOR | Permissions::MODERATE_MEMBERS | Permissions::MOVE_MEMBERS
+const fn permissions() -> Permissions {
+    Permissions::MOVE_MEMBERS
 }
 
 pub fn chat_input() -> Command {
@@ -100,12 +100,14 @@ pub fn chat_input() -> Command {
 
 pub fn user_context_menu() -> Command {
     CommandBuilder::new(NAME, "", CommandType::User)
+        .default_member_permissions(permissions())
         .contexts([InteractionContextType::Guild])
         .build()
 }
 
 pub fn message_context_menu() -> Command {
     CommandBuilder::new(NAME, "", CommandType::Message)
+        .default_member_permissions(permissions())
         .contexts([InteractionContextType::Guild])
         .build()
 }
