@@ -38,6 +38,7 @@ use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
 use crate::util::trim::trim;
 
+mod application_role_connection;
 mod assets;
 mod data;
 mod interaction;
@@ -47,11 +48,12 @@ mod sync;
 mod takedown;
 mod util;
 mod verify;
-mod application_role_connection;
 
 // TODO: log messages using allowed_mention([]) to hide mentions
 
 // TODO: implement linked roles
+
+// TODO: use miette to render nice errors
 
 #[cfg(not(any(feature = "dev", feature = "prod")))]
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(macros::env_u64!("DISCORD_APPLICATION_ID"));
@@ -89,7 +91,7 @@ struct State {
     cache: ObservableCache,
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
-    owner_notifications: PersistentData<PersistentOwnerNotifications>
+    owner_notifications: PersistentData<PersistentOwnerNotifications>,
 }
 
 static READY: AtomicBool = AtomicBool::new(false);
@@ -99,7 +101,7 @@ enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
     PersistData,
-    CacheUpdate(CacheUpdateEvent)
+    CacheUpdate(CacheUpdateEvent),
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -109,7 +111,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-        BOT_USER_ID
+        BOT_USER_ID,
     );
 
     let shard = Eject::new(shard);
@@ -136,7 +138,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache,
         cache_rx,
         songbird,
-        owner_notifications
+        owner_notifications,
     }
 });
 
@@ -149,6 +151,9 @@ async fn main() {
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
     COMMANDS_REGISTER.deref();
+    application_role_connection::register_metadata_records()
+        .await
+        .expect("registering metadata records failed");
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
@@ -179,7 +184,7 @@ enum HandleEventError {
     Discord(HandleDiscordEventError),
     Persist(io::Error),
     CheckDangerZones(CheckDangerZonesError),
-    RandomCheck(CheckRandomError)
+    RandomCheck(CheckRandomError),
 }
 
 impl HandleEventError {
@@ -187,7 +192,7 @@ impl HandleEventError {
         type E = ReceiveMessageErrorType;
         match source.kind() {
             E::Reconnect => Err(HandleEventError::Fatal),
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
 }
@@ -207,7 +212,7 @@ async fn handle_event(event: BotEvent) {
             (true, event) => match event {
                 BotEvent::Discord(event) => match event {
                     Ok(event) => handle_discord_event(event).await?,
-                    Err(source) => HandleEventError::check_fatal(source)?
+                    Err(source) => HandleEventError::check_fatal(source)?,
                 },
                 BotEvent::RandomCheck => handle_random_check().await?,
                 BotEvent::PersistData => handle_persist_data().await?,
@@ -215,8 +220,8 @@ async fn handle_event(event: BotEvent) {
                     CacheUpdateEvent::VoiceChannelUpdate(update) => {
                         check_danger_zones(update).await?
                     }
-                }
-            }
+                },
+            },
         }
 
         Ok(())
@@ -227,7 +232,7 @@ async fn handle_event(event: BotEvent) {
 
 #[derive(Debug, From)]
 enum HandleDiscordEventError {
-    Interaction(HandleInteractionError)
+    Interaction(HandleInteractionError),
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -244,7 +249,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
             handle_interaction(&interaction_create).await?
         }
 
-        _ => ()
+        _ => (),
     }
 
     Ok(())

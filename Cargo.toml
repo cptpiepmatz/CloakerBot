@@ -89,3 +89,7 @@ features = ["macros", "no_logger"]
 
 [build-dependencies]
 hound.workspace = true
+
+[patch.crates-io.twilight-http-ratelimiting]
+git = "https://github.com/cptpiepmatz/twilight.git"
+branch = "patch/0.16.0/role-connection"

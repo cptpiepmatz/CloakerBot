@@ -1,10 +1,16 @@
-use serde_json::{json, Value};
-use twilight_http::request::Method;
+use derive_more::From;
+use serde_json::{Value, json};
+use twilight_http::{
+    request::{Method, RequestBuilder},
+    routing::Path,
+};
+
+use crate::{APPLICATION_ID, STATE};
 
 // TODO: replace this when application role connection support lands
 
 /// Construct the Application Role Connection Metadata Object list.
-/// 
+///
 /// This is sent to discord to define what metadata we provide.
 fn metadata() -> Value {
     json!([
@@ -29,6 +35,21 @@ fn metadata() -> Value {
     ])
 }
 
-pub async fn register_metadata_records() {
-    // RequestBuilder::raw(Method::Put, )
-} 
+#[derive(Debug, From)]
+pub enum RegisterMetadataRecordsError {
+    Http(twilight_http::Error),
+}
+
+pub async fn register_metadata_records() -> Result<(), RegisterMetadataRecordsError> {
+    let request = RequestBuilder::raw(
+        Method::Put,
+        Path::ApplicationIdRoleConnections(APPLICATION_ID.into()),
+        format!("applications/{}/role-connections/metadata", APPLICATION_ID),
+    )
+    .json(&metadata())
+    .build()?;
+
+    STATE.client.request::<Value>(request).await?;
+
+    Ok(())
+}
