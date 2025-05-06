@@ -49,6 +49,8 @@ mod util;
 
 // TODO: log messages using allowed_mention([]) to hide mentions
 
+// TODO: implement linked roles
+
 #[cfg(debug_assertions)]
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(604066644465287198);
 #[cfg(not(debug_assertions))]
