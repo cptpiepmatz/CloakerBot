@@ -95,6 +95,8 @@ source for such criteria.
 Users can link their Discord account to the bot to receive based on their stats.
 The metadata that the bot will provide are:
 
+<!-- TODO: use the real stats we can provide -->
+
 - how many times you successfully targeted a takedown globally,
 
 - and locally on the current server
