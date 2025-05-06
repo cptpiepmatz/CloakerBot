@@ -8,6 +8,10 @@ default-run = "CloakerBot"
 name = "CloakerBot"
 path = "src/main.rs"
 
+[features]
+prod = []
+dev = []
+
 [workspace]
 members = ["macros"]
 package.version = "3.0.0"

@@ -46,14 +46,20 @@ mod ranks;
 mod sync;
 mod takedown;
 mod util;
+mod verify;
+mod application_role_connection;
 
 // TODO: log messages using allowed_mention([]) to hide mentions
 
 // TODO: implement linked roles
 
-#[cfg(debug_assertions)]
-const APPLICATION_ID: Id<ApplicationMarker> = Id::new(604066644465287198);
-#[cfg(not(debug_assertions))]
+#[cfg(not(any(feature = "dev", feature = "prod")))]
+const APPLICATION_ID: Id<ApplicationMarker> = Id::new(macros::env_u64!("DISCORD_APPLICATION_ID"));
+#[cfg(all(feature = "dev", feature = "prod"))]
+compile_error!("the feature `dev` and `prod` are mutually exclusive");
+#[cfg(feature = "dev")]
+const APPLICATION_ID: Id<ApplicationMarker> = Id::new(1369284129031458906);
+#[cfg(feature = "prod")]
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(772259037580361729);
 
 const BOT_USER_ID: Id<UserMarker> = APPLICATION_ID.cast();

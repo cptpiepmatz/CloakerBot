@@ -12,5 +12,6 @@
     "reqwest",
     "shouty",
     "WULULULULU"
-  ]
+  ],
+  "rust-analyzer.cargo.features": ["dev"]
 }
