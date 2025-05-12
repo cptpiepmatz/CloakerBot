@@ -1,6 +1,16 @@
 {
   "material-icon-theme.folders.associations": {
-    "macros": "snippet"
+    "application_command": "batch",
+    "application_command_autocomplete": "custom",
+    "graphics": "images",
+    "help": "docs",
+    "interaction": "command",
+    "link": "contract",
+    "macros": "snippet",
+    "message_component": "components",
+    "owner_notifications": "event",
+    "sync": "ci",
+    "takedown": "error",
   },
   "cSpell.words": [
     "bitflags",
