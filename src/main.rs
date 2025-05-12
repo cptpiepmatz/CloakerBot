@@ -38,7 +38,6 @@ use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::log::info;
 use crate::util::trim::trim;
 
-mod application_role_connection;
 mod assets;
 mod data;
 mod interaction;
@@ -47,7 +46,7 @@ mod ranks;
 mod sync;
 mod takedown;
 mod util;
-mod verify;
+mod link;
 
 // TODO: log messages using allowed_mention([]) to hide mentions
 
