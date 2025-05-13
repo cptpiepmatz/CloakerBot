@@ -1,10 +1,13 @@
+use std::any::Any;
 use std::collections::HashMap;
+use std::error::Error;
 use std::sync::LazyLock;
 
 use axum::extract::Query;
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
+use futures::TryFutureExt;
 use http::StatusCode;
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;
@@ -31,24 +34,54 @@ pub struct CallbackParams {
 }
 
 pub const CALLBACK_PATH: &str = "/callback";
-pub async fn callback(Query(params): Query<CallbackParams>, jar: SignedCookieJar) -> StatusCode {
+pub async fn callback(
+    Query(params): Query<CallbackParams>,
+    jar: SignedCookieJar
+) -> Result<Redirect, StatusCode> {
+    fn err500(err: impl Error) -> StatusCode {
+        macros::error!("callback error: {err}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+
     let code = params.code;
     let discord_state = params.state;
 
     let client_state = jar.get("state").map(|c| Nonce(c.value_trimmed().to_owned()));
     if Some(discord_state) != client_state {
         macros::warn!("state verification failed");
-        return StatusCode::FORBIDDEN;
+        return Err(StatusCode::FORBIDDEN);
     }
 
-    let Ok(tokens) = oauth_tokens(&code).await else {return StatusCode::INTERNAL_SERVER_ERROR};
+    let tokens = oauth_tokens(&code).await.map_err(err500)?;
 
-    let client = TwilightClient::new(format!("{} {}", tokens.token_type, tokens.access_tokens));
-    let me_data = client.current_authorization().await.unwrap().model().await.unwrap();
-    
-    
+    let client = TwilightClient::new(format!("{} {}", tokens.token_type, tokens.access_token));
+    let me_data =
+        client.current_authorization().await.map_err(err500)?.model().await.map_err(err500)?;
+    // TODO: store tokens and stuff
+    // TODO: update metadata
 
-    todo!()
+    let me_user = match me_data.user {
+        None => return Err(StatusCode::FORBIDDEN),
+        Some(user) => user
+    };
+
+    let private_channel = STATE
+        .client
+        .create_private_channel(me_user.id)
+        .await
+        .map_err(err500)?
+        .model()
+        .await
+        .map_err(err500)?;
+    // TODO: do a proper message
+    STATE
+        .client
+        .create_message(private_channel.id)
+        .content("connected 🔗")
+        .await
+        .map_err(err500)?;
+
+    Ok(Redirect::to("https://discord.com/channels/@me/"))
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
@@ -73,11 +106,11 @@ fn oauth_url() -> (Url, Nonce) {
 
 #[derive(Debug, Deserialize)]
 pub struct Tokens {
-    access_tokens: String,
+    access_token: String,
     token_type: String,
     expires_in: u32,
     refresh_token: String,
-    scope: String,
+    scope: String
 }
 
 async fn oauth_tokens(code: &str) -> reqwest::Result<Tokens> {
@@ -100,4 +133,5 @@ async fn oauth_tokens(code: &str) -> reqwest::Result<Tokens> {
         .error_for_status()?
         .json()
         .await
+        .map_err(|err| dbg!(err))
 }

@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use axum::{response::Redirect, Router};
+use axum::Router;
+use axum::response::Redirect;
 use axum::routing::get;
 use cookie::Key;
 
@@ -18,6 +19,6 @@ pub async fn serve() {
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", OAUTH_PORT)).await.unwrap();
 
-    macros::log!("HTTP server listening on {}", OAUTH_PORT);
+    macros::info!("HTTP server listening on port {}", OAUTH_PORT);
     axum::serve(listener, router).await.unwrap();
 }

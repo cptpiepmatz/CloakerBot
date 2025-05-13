@@ -620,7 +620,8 @@ where
         match self.prev_score.cmp(&score) {
             cmp::Ordering::Less => macros::warn!(
                 "received a higher score ({}) after a lower one ({}); input may not be sorted",
-                score, self.prev_score
+                score,
+                self.prev_score
             ),
             cmp::Ordering::Greater => {
                 // strictly lower score → move to next rank

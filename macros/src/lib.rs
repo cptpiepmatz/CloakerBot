@@ -4,8 +4,8 @@ use proc_macro_error2::{Diagnostic, proc_macro_error};
 use proc_macro2::TokenStream as TokenStream2;
 
 mod env;
-mod template;
 mod log;
+mod template;
 
 fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream2>) -> TokenStream {
     let input = TokenStream2::from(input);

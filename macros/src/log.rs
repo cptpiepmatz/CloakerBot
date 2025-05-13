@@ -1,7 +1,9 @@
 use common::log::LogLevel;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{parse::{Parse, ParseStream}, punctuated::Punctuated, Expr, LitStr, Token};
+use syn::parse::{Parse, ParseStream};
+use syn::punctuated::Punctuated;
+use syn::{Expr, LitStr, Token};
 
 struct Args {
     pattern: LitStr,
@@ -15,24 +17,29 @@ impl Parse for Args {
             false => vec![],
             true => {
                 input.parse::<Token![,]>()?;
-                let items: Punctuated<Expr, Token![,]> = Punctuated::parse_separated_nonempty(input)?;
+                let items: Punctuated<Expr, Token![,]> =
+                    Punctuated::parse_separated_nonempty(input)?;
                 items.into_iter().collect()
             }
         };
 
-        Ok(Self{pattern, items})
+        Ok(Self { pattern, items })
     }
 }
 
-pub fn logger(name: &str, level: LogLevel, color: &str) -> impl Fn(TokenStream2) -> syn::Result<TokenStream2> {
+pub fn logger(
+    name: &str,
+    level: LogLevel,
+    color: &str
+) -> impl Fn(TokenStream2) -> syn::Result<TokenStream2> {
     move |input: TokenStream2| {
-        let Args {pattern, items} = syn::parse2(input)?;
+        let Args { pattern, items } = syn::parse2(input)?;
 
         let level = match level {
             LogLevel::Debug => format_ident!("Debug"),
             LogLevel::Info => format_ident!("Info"),
             LogLevel::Warn => format_ident!("Warn"),
-            LogLevel::Error => format_ident!("Error"),
+            LogLevel::Error => format_ident!("Error")
         };
 
         Ok(quote! {{
