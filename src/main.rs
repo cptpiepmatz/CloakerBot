@@ -216,7 +216,7 @@ async fn handle_event(event: BotEvent) {
             (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
                 STATE.ready.store(true, Ordering::Release);
-                info!("Bot is ready");
+                macros::info!("Bot is ready");
             }
             (false, _) => {}
 

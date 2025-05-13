@@ -10,7 +10,6 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 use crate::data::persist::Persist;
-use crate::util::log::warn;
 
 /// Statistics of the app.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -619,10 +618,10 @@ where
 
         let score = (self.score_fn)(&next);
         match self.prev_score.cmp(&score) {
-            cmp::Ordering::Less => warn!(format!(
+            cmp::Ordering::Less => macros::warn!(
                 "received a higher score ({}) after a lower one ({}); input may not be sorted",
                 score, self.prev_score
-            )),
+            ),
             cmp::Ordering::Greater => {
                 // strictly lower score → move to next rank
                 self.prev_score = score;
