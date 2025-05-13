@@ -1,13 +1,12 @@
 use std::env::VarError;
 use std::fmt::Display;
-use std::str::FromStr;
 
 use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
 use quote::{ToTokens, quote};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{Expr, Ident, Lit, LitStr, Token};
+use syn::{Ident, Lit, LitStr, Token};
 
 struct Args {
     env: LitStr,
@@ -127,10 +126,9 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
     let prod = quote_value(prod);
     let fallback = quote_value(fallback);
 
-    // when https://doc.rust-lang.org/stable/proc_macro/tracked_env/fn.var.html
-    // stabilizes, we should include it here
-
     Ok(quote! {{
+        std::option_env!(#env);
+
         #fallback
         #prod
         #dev
