@@ -35,7 +35,6 @@ use crate::takedown::PlannedTakedown;
 use crate::takedown::danger_zones::{CheckDangerZonesError, check_danger_zones};
 use crate::takedown::random::{CheckRandomError, handle_random_check};
 use crate::util::cache::{CacheUpdateEvent, ObservableCache};
-use crate::util::log::info;
 use crate::util::trim::trim;
 
 mod assets;
@@ -76,6 +75,7 @@ const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_MESSAGES)
     .union(Intents::GUILD_INTEGRATIONS);
 
+const OAUTH_PORT: u16 = macros::env!("DISCORD_OAUTH_PORT", 9000u16);
 static CLIENT_SECRET: LazyString = lazy_env!("DISCORD_CLIENT_SECRET");
 static COOKIE_SECRET: LazyString = lazy_env!("COOKIE_SECRET");
 const REDIRECT_URI: &str = macros::env!(
@@ -91,6 +91,7 @@ const PERSIST_DATA_EVERY: Duration = Duration::from_millis(500);
 struct State {
     shard: Eject<Shard>,
     client: Client,
+    http_client: reqwest::Client,
     ready: AtomicBool,
     guild_configs: PersistentData<PersistentGuildConfig>,
     stats: PersistentData<PersistentAppStats>,
@@ -111,6 +112,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
     let discord_token = TOKEN.deref();
     let mut shard = Shard::new(ShardId::ONE, discord_token.to_owned(), INTENTS);
     let client = Client::new(discord_token.to_owned());
+
+    let http_client = reqwest::Client::new();
 
     let ready = AtomicBool::new(false);
 
@@ -135,6 +138,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
     State {
         shard,
         client,
+        http_client,
         ready,
         guild_configs,
         stats: guild_stats,
@@ -150,6 +154,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
 #[tokio::main]
 async fn main() {
+    // console_subscriber::init();
+
     let state = STATE.deref();
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
@@ -160,6 +166,8 @@ async fn main() {
     // application_role_connection::register_metadata_records()
     //     .await
     //     .expect("registering metadata records failed");
+
+    let http_server = tokio::spawn(link::serve());
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
@@ -176,10 +184,14 @@ async fn main() {
     let events = select(events, persist_data_interval);
     let mut events = select(events, cache_updates);
 
-    futures::pin_mut!(events);
-    while let Some(event) = events.next().await {
-        tokio::spawn(handle_event(event));
-    }
+    let event_handler = tokio::spawn(async {
+        futures::pin_mut!(events);
+        while let Some(event) = events.next().await {
+            tokio::spawn(handle_event(event));
+        }
+    });
+
+    tokio::try_join!(http_server, event_handler).unwrap();
 }
 
 #[derive(Debug)]

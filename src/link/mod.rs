@@ -1,4 +1,23 @@
+use std::ops::Deref;
+
+use axum::{response::Redirect, Router};
+use axum::routing::get;
+use cookie::Key;
+
+use crate::{COOKIE_SECRET, OAUTH_PORT};
+
 pub mod application_role_connection;
 pub mod oauth;
 
-const PORT: &str = macros::env!("DISCORD_VERIFY_PORT", "9000");
+pub async fn serve() {
+    let router = Router::new()
+        .route("/", get(async || "👋"))
+        .route(oauth::LINKED_ROLE_PATH, get(oauth::linked_role))
+        .route(oauth::CALLBACK_PATH, get(oauth::callback))
+        .with_state(Key::from(COOKIE_SECRET.as_bytes()));
+
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", OAUTH_PORT)).await.unwrap();
+
+    macros::log!("HTTP server listening on {}", OAUTH_PORT);
+    axum::serve(listener, router).await.unwrap();
+}
