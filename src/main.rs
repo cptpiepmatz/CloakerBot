@@ -104,7 +104,7 @@ struct State {
     cache: ObservableCache,
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
-    owner_notifications: PersistentData<PersistentOwnerNotifications>,
+    owner_notifications: PersistentData<PersistentOwnerNotifications>
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -116,7 +116,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-        BOT_USER_ID,
+        BOT_USER_ID
     );
 
     let shard = Eject::new(shard);
@@ -144,7 +144,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache,
         cache_rx,
         songbird,
-        owner_notifications,
+        owner_notifications
     }
 });
 
@@ -165,12 +165,10 @@ async fn main() {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
     });
 
-    let random_check_interval =
-        IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
-            .map(|_| BotEvent::RandomCheck);
-    let persist_data_interval =
-        IntervalStream::new(tokio::time::interval(PERSIST_DATA_EVERY))
-            .map(|_| BotEvent::PersistData);
+    let random_check_interval = IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
+        .map(|_| BotEvent::RandomCheck);
+    let persist_data_interval = IntervalStream::new(tokio::time::interval(PERSIST_DATA_EVERY))
+        .map(|_| BotEvent::PersistData);
 
     let cache_updates = ReceiverStream::new(cache_rx).map(BotEvent::CacheUpdate);
 
@@ -189,7 +187,7 @@ enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
     PersistData,
-    CacheUpdate(CacheUpdateEvent),
+    CacheUpdate(CacheUpdateEvent)
 }
 
 #[derive(Debug, From)]
@@ -198,7 +196,7 @@ enum HandleEventError {
     Discord(HandleDiscordEventError),
     Persist(io::Error),
     CheckDangerZones(CheckDangerZonesError),
-    RandomCheck(CheckRandomError),
+    RandomCheck(CheckRandomError)
 }
 
 impl HandleEventError {
@@ -206,7 +204,7 @@ impl HandleEventError {
         type E = ReceiveMessageErrorType;
         match source.kind() {
             E::Reconnect => Err(HandleEventError::Fatal),
-            _ => Ok(()),
+            _ => Ok(())
         }
     }
 }
@@ -226,7 +224,7 @@ async fn handle_event(event: BotEvent) {
             (true, event) => match event {
                 BotEvent::Discord(event) => match event {
                     Ok(event) => handle_discord_event(event).await?,
-                    Err(source) => HandleEventError::check_fatal(source)?,
+                    Err(source) => HandleEventError::check_fatal(source)?
                 },
                 BotEvent::RandomCheck => handle_random_check().await?,
                 BotEvent::PersistData => handle_persist_data().await?,
@@ -234,8 +232,8 @@ async fn handle_event(event: BotEvent) {
                     CacheUpdateEvent::VoiceChannelUpdate(update) => {
                         check_danger_zones(update).await?
                     }
-                },
-            },
+                }
+            }
         }
 
         Ok(())
@@ -246,7 +244,7 @@ async fn handle_event(event: BotEvent) {
 
 #[derive(Debug, From)]
 enum HandleDiscordEventError {
-    Interaction(HandleInteractionError),
+    Interaction(HandleInteractionError)
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -263,7 +261,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
             handle_interaction(&interaction_create).await?
         }
 
-        _ => (),
+        _ => ()
     }
 
     Ok(())
@@ -272,9 +270,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 type LazyString = LazyLock<String>;
 macro_rules! lazy_env {
     ($env:literal) => {
-        LazyLock::new(|| {
-            std::env::var($env).expect(concat!("missing env variable ", $env))
-        })
+        LazyLock::new(|| std::env::var($env).expect(concat!("missing env variable ", $env)))
     };
 }
 
