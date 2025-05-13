@@ -72,6 +72,11 @@ hieroglyph = "0.1"
 image = "0.25"
 imageproc = "0.25"
 
+# http server for oauth
+axum = "0.8"
+axum-extra = { version = "0.10", features = ["cookie", "cookie-signed"] }
+url = "2.5"
+
 # audio handling
 wav = "1"
 hound.workspace = true

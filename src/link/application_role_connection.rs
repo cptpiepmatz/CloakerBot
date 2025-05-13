@@ -1,9 +1,7 @@
 use derive_more::From;
 use serde_json::{Value, json};
-use twilight_http::{
-    request::{Method, RequestBuilder},
-    routing::Path,
-};
+use twilight_http::request::{Method, RequestBuilder};
+use twilight_http::routing::Path;
 
 use crate::{APPLICATION_ID, STATE};
 
@@ -37,14 +35,14 @@ fn metadata() -> Value {
 
 #[derive(Debug, From)]
 pub enum RegisterMetadataRecordsError {
-    Http(twilight_http::Error),
+    Http(twilight_http::Error)
 }
 
 pub async fn register_metadata_records() -> Result<(), RegisterMetadataRecordsError> {
     let request = RequestBuilder::raw(
         Method::Put,
         Path::ApplicationIdRoleConnections(APPLICATION_ID.into()),
-        format!("applications/{}/role-connections/metadata", APPLICATION_ID),
+        format!("applications/{}/role-connections/metadata", APPLICATION_ID)
     )
     .json(&metadata())
     .build()?;

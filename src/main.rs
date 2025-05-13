@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
-use std::{env, io, iter};
+use std::{io, iter};
 
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
@@ -41,12 +41,18 @@ use crate::util::trim::trim;
 mod assets;
 mod data;
 mod interaction;
+mod link;
 mod owner_notifications;
 mod ranks;
 mod sync;
 mod takedown;
 mod util;
-mod link;
+
+#[cfg(all(feature = "dev", feature = "prod"))]
+compile_error!("the feature `dev` and `prod` are mutually exclusive");
+
+#[cfg(all(not(feature = "dev"), not(feature = "prod")))]
+compile_error!("one of the features `dev` or `prod` are required");
 
 // TODO: log messages using allowed_mention([]) to hide mentions
 
@@ -54,30 +60,38 @@ mod link;
 
 // TODO: use miette to render nice errors
 
-#[cfg(not(any(feature = "dev", feature = "prod")))]
-const APPLICATION_ID: Id<ApplicationMarker> = Id::new(macros::env_u64!("DISCORD_APPLICATION_ID"));
-#[cfg(all(feature = "dev", feature = "prod"))]
-compile_error!("the feature `dev` and `prod` are mutually exclusive");
-#[cfg(feature = "dev")]
-const APPLICATION_ID: Id<ApplicationMarker> = Id::new(1369284129031458906);
-#[cfg(feature = "prod")]
-const APPLICATION_ID: Id<ApplicationMarker> = Id::new(772259037580361729);
+#[rustfmt::skip]
+const CLIENT_ID: u64 = macros::env!(
+    "DISCORD_CLIENT_ID", 
+    dev = 1369284129031458906u64, 
+    prod = 772259037580361729u64
+);
 
-const BOT_USER_ID: Id<UserMarker> = APPLICATION_ID.cast();
+const APPLICATION_ID: Id<ApplicationMarker> = Id::new(CLIENT_ID);
+const BOT_USER_ID: Id<UserMarker> = Id::new(CLIENT_ID);
 
+static TOKEN: LazyStr = lazy_env!("DISCORD_TOKEN");
 const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_VOICE_STATES)
     .union(Intents::GUILD_MESSAGES)
     .union(Intents::GUILD_INTEGRATIONS);
 
-const RANDOM_CHECK_INTERVAL_DURATION: Duration = Duration::from_secs(15);
+static CLIENT_SECRET: LazyStr = lazy_env!("DISCORD_CLIENT_SECRET");
+const COOKIE_SECRET: LazyStr = lazy_env!("COOKIE_SECRET");
+const REDIRECT_URI: &str = macros::env!(
+    "DISCORD_REDIRECT_URI",
+    dev = "https://dev.cloakerbot.cptpiepmatz.de/callback",
+    prod = "https://cloakerbot.cptpiepmatz.de/callback"
+);
 
+const RANDOM_CHECK_INTERVAL_DURATION: Duration = Duration::from_secs(15);
 const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
     shard: Eject<Shard>,
     client: Client,
+    ready: AtomicBool,
     guild_configs: PersistentData<PersistentGuildConfig>,
     stats: PersistentData<PersistentAppStats>,
     /// Lock per guild to allow only one takedown to happen per guild.
@@ -93,20 +107,12 @@ struct State {
     owner_notifications: PersistentData<PersistentOwnerNotifications>,
 }
 
-static READY: AtomicBool = AtomicBool::new(false);
-
-#[derive(Debug)]
-enum BotEvent {
-    Discord(Result<DiscordEvent, ReceiveMessageError>),
-    RandomCheck,
-    PersistData,
-    CacheUpdate(CacheUpdateEvent),
-}
-
 static STATE: LazyLock<State> = LazyLock::new(|| {
-    let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
-    let mut shard = Shard::new(ShardId::ONE, discord_token.clone(), INTENTS);
-    let client = Client::new(discord_token);
+    let discord_token = *TOKEN;
+    let mut shard = Shard::new(ShardId::ONE, discord_token.to_owned(), INTENTS);
+    let client = Client::new(discord_token.to_owned());
+
+    let ready = AtomicBool::new(false);
 
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
@@ -129,6 +135,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
     State {
         shard,
         client,
+        ready,
         guild_configs,
         stats: guild_stats,
         takedown_locks,
@@ -150,9 +157,9 @@ async fn main() {
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
     COMMANDS_REGISTER.deref();
-    application_role_connection::register_metadata_records()
-        .await
-        .expect("registering metadata records failed");
+    // application_role_connection::register_metadata_records()
+    //     .await
+    //     .expect("registering metadata records failed");
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
@@ -177,6 +184,14 @@ async fn main() {
     }
 }
 
+#[derive(Debug)]
+enum BotEvent {
+    Discord(Result<DiscordEvent, ReceiveMessageError>),
+    RandomCheck,
+    PersistData,
+    CacheUpdate(CacheUpdateEvent),
+}
+
 #[derive(Debug, From)]
 enum HandleEventError {
     Fatal,
@@ -198,11 +213,11 @@ impl HandleEventError {
 
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
-        match (READY.load(Ordering::SeqCst), event) {
+        match (STATE.ready.load(Ordering::SeqCst), event) {
             // Bot is not ready
             (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
-                READY.store(true, Ordering::SeqCst);
+                STATE.ready.store(true, Ordering::SeqCst);
                 info!("Bot is ready");
             }
             (false, _) => {}
@@ -253,3 +268,14 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 
     Ok(())
 }
+
+type LazyStr = LazyLock<&'static str>;
+macro_rules! lazy_env {
+    ($env:literal) => {
+        LazyLock::new(|| {
+            std::env::var($env).expect(concat!("missing env variable ", $env)).leak()
+        })
+    };
+}
+
+use lazy_env;
