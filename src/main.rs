@@ -70,22 +70,22 @@ const CLIENT_ID: u64 = macros::env!(
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(CLIENT_ID);
 const BOT_USER_ID: Id<UserMarker> = Id::new(CLIENT_ID);
 
-static TOKEN: LazyStr = lazy_env!("DISCORD_TOKEN");
+static TOKEN: LazyString = lazy_env!("DISCORD_TOKEN");
 const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_VOICE_STATES)
     .union(Intents::GUILD_MESSAGES)
     .union(Intents::GUILD_INTEGRATIONS);
 
-static CLIENT_SECRET: LazyStr = lazy_env!("DISCORD_CLIENT_SECRET");
-const COOKIE_SECRET: LazyStr = lazy_env!("COOKIE_SECRET");
+static CLIENT_SECRET: LazyString = lazy_env!("DISCORD_CLIENT_SECRET");
+static COOKIE_SECRET: LazyString = lazy_env!("COOKIE_SECRET");
 const REDIRECT_URI: &str = macros::env!(
     "DISCORD_REDIRECT_URI",
     dev = "https://dev.cloakerbot.cptpiepmatz.de/callback",
     prod = "https://cloakerbot.cptpiepmatz.de/callback"
 );
 
-const RANDOM_CHECK_INTERVAL_DURATION: Duration = Duration::from_secs(15);
-const PERSIST_DATA_INTERVAL_DURATION: Duration = Duration::from_millis(500);
+const RANDOM_CHECK_EVERY: Duration = Duration::from_secs(15);
+const PERSIST_DATA_EVERY: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
@@ -108,7 +108,7 @@ struct State {
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
-    let discord_token = *TOKEN;
+    let discord_token = TOKEN.deref();
     let mut shard = Shard::new(ShardId::ONE, discord_token.to_owned(), INTENTS);
     let client = Client::new(discord_token.to_owned());
 
@@ -166,10 +166,10 @@ async fn main() {
     });
 
     let random_check_interval =
-        IntervalStream::new(tokio::time::interval(RANDOM_CHECK_INTERVAL_DURATION))
+        IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
             .map(|_| BotEvent::RandomCheck);
     let persist_data_interval =
-        IntervalStream::new(tokio::time::interval(PERSIST_DATA_INTERVAL_DURATION))
+        IntervalStream::new(tokio::time::interval(PERSIST_DATA_EVERY))
             .map(|_| BotEvent::PersistData);
 
     let cache_updates = ReceiverStream::new(cache_rx).map(BotEvent::CacheUpdate);
@@ -213,11 +213,11 @@ impl HandleEventError {
 
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
-        match (STATE.ready.load(Ordering::SeqCst), event) {
+        match (STATE.ready.load(Ordering::Acquire), event) {
             // Bot is not ready
             (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
-                STATE.ready.store(true, Ordering::SeqCst);
+                STATE.ready.store(true, Ordering::Release);
                 info!("Bot is ready");
             }
             (false, _) => {}
@@ -269,11 +269,11 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
     Ok(())
 }
 
-type LazyStr = LazyLock<&'static str>;
+type LazyString = LazyLock<String>;
 macro_rules! lazy_env {
     ($env:literal) => {
         LazyLock::new(|| {
-            std::env::var($env).expect(concat!("missing env variable ", $env)).leak()
+            std::env::var($env).expect(concat!("missing env variable ", $env))
         })
     };
 }
