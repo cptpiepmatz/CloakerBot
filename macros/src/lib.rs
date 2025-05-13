@@ -16,7 +16,7 @@ fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream
     TokenStream::from(output)
 }
 
-macro_rules! defer_macro {
+macro_rules! defer_macros {
     ($($ident:ident: $f:expr),* $(,)?) => {$(
         #[proc_macro]
         #[proc_macro_error]
@@ -26,7 +26,7 @@ macro_rules! defer_macro {
     )*}
 }
 
-defer_macro! {
+defer_macros! {
     template_md: template::md,
     template_toml: template::toml,
     env: env::env,
