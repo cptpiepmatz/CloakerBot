@@ -23,6 +23,9 @@ itertools = "0.14"
 hound = "3.5"
 
 [dependencies]
+# custom libs
+common = { path = "./common", package = "cloaker-bot-common" }
+macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # data serialization
 serde = { version = "1", features = ["derive"] }
@@ -47,13 +50,11 @@ chrono = { version = "0.4", features = ["serde"] }
 # utility
 bitflags = "2.9"
 bytes = "1.10"
-common = { path = "./common", package = "cloaker-bot-common" }
 const_format = { version = "0.2", features = ["rust_1_51"] }
 derive_more = { version = "2", features = ["full"] }
 heapless = "0.8"
 itertools.workspace = true
 konst = "0.3"
-macros = { path = "./macros", package = "cloaker-bot-macros" }
 rand = "0.9"
 smart-default = "0.7"
 static-toml = "1"
