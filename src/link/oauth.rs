@@ -73,7 +73,7 @@ pub async fn callback(
         .model()
         .await
         .map_err(err500)?;
-    // TODO: do a proper message
+    // FILLME: do a proper message
     STATE
         .client
         .create_message(private_channel.id)

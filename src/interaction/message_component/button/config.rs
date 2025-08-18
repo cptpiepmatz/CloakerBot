@@ -235,7 +235,7 @@ async fn handle_random(
 
     let random_config = guild_config.random.complete();
 
-    // TODO: get a quote here
+    // FILLME: get a quote here
     let quote = "some quote";
     let reply = match random_config.enabled {
         true => config::random::enabled(
