@@ -42,7 +42,7 @@ where
     /// Returns a guard on successful insertion, or `None` if the key is
     /// occupied.
     #[must_use]
-    pub fn upsert(&self, key: K, value: V) -> Option<VolatileMapGuard<K, V>> {
+    pub fn upsert(&self, key: K, value: V) -> Option<VolatileMapGuard<'_, K, V>> {
         let mut lock = self.inner.lock();
         match lock.entry(key) {
             Entry::Occupied(_) => None,
