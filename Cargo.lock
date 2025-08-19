@@ -596,6 +596,7 @@ dependencies = [
  "console-subscriber",
  "const_format",
  "cookie",
+ "dashmap",
  "derive_more 2.0.1",
  "futures",
  "heapless",

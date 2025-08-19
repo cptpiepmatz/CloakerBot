@@ -40,6 +40,7 @@ console-subscriber = "0.4"
 
 # concurrency
 parking_lot = "0.12"
+dashmap = "6"
 
 # time management
 chrono = { version = "0.4", features = ["serde"] }
