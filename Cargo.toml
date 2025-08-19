@@ -31,9 +31,6 @@ macros = { path = "./macros", package = "cloaker-bot-macros" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-# http request
-reqwest = { version = "0.12", features = ["json"] }
-
 # async
 tokio = { version = "1", features = ["full", "tracing"] }
 tokio-stream = "0.1"
@@ -92,6 +89,12 @@ symphonia = "0.5"
 version = "0.5"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls", "tungstenite"]
+
+# http request
+[dependencies.reqwest]
+version = "0.12"
+default-features = false
+features = ["json", "rustls-tls"]
 
 # logging
 [dependencies.paris]
