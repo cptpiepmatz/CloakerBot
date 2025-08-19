@@ -87,3 +87,75 @@ impl Drop for KeyLockGuard {
         self.notify.notify_one();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+    use std::sync::{Arc, LazyLock};
+    use std::time::Duration;
+
+    use dashmap::DashSet;
+    use itertools::Itertools;
+    use tokio::task::JoinSet;
+    use tokio::time::Timeout;
+    use tokio::time::error::Elapsed;
+
+    use super::*;
+
+    fn leak<T>(to_leak: T) -> &'static T {
+        Box::leak(Box::new(to_leak))
+    }
+
+    async fn sleep() {
+        tokio::time::sleep(Duration::from_millis(30)).await;
+    }
+
+    async fn timeout<F: IntoFuture>(future: F) -> Result<F::Output, Elapsed> {
+        tokio::time::timeout(Duration::from_millis(30), future).await
+    }
+
+    #[tokio::test]
+    async fn single_key_sequence() {
+        const N: usize = 10;
+
+        let key_lock = leak(KeyLock::new());
+        let barrier = leak(Notify::new());
+        let bucket0 = leak(DashSet::with_capacity(N));
+        let bucket1 = leak(DashSet::with_capacity(N));
+        let bucket2 = leak(DashSet::with_capacity(N));
+
+        let mut tasks = JoinSet::new();
+        for idx in 1..=N {
+            tasks.spawn(async move {
+                bucket0.insert(idx);
+                barrier.notified().await;
+
+                let guard = key_lock.lock(0).await;
+                bucket1.insert(idx);
+                barrier.notified().await;
+                drop(guard);
+
+                let guard = key_lock.lock(idx).await;
+                bucket2.insert(idx);
+                barrier.notified().await;
+                drop(guard);
+            });
+        }
+
+        sleep().await;
+        assert_eq!(bucket0.len(), N);
+        barrier.notify_waiters();
+
+        for count in 1..=N {
+            sleep().await;
+            assert_eq!(bucket1.len(), count);
+            barrier.notify_waiters();
+        }
+
+        sleep().await;
+        assert_eq!(bucket2.len(), N);
+        barrier.notify_waiters();
+
+        assert!(timeout(tasks.join_all()).await.is_ok());
+    }
+}
