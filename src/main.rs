@@ -156,13 +156,13 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 async fn main() {
     // console_subscriber::init();
 
-    let state = STATE.deref();
+    let state = LazyLock::force(&STATE);
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
 
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
-    COMMANDS_REGISTER.deref();
+    LazyLock::force(&COMMANDS_REGISTER);
     // application_role_connection::register_metadata_records()
     //     .await
     //     .expect("registering metadata records failed");
