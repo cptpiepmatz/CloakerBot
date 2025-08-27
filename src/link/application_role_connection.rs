@@ -1,8 +1,8 @@
 use derive_more::From;
 use serde_json::{Value, json};
+use twilight_http::Client;
 use twilight_http::request::{Method, RequestBuilder};
 use twilight_http::routing::Path;
-use twilight_http::Client;
 
 use crate::{APPLICATION_ID, STATE};
 
@@ -53,9 +53,7 @@ pub async fn register_metadata() -> Result<(), RegisterMetadataRecordsError> {
     Ok(())
 }
 
-pub enum UpdateMetadataError {
-
-}
+pub enum UpdateMetadataError {}
 
 pub async fn update_metadata(client: &Client) {
     let request = RequestBuilder::raw(
