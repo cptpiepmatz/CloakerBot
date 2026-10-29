@@ -89,11 +89,23 @@ pub async fn takedown(
     guild_id: Id<GuildMarker>,
     kind: TakedownType
 ) -> TakedownResult {
-    // TODO: put this into inner function to allow tracking stats
     let guild_configs = STATE.guild_configs.read().await;
     let config = guild_configs.get(&guild_id).cloned().unwrap_or_default();
     drop(guild_configs);
-    execute_takedown(target_id, guild_id, kind, &config).await
+    let result = execute_takedown(target_id, guild_id, kind, &config).await;
+    record_outcome(target_id, guild_id, kind, &result).await;
+    result
+}
+
+async fn record_outcome(
+    target_id: Id<UserMarker>,
+    guild_id: Id<GuildMarker>,
+    kind: TakedownType,
+    result: &TakedownResult
+) {
+    if let Err(error) = result {
+        macros::info!("takedown in {guild_id} targeting {target_id} ({kind:?}): {error:?}");
+    }
 }
 
 async fn execute_takedown(

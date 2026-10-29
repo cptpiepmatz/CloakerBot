@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+15. Takedown outcome boundary: made the public function observe every inner result, including early failures. This central boundary is where statistics and linked-role/log side effects can run without being skipped by `?` in execution.
+
 14. Takedown decomposition: separated configuration snapshotting from execution and the existing in-voice phase. Removed the unused global stats guard across network/audio waits and moved the per-guild lock before target checks so queued requests revalidate the current voice state.
 
 13. Autocomplete: implemented filtered help-command suggestions and enabled autocomplete on `/help command`. Unknown/stale requests receive an empty result rather than panicking; suggestions are limited to Discord's 25-choice maximum.
