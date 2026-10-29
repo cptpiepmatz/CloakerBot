@@ -68,6 +68,7 @@ pub async fn action(
     let mut guild_configs = STATE.guild_configs.write().await;
     let guild_config = guild_configs.entry(guild_id).or_default();
     guild_config.log_channel = channel;
+    drop(guild_configs);
 
     let content = match channel {
         Some(ch_id) => assets::replies::config::log_channel::set(
@@ -77,8 +78,7 @@ pub async fn action(
         ),
         None => assets::replies::config::log_channel::unset(
             BOT_USER_ID.mention(),
-            // TODO: insert fallback log channel here
-            "[insert fallback here]",
+            crate::logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
     };

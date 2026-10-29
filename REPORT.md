@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+11. Log-channel select: showed the real fallback after clearing the selection, releasing the configuration lock before HTTP lookup.
+
 10. Log-channel command fallback: implemented the documented system → public updates → #general order, checking effective view/send permissions. Missing cache data fails closed; the bot's own member is fetched when needed. The UI explicitly reports when no fallback is usable.
 
 9. Mention safety: disabled mention parsing by default on the bot HTTP client. Log messages and ordinary replies can render mentions without pinging users, roles, or everyone.
