@@ -14,6 +14,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Integration review
 
+- Production validation exposed an existing environment-macro bug: all fallback assignments were gated on `dev`. Corrected the feature gates for dev/prod values and made the common fallback unconditional.
+
 - Updated the observable cache before emitting change notifications or processing events in Songbird: a takedown owns the call mutex, so Songbird may wait on that mutex while the bot is moved. Rejection detection must see the gateway state before that wait. Also released danger-zone config reads before takedown execution and revalidated the original danger channel after queuing.
 
 - Formatted the workspace with the existing nightly rustfmt configuration, preserving the project's import grouping, brace style, and sparse comments.

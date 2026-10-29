@@ -117,14 +117,9 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
         }
     }
 
-    let quote_value = |value| match value {
-        None => quote!(),
-        Some(value) => quote!(#[cfg(feature = "dev")] let value = #value;)
-    };
-
-    let dev = quote_value(dev);
-    let prod = quote_value(prod);
-    let fallback = quote_value(fallback);
+    let dev = dev.map(|value| quote!(#[cfg(feature = "dev")] let value = #value;));
+    let prod = prod.map(|value| quote!(#[cfg(feature = "prod")] let value = #value;));
+    let fallback = fallback.map(|value| quote!(let value = #value;));
 
     Ok(quote! {{
         std::option_env!(#env);
