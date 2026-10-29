@@ -15,6 +15,14 @@ channel = "I'd rather eat glass than report in, but hey, let’s not disappoint 
 no_channel = "So you don't want reports? That's fine for me!"
 
 [config.random]
-# FILLME: add nice quotes here
-enabled = "random quote"
-disabled = "quote for no random"
+enabled = "You can run, but you can't hide."
+disabled = "I'll wait until you call me."
+
+[cloaker]
+success = "Now go to the forums and cry like the little bitch you are!"
+countered = "Not so tough now, huh?"
+fail = "Next time, put up a better fight."
+
+[counter]
+success = "You wanted me back?"
+miss = "Check your corners!"
