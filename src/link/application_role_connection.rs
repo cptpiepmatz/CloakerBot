@@ -70,14 +70,37 @@ pub async fn register_metadata() -> Result<(), RegisterMetadataRecordsError> {
     Ok(())
 }
 
-pub enum UpdateMetadataError {}
+#[derive(Serialize)]
+struct RoleConnection {
+    platform_name: &'static str,
+    metadata: UserMetadata
+}
 
-pub async fn update_metadata(client: &Client) {
+#[derive(Serialize)]
+struct UserMetadata {
+    times_smacked: String,
+    times_called: String,
+    times_countered: String
+}
+
+pub async fn update_metadata(
+    client: &Client,
+    user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
+) -> Result<(), twilight_http::Error> {
+    let totals = STATE.stats.read().await.takedowns.user_totals(user_id);
+    let connection = RoleConnection {
+        platform_name: "CloakerBot",
+        metadata: UserMetadata {
+            times_smacked: totals.initiated.to_string(),
+            times_called: totals.received.to_string(),
+            times_countered: totals.countered.to_string()
+        }
+    };
     let request = RequestBuilder::raw(
         Method::Put,
         Path::UsersMeApplicationsIdRoleConnection,
         format!("users/@me/applications/{}/role-connection", APPLICATION_ID)
-    );
-
-    // TODO: the rest, I guess
+    ).json(&connection).build()?;
+    client.request::<serde_json::Value>(request).await?;
+    Ok(())
 }

@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+27. Role-connection update implementation: completed the user-scoped PUT with a typed payload and Discord-required string metadata values. Computed global initiated/received/counter-plus-parry totals directly from stored guild stats, using 64-bit totals without sorting ranks or holding stats locks across HTTP.
+
 26. Role-connection API adapter: inspected the pinned Twilight 0.16 client/model APIs; native support is absent. Replaced untyped metadata JSON with a typed record and numeric metadata-kind serializer while retaining Twilight's authenticated, rate-limited raw request adapter and the existing routing patch. No speculative major dependency upgrade was introduced.
 
 25. Error rendering: added miette diagnostics for event failures with persistence/reconnection advice and rendered reports instead of panicking spawned handlers. HTTP bind/serve and task-join errors propagate to the miette-returning entry point. Remote callback errors continue returning safe HTTP statuses rather than leaking reports to browsers.

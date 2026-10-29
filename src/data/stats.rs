@@ -212,6 +212,22 @@ impl GuildTakedowns {
 }
 
 impl AppTakedowns {
+    /// Returns global totals for a user's linked-role connection.
+    pub fn user_totals(&self, user_id: Id<UserMarker>) -> UserTotals {
+        let mut totals = UserTotals::default();
+        for guild in self.0.values() {
+            if let Some(member) = guild.0.get(&user_id) {
+                totals.initiated += member.takedowns.values().map(|&count| u64::from(count)).sum::<u64>();
+                totals.countered += member.counters.values().map(|&count| u64::from(count)).sum::<u64>() + u64::from(member.parries);
+            }
+            for member in guild.0.values() {
+                totals.received += u64::from(member.takedowns.get(&user_id).copied().unwrap_or_default());
+                totals.received += u64::from(member.counters.get(&user_id).copied().unwrap_or_default());
+            }
+        }
+        totals
+    }
+
     /// Returns an iterator over the punisher rank positions.
     ///
     /// The punisher rank indicates the number of successful takedowns initiated
@@ -321,6 +337,13 @@ impl AppTakedowns {
 }
 
 pub type PersistentAppStats = AppStats;
+#[derive(Debug, Default, Clone, Copy)]
+pub struct UserTotals {
+    pub initiated: u64,
+    pub received: u64,
+    pub countered: u64
+}
+
 impl Persist for PersistentAppStats {
     type Item = Self;
 
