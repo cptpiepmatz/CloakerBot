@@ -1,20 +1,54 @@
 # Changes and decisions
 
-## SQLite replacement (in progress)
+## SQLite replacement
 
 - Starting fresh, as requested: no JSON importer, dual-write mode, or legacy-format compatibility.
 - Added SQLx 0.9 with only SQLite/Tokio, checked-query, embedded-migration, and time features. The initial schema is normalized and uses strict tables, foreign keys, nonnegative counters, bounded random intervals, and cascading guild cleanup.
-- The database will live at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a small connection pool. New Unix directories/files are private; Windows inherits the directory ACL. SQL statement logging is disabled for credential safety.
-- Offline query metadata will be checked in so normal builds do not need a schema database. The initial migration creates fresh databases automatically; it is a schema migration, not a legacy data migration.
+- The database lives at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a four-connection pool. New Unix directories/files use modes 0700/0600; Windows inherits the directory ACL. Existing directory/file permissions are not changed. SQL statement logging is disabled for credential safety.
+- Offline query metadata is checked into `.sqlx`, with offline mode enabled in `.cargo/config.toml`, so normal builds need no schema database or SQLx CLI. The initial migration creates fresh databases automatically before workers start; it is a schema migration, not a legacy data migration.
 
 - Replaced all persistent state maps and the half-second JSON flush worker with a single database handle. Config reads are on demand; edits use short `BEGIN IMMEDIATE` transactions so concurrent component changes cannot overwrite one another. No transaction is held across Discord requests or playback.
 - Takedown/counter/parry writes use atomic SQL increments. Ranking calculations keep their existing tested Rust read model, loaded as an owned, consistent snapshot per request rather than a synchronized cache. Linked-role totals are calculated directly in SQL.
 - OAuth credential writes and owner-notification acknowledgements commit immediately. Existing per-user locks continue to serialize refresh/relink and announcement sends. Database errors propagate through the existing diagnostic boundaries; failure to record an already completed takedown is logged without misreporting the gameplay result.
 - Random schedules are claimed transactionally, including a config recheck; changing random settings invalidates the existing schedule in the same transaction. Guild deletion cascades through config, stats, schedules, and owner references while preserving linked accounts and owners still referenced by another guild.
+- Added two focused local SQLite tests for the replacement: fresh initialization/reopening, full-range Discord ID roundtrips, credential rotation/revocation, totals/rank snapshots, schedule claims, config rollback, shared-owner cleanup, concurrent increments/edits, and schema constraints. These cover real persistence behavior rather than remote Discord APIs.
+- Updated both Docker build contexts to include embedded migrations, offline SQLx metadata, build script, and workspace crates. Removed the stale single-crate bootstrap build and unnecessary token-file copy; builds use `--locked` and need no schema database.
+
+### Running and developing
+
+- Run normally; startup creates `data/cloaker.sqlite` and applies the embedded `migrations/`. Old JSON files are ignored, not imported or deleted. The entire `data/` directory remains ignored by Git.
+- Keep `data/` private: the database contains plaintext OAuth credentials, as can its `-wal`/`-shm` sidecars and backups. SQLite is not encryption. In containers, mount a persistent, access-controlled directory at `/cloaker-bot/data`.
+- Use SQLite's backup API or stop the bot before copying a database. Do not copy only the main file while the bot is running in WAL mode. SQLite improves local durability but cannot atomically commit Discord token rotation or a voice removal together with a database write.
+- After editing queries or adding schema migrations, use a disposable schema database and regenerate offline metadata (PowerShell):
+
+  ```powershell
+  $env:DATABASE_URL = 'sqlite:target/sqlx-schema.sqlite'
+  $env:SQLX_OFFLINE = 'false'
+  cargo sqlx database setup
+  cargo sqlx prepare --workspace -- --all-targets
+  # commit migrations and .sqlx; return ordinary builds to offline mode
+  Remove-Item Env:DATABASE_URL, Env:SQLX_OFFLINE
+  ```
+
+  This maintenance workflow requires `sqlx-cli` 0.9 with SQLite support. Add new migrations rather than editing migrations applied to a deployed database. `cargo sqlx prepare --check --workspace -- --all-targets` verifies metadata against the schema database.
+
+### SQLite validation
+
+| Check | Result |
+| --- | --- |
+| `cargo check --workspace --all-targets --locked` | Passed offline, without a schema database. |
+| `cargo check --workspace --all-targets --no-default-features --features prod --locked` | Passed offline. |
+| `cargo test --workspace --locked` | Passed: 24 bot tests (including two new storage tests) and 2 macro tests; no failures. |
+| `cargo sqlx prepare --check --workspace -- --all-targets` | Passed against a disposable database created from `migrations/`. |
+| `cargo +nightly fmt --all -- --check` | Passed. |
+| Marker/legacy-persistence search | No remaining code markers, `PersistentData`, or periodic persistence worker. |
+| `git diff --check` | Passed. |
+
+Only the existing Windows macro-DLL linker warning remains. Docker images and live Discord/OAuth flows were not exercised.
 
 The following sections describe the earlier TODO/dependency work; their JSON-persistence details are superseded by this replacement.
 
-Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. No new tests were added; the existing sound-duration assertion was made precise. Live Discord behavior still needs deployment verification.
+Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. That original phase added no tests; the existing sound-duration assertion was made precise. The SQLite phase above adds two targeted storage tests. Live Discord behavior still needs deployment verification.
 
 ## Dependency refresh
 
@@ -91,7 +125,7 @@ Each row corresponds to a separate initial commit, in commit order. Follow-up in
 - Linked-role connections are user-scoped. Discord server admins choose requirements against global stats; local server thresholds are not representable in this connection.
 - Verify real Discord permissions, moderator moves/disconnects, linking, token refresh/revocation, and blocked DMs after deployment. No live Discord API calls were used for validation.
 
-## Validation
+## Original validation (before SQLite)
 
 | Check | Result |
 | --- | --- |

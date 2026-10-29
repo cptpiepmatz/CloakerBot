@@ -1,11 +1,9 @@
 use std::fmt;
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use twilight_model::id::Id;
-use twilight_model::id::marker::UserMarker;
+use serde::Deserialize;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(try_from = "String")]
 pub struct SecretToken(String);
 
@@ -32,7 +30,7 @@ impl fmt::Debug for SecretToken {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct StoredTokens {
     pub access_token: SecretToken,
     pub refresh_token: SecretToken,

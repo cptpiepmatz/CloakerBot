@@ -8,3 +8,6 @@ mod schedule_store;
 pub mod stats;
 
 pub use database::Database;
+
+#[cfg(test)]
+mod tests;

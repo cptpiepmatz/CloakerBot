@@ -113,3 +113,6 @@ features = ["macros", "no_logger"]
 
 [build-dependencies]
 hound.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -6,17 +6,17 @@ RUN apt update -y && apt upgrade -y
 RUN apt install -y cmake build-essential
 RUN rustup up
 
-# build dependencies
-RUN cargo init --bin
-COPY Cargo.toml Cargo.lock ./
-RUN cargo build
-
 # build cloaker bot
-COPY dev.token .
+COPY Cargo.toml Cargo.lock ./
+COPY build.rs ./
+COPY .cargo ./.cargo
+COPY .sqlx ./.sqlx
+COPY migrations ./migrations
+COPY common ./common
+COPY macros ./macros
 COPY ./assets ./assets
 COPY ./src ./src
-RUN touch ./src/main.rs
-RUN cargo build
+RUN cargo build --locked
 
 
 FROM debian:bookworm-slim AS run

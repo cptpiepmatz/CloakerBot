@@ -1,9 +1,8 @@
-use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use twilight_model::id::Id;
-use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
+use twilight_model::id::marker::{ChannelMarker, RoleMarker};
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone)]
 pub struct GuildConfig {
     pub danger_zones: Vec<Id<ChannelMarker>>,
     pub immunity: GuildConfigImmunity,
@@ -11,7 +10,7 @@ pub struct GuildConfig {
     pub random: GuildConfigRandom
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone)]
 pub struct GuildConfigImmunity {
     pub general: Vec<Id<RoleMarker>>,
     pub random: Vec<Id<RoleMarker>>,
@@ -19,7 +18,7 @@ pub struct GuildConfigImmunity {
     pub random_silent: Vec<Id<RoleMarker>>
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct GuildConfigRandom {
     pub enabled: Option<bool>,
     pub min: Option<f64>,

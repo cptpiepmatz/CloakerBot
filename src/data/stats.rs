@@ -5,31 +5,30 @@ use std::ops::{Deref, DerefMut};
 
 use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 
 /// Statistics of the app.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct AppStats {
     pub takedowns: AppTakedowns
 }
 
 /// Statistics about takedowns of the app.
-#[derive(Debug, Default, Clone, Serialize, Deserialize, Deref, DerefMut)]
+#[derive(Debug, Default, Clone, Deref, DerefMut)]
 pub struct AppTakedowns(HashMap<Id<GuildMarker>, GuildTakedowns>);
 
 /// Statistics about takedowns in a guild.
 ///
 /// This structure stores takedown statistics for each member of the guild.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct GuildTakedowns(HashMap<Id<UserMarker>, MemberTakedowns>);
 
 /// Statistics about the takedowns of a member of a guild
 ///
 /// Across multiple guilds, a user might have multiple of these entries.
 /// Random takedowns are stored by the user id of the bot.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone)]
 pub struct MemberTakedowns {
     /// Stores successful takedowns.
     takedowns: HashMap<Id<UserMarker>, u32>,

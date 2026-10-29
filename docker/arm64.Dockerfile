@@ -11,17 +11,17 @@ RUN rustup target add aarch64-unknown-linux-gnu
 ENV CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
 
-# build dependencies
-RUN cargo init --bin
-COPY Cargo.toml Cargo.lock ./
-RUN cargo build
-
 # build cloaker bot
-COPY dev.token .
+COPY Cargo.toml Cargo.lock ./
+COPY build.rs ./
+COPY .cargo ./.cargo
+COPY .sqlx ./.sqlx
+COPY migrations ./migrations
+COPY common ./common
+COPY macros ./macros
 COPY ./assets ./assets
 COPY ./src ./src
-RUN touch ./src/main.rs
-RUN cargo build
+RUN cargo build --locked
 
 
 FROM debian:bookworm-slim AS run

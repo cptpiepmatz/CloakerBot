@@ -84,7 +84,10 @@ impl Database {
             random.min > random.max ||
             random.max > 8760.0
         {
-            return Err(decode_error("invalid random interval"));
+            return Err(sqlx::Error::InvalidArgument(
+                "random intervals must be finite, positive, ordered, and no longer than one year"
+                    .into()
+            ));
         }
         let log = config.log_channel.map(|id| id.to_string());
         sqlx::query!(
