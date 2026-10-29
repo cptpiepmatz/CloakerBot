@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+31. OAuth consent decision: kept explicit `prompt=consent` because linking is a user-initiated grant of stats-writing access. Hardened that flow with secure/HTTP-only/SameSite=Lax callback-scoped cookies and single-use server-side nonces expiring after five minutes (bounded pending store). Callback success clears the cookie; replayed/expired state is rejected. HTTPS termination must preserve the configured redirect URI.
+
 30. Linking confirmation: replaced the terse placeholder DM with an explanation of stats, role requirements, and disconnecting. Added a browser success page so blocked DMs do not turn a successful connection into an HTTP failure. DM delivery is best-effort and logged separately.
 
 29. OAuth callback metadata: published current stats immediately after linking and made update errors fail the callback rather than falsely confirming a completed connection. Persisted credentials remain available for periodic retry if Discord temporarily rejects the metadata request.
