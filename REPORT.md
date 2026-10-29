@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+9. Mention safety: disabled mention parsing by default on the bot HTTP client. Log messages and ordinary replies can render mentions without pinging users, roles, or everyone.
+
 8. Ranks errors: implemented `Error` with specific context and a transparent graphics-error source, matching the existing `thiserror` style.
 
 7. Random toggle buttons: selected the existing enabled/disabled quote according to the resulting configuration.

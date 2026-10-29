@@ -53,8 +53,6 @@ compile_error!("the feature `dev` and `prod` are mutually exclusive");
 #[cfg(all(not(feature = "dev"), not(feature = "prod")))]
 compile_error!("one of the features `dev` or `prod` are required");
 
-// TODO: log messages using allowed_mention([]) to hide mentions
-
 // TODO: implement linked roles
 
 // TODO: use miette to render nice errors
@@ -111,7 +109,10 @@ struct State {
 static STATE: LazyLock<State> = LazyLock::new(|| {
     let discord_token = TOKEN.deref();
     let mut shard = Shard::new(ShardId::ONE, discord_token.to_owned(), INTENTS);
-    let client = Client::new(discord_token.to_owned());
+    let client = Client::builder()
+        .token(discord_token.to_owned())
+        .default_allowed_mentions(twilight_model::channel::message::AllowedMentions::default())
+        .build();
 
     let http_client = reqwest::Client::new();
 
