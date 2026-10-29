@@ -41,7 +41,8 @@ pub enum TakedownFail {
     /// `by_id` refers to the user who countered the bot.
     /// It may be another user than the target.
     Countered {
-        by_id: Id<UserMarker>
+        by_id: Id<UserMarker>,
+        outcome: CounterOutcome
     },
     // TODO: maybe this needs a variant for other discord-related errors
     Join(JoinError),
@@ -97,15 +98,36 @@ pub async fn takedown(
     result
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum CounterOutcome {
+    Parried,
+    Removed { user_id: Id<UserMarker> }
+}
+
 async fn record_outcome(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     kind: TakedownType,
     result: &TakedownResult
 ) {
-    if let (Ok(_), TakedownType::Called { caller_id }) = (result, kind) {
-        STATE.stats.write().await.takedowns.entry(guild_id).or_default()
-            .increment_takedown(caller_id, target_id);
+    match result {
+        Ok(_) => {
+            let caller_id = match kind {
+                TakedownType::Called { caller_id } => caller_id,
+                TakedownType::Random | TakedownType::DangerZone { .. } => BOT_USER_ID
+            };
+            STATE.stats.write().await.takedowns.entry(guild_id).or_default()
+                .increment_takedown(caller_id, target_id);
+        }
+        Err(TakedownFail::Countered { by_id, outcome }) => {
+            let mut stats = STATE.stats.write().await;
+            let stats = stats.takedowns.entry(guild_id).or_default();
+            match outcome {
+                CounterOutcome::Parried => { stats.increment_parry(*by_id); }
+                CounterOutcome::Removed { user_id } => { stats.increment_counter(*by_id, *user_id); }
+            }
+        }
+        Err(_) => {}
     }
     if let Err(error) = result {
         macros::info!("takedown in {guild_id} targeting {target_id} ({kind:?}): {error:?}");
@@ -143,7 +165,6 @@ async fn execute_takedown(
     )
     .await;
 
-    // TODO: track more stats
 
     // leave the channel after everything that happened, we cannot do a thing if it
     // fails to leave
@@ -191,7 +212,10 @@ async fn takedown_in_voice(
     };
 
     if let Some(countered_by_id) = countered_by_id {
-        let fail = Err(TakedownFail::Countered { by_id: countered_by_id });
+        let fail = Err(TakedownFail::Countered {
+            by_id: countered_by_id,
+            outcome: CounterOutcome::Parried
+        });
 
         let Some(caller_id) = caller_id
         else {
@@ -233,7 +257,10 @@ async fn takedown_in_voice(
         }
 
         takedown_sound.play_and_wait(call, WAIT_AFTER_QUOTE).await;
-        return fail;
+        return Err(TakedownFail::Countered {
+            by_id: countered_by_id,
+            outcome: CounterOutcome::Removed { user_id: caller_id }
+        });
     }
 
     let target_end_channel_id =

@@ -134,7 +134,7 @@ pub async fn action(
     .await
     {
         Ok(TakedownSuccess { .. }) => cloaker::success(command.target_id.mention(), crate::assets::QUOTES.cloaker.success),
-        Err(TakedownFail::Countered { by_id }) => {
+        Err(TakedownFail::Countered { by_id, .. }) => {
             cloaker::countered(by_id.mention(), crate::assets::QUOTES.cloaker.countered)
         }
         Err(fail) => cloaker::fail::template(crate::assets::QUOTES.cloaker.fail, match fail {

@@ -233,7 +233,7 @@ impl AppTakedowns {
         for (_, guild_takedowns) in self.0.iter() {
             for (&uid, member_takedowns) in guild_takedowns.0.iter() {
                 let entry = takedown_counts.entry(uid).or_default();
-                *entry = member_takedowns.takedowns.values().copied().sum();
+                    *entry += member_takedowns.takedowns.values().copied().sum::<u32>();
             }
         }
 
