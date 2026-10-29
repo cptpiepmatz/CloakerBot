@@ -16,6 +16,7 @@
 
 ### Running and developing
 
+- Both binaries read the bot token only from the runtime `DISCORD_TOKEN` environment variable. The bot also reads `DISCORD_CLIENT_SECRET` and `COOKIE_SECRET` from the runtime environment. There is no token-file fallback or automatic secrets-file loading, and Docker builds do not copy token files. Existing `.token`/`dev.token` files are left untouched and remain ignored by Git.
 - Run normally; startup creates `data/cloaker.sqlite` and applies the embedded `migrations/`. Old JSON files are ignored, not imported or deleted. The entire `data/` directory remains ignored by Git.
 - The database and its sidecars/backups contain plaintext OAuth credentials; do not publish them. In containers, mount persistent storage at `/cloaker-bot/data`.
 - Use SQLite's backup API or stop the bot before copying a database. Do not copy only the main file while the bot is running in WAL mode. SQLite improves local durability but cannot atomically commit Discord token rotation or a voice removal together with a database write.
