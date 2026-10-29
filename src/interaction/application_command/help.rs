@@ -111,7 +111,7 @@ pub fn chat_input() -> Command {
         .contexts([InteractionContextType::Guild])
         .option(
             StringBuilder::new("command", "Shows help for a command.")
-                .choices(CHOICES.iter().map(|c| (c.to_owned(), c.to_owned())))
+                .autocomplete(true)
         )
         .build()
 }

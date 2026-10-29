@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+13. Autocomplete: implemented filtered help-command suggestions and enabled autocomplete on `/help command`. Unknown/stale requests receive an empty result rather than panicking; suggestions are limited to Discord's 25-choice maximum.
+
 12. Log-channel unset button: used the same permission-checked fallback description as the command and channel select, avoiding three divergent fallback policies.
 
 11. Log-channel select: showed the real fallback after clearing the selection, releasing the configuration lock before HTTP lookup.

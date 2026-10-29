@@ -35,7 +35,7 @@ pub async fn handle_interaction(
 
         InteractionType::ApplicationCommand => handle_application_command(interaction).await?,
         InteractionType::ApplicationCommandAutocomplete => {
-            handle_application_command_autocomplete(interaction)?
+            handle_application_command_autocomplete(interaction).await?
         }
 
         _ => ()
