@@ -71,11 +71,13 @@ pub fn chat_input() -> Command {
         .build()
 }
 
-// TODO: implement Error
-#[derive(Debug, From)]
+#[derive(Debug, Error, From)]
 pub enum RanksActionError {
+    #[error("not in guild")]
     NotInGuild,
+    #[error("author not found")]
     NoAuthor,
+    #[error(transparent)]
     CreateRanksGraphic(CreateRanksGraphicError)
 }
 

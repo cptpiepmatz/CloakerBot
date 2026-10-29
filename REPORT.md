@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+8. Ranks errors: implemented `Error` with specific context and a transparent graphics-error source, matching the existing `thiserror` style.
+
 7. Random toggle buttons: selected the existing enabled/disabled quote according to the resulting configuration.
 
 6. `counter` miss: used the shared missed-counter quote.
