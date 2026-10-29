@@ -248,7 +248,18 @@ async fn takedown_in_voice(
             None => false
         };
 
-        let caller_roles = fetch_member_roles(guild_id, caller_id).await?;
+        if !caller_is_here {
+            fail_sound.play_and_wait(call, None).await;
+            return fail;
+        }
+        let caller_roles = match fetch_member_roles(guild_id, caller_id).await {
+            Ok(roles) => roles,
+            Err(error) => {
+                macros::warn!("could not check counter target in {guild_id}: {error:?}");
+                fail_sound.play_and_wait(call, None).await;
+                return fail;
+            }
+        };
         let caller_is_immune = config
             .immunity
             .general
@@ -256,7 +267,7 @@ async fn takedown_in_voice(
             .chain(config.immunity.general_silent.iter())
             .any(|role| caller_roles.contains(role));
 
-        if caller_is_immune || !caller_is_here {
+        if caller_is_immune {
             fail_sound.play_and_wait(&mut call, None).await;
             return fail;
         }
@@ -264,12 +275,11 @@ async fn takedown_in_voice(
         if let Err(err) =
             STATE.client.update_guild_member(guild_id, caller_id).channel_id(None).await
         {
-            if missing_permissions(&err) {
-                fail_sound.play_and_wait(&mut call, None).await;
-                return fail;
+            if !missing_permissions(&err) {
+                macros::warn!("returned takedown failed in {guild_id}: {err:?}");
             }
-
-            return Err(TakedownFail::Client(err.into()));
+            fail_sound.play_and_wait(call, None).await;
+            return fail;
         }
 
         takedown_sound.play_and_wait(call, WAIT_AFTER_QUOTE).await;
