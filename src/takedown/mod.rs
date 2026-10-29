@@ -145,6 +145,9 @@ async fn record_outcome(
     if let Err(error) = result {
         macros::info!("takedown in {guild_id} targeting {target_id} ({kind:?}): {error:?}");
     }
+    if let Err(error) = crate::logging::log_takedown(guild_id, target_id, kind, result).await {
+        macros::warn!("could not log takedown in {guild_id}: {error:?}");
+    }
 }
 
 async fn execute_takedown(
