@@ -133,7 +133,7 @@ pub async fn action(
     })
     .await
     {
-        Ok(TakedownSuccess { .. }) => cloaker::success(command.target_id.mention(), "TODO: quote"),
+        Ok(TakedownSuccess { .. }) => cloaker::success(command.target_id.mention(), crate::assets::QUOTES.cloaker.success),
         Err(TakedownFail::Countered { by_id }) => {
             cloaker::countered(by_id.mention(), "TODO: quote")
         }
