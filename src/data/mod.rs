@@ -6,6 +6,8 @@ use derive_more::From;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub mod config;
+mod database;
+pub use database::Database;
 pub mod linked_roles;
 pub mod owner_notifications;
 pub mod random;

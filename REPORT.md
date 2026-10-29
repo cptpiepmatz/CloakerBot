@@ -1,5 +1,14 @@
 # Changes and decisions
 
+## SQLite replacement (in progress)
+
+- Starting fresh, as requested: no JSON importer, dual-write mode, or legacy-format compatibility.
+- Added SQLx 0.9 with only SQLite/Tokio, checked-query, embedded-migration, and time features. The initial schema is normalized and uses strict tables, foreign keys, nonnegative counters, bounded random intervals, and cascading guild cleanup.
+- The database will live at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a small connection pool. New Unix directories/files are private; Windows inherits the directory ACL. SQL statement logging is disabled for credential safety.
+- Offline query metadata will be checked in so normal builds do not need a schema database. The initial migration creates fresh databases automatically; it is a schema migration, not a legacy data migration.
+
+The following sections describe the earlier TODO/dependency work; their JSON-persistence details are superseded by this replacement.
+
 Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. No new tests were added; the existing sound-duration assertion was made precise. Live Discord behavior still needs deployment verification.
 
 ## Dependency refresh
