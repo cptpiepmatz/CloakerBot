@@ -160,7 +160,7 @@ pub async fn action(
 
     let variant = ConfigButton::try_from(custom_id)?;
     let (reply, component) = match variant {
-        CB::Unset(cub) => handle_unset(guild_config, cub).await?,
+        CB::Unset(cub) => handle_unset(guild_config, cub, guild_id).await?,
         CB::Random(crb) => handle_random(guild_config, crb).await?
     };
 
@@ -183,7 +183,8 @@ pub async fn action(
 
 async fn handle_unset(
     guild_config: &mut GuildConfig,
-    variant: ConfigUnsetButton
+    variant: ConfigUnsetButton,
+    guild_id: twilight_model::id::Id<twilight_model::id::marker::GuildMarker>
 ) -> Result<(String, Option<Component>), HandleMessageComponentError> {
     use ConfigUnsetButton as CUB;
 
@@ -213,8 +214,7 @@ async fn handle_unset(
         }
         CUB::LogChannel => config::log_channel::unset(
             BOT_USER_ID.mention(),
-            // TODO: insert fallback log channel here
-            "[insert fallback log channel here]",
+            crate::logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
     };

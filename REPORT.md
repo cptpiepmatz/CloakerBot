@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+12. Log-channel unset button: used the same permission-checked fallback description as the command and channel select, avoiding three divergent fallback policies.
+
 11. Log-channel select: showed the real fallback after clearing the selection, releasing the configuration lock before HTTP lookup.
 
 10. Log-channel command fallback: implemented the documented system → public updates → #general order, checking effective view/send permissions. Missing cache data fails closed; the bot's own member is fetched when needed. The UI explicitly reports when no fallback is usable.
