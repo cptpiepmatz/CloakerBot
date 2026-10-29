@@ -8,7 +8,8 @@ use twilight_model::id::Id;
 #[derive(Debug)]
 pub struct Database {
     pub(super) pool: SqlitePool,
-    path: PathBuf
+    path: PathBuf,
+    pub(super) backup_lock: tokio::sync::Mutex<()>
 }
 
 impl Database {
@@ -23,7 +24,7 @@ impl Database {
             .busy_timeout(Duration::from_secs(5))
             .disable_statement_logging();
         let pool = SqlitePoolOptions::new().max_connections(4).connect_lazy_with(options);
-        Self { pool, path }
+        Self { pool, path, backup_lock: Default::default() }
     }
 
     pub async fn initialize(&self) -> miette::Result<()> {
@@ -41,6 +42,12 @@ impl Database {
             .into_diagnostic()
             .wrap_err("initializing the database schema")?;
         Ok(())
+    }
+}
+
+impl Database {
+    pub(super) fn backup_path(&self) -> PathBuf {
+        self.path.with_file_name("backup").join("cloaker.sqlite")
     }
 }
 

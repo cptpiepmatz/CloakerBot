@@ -16,6 +16,12 @@
 
 ### Running and developing
 
+- A supervised worker publishes a standalone snapshot at `data/backup/cloaker.sqlite` immediately at startup and every five minutes. Set runtime `BACKUP_INTERVAL_SECONDS` to 1–86400 to change the interval. Snapshot failures are warned and retried on the next interval without stopping gameplay; until the first successful snapshot there is no backup file.
+- Snapshots use SQLite's `VACUUM INTO` (a consistent online snapshot, supported directly through SQLx without unsafe backup-API bindings), then sync the temporary file and atomically replace the published snapshot. Generation is serialized. Failed creation/replacement leaves the previous published file intact, including Windows sharing conflicts with a copying tool. This regenerates the snapshot each interval rather than doing incremental backup.
+- Configure the zip backup to include `data/backup/cloaker.sqlite` and exclude the live `data/cloaker.sqlite`, its `-wal`/`-shm` sidecars, and `data/backup/*.tmp`. The published file is self-contained and can be copied at any time; it contains plaintext credentials. A tool that denies replacement while reading can delay publication on Windows, but the older snapshot remains available.
+- For restore, stop the bot and restore the published snapshot as `data/cloaker.sqlite`, without stale live `-wal`/`-shm` files. Recent changes since the last successful snapshot are lost; failed snapshots can extend that window beyond the configured interval. Restoring older rotated OAuth credentials can require relinking.
+- Added a local snapshot test covering standalone restore from a running WAL database, integrity checking, failed generation/replacement preserving the previous file, Windows reader sharing conflicts, and successful subsequent refresh.
+
 - Both binaries read the bot token only from the runtime `DISCORD_TOKEN` environment variable. The bot also reads `DISCORD_CLIENT_SECRET` and `COOKIE_SECRET` from the runtime environment. There is no token-file fallback or automatic secrets-file loading, and Docker builds do not copy token files. Existing `.token`/`dev.token` files are left untouched and remain ignored by Git.
 - Run normally; startup creates `data/cloaker.sqlite` and applies the embedded `migrations/`. Old JSON files are ignored, not imported or deleted. The entire `data/` directory remains ignored by Git.
 - The database and its sidecars/backups contain plaintext OAuth credentials; do not publish them. In containers, mount persistent storage at `/cloaker-bot/data`.
@@ -39,7 +45,7 @@
 | --- | --- |
 | `cargo check --workspace --all-targets --locked` | Passed offline, without a schema database. |
 | `cargo check --workspace --all-targets --no-default-features --features prod --locked` | Passed offline. |
-| `cargo test --workspace --locked` | Passed: 24 bot tests (including two new storage tests) and 2 macro tests; no failures. |
+| `cargo test --workspace --locked` | Passed: 25 bot tests (including three storage tests) and 2 macro tests; no failures. |
 | `cargo sqlx prepare --check --workspace -- --all-targets` | Passed against a disposable database created from `migrations/`. |
 | `cargo +nightly fmt --all -- --check` | Passed. |
 | Marker/legacy-persistence search | No remaining code markers, `PersistentData`, or periodic persistence worker. |
@@ -49,7 +55,7 @@ Only the existing Windows macro-DLL linker warning remains. Docker images and li
 
 The following sections describe the earlier TODO/dependency work; their JSON-persistence details are superseded by this replacement.
 
-Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. That original phase added no tests; the existing sound-duration assertion was made precise. The SQLite phase above adds two targeted storage tests. Live Discord behavior still needs deployment verification.
+Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. That original phase added no tests; the existing sound-duration assertion was made precise. The SQLite phase above adds three targeted storage tests. Live Discord behavior still needs deployment verification.
 
 ## Dependency refresh
 

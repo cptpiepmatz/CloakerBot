@@ -1,4 +1,5 @@
 mod account_store;
+mod backup;
 pub mod config;
 mod config_store;
 mod database;

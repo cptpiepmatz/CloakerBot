@@ -7,6 +7,57 @@ use super::owner_notifications::OwnerNotified;
 use super::stats::StatEvent;
 
 #[tokio::test]
+async fn standalone_backup_and_failed_publication() {
+    let directory = tempfile::tempdir().unwrap();
+    let database = Database::new(directory.path().join("cloaker.sqlite"));
+    database.initialize().await.unwrap();
+    let guild = Id::new(1);
+    let caller = Id::new(2);
+    let event = StatEvent::Takedown { caller_id: caller, target_id: Id::new(3) };
+    database.record_stat(guild, event).await.unwrap();
+    database.backup().await.unwrap();
+    let snapshot = database.backup_path();
+    let previous = tokio::fs::read(&snapshot).await.unwrap();
+    let restored_path = directory.path().join("restored.sqlite");
+    tokio::fs::copy(&snapshot, &restored_path).await.unwrap();
+
+    database.record_stat(guild, event).await.unwrap();
+    let temporary = snapshot.with_extension("sqlite.tmp");
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+
+        let reader = std::fs::OpenOptions::new().read(true).share_mode(1).open(&snapshot).unwrap();
+        assert!(database.backup().await.is_err());
+        assert_eq!(tokio::fs::read(&snapshot).await.unwrap(), previous);
+        drop(reader);
+        tokio::fs::remove_file(&temporary).await.unwrap();
+    }
+    tokio::fs::create_dir(&temporary).await.unwrap();
+    assert!(database.backup().await.is_err());
+    assert_eq!(tokio::fs::read(&snapshot).await.unwrap(), previous);
+    tokio::fs::remove_dir(&temporary).await.unwrap();
+    database.backup().await.unwrap();
+    assert!(!temporary.exists());
+
+    let restored = Database::new(&restored_path);
+    restored.initialize().await.unwrap();
+    assert_eq!(restored.user_totals(caller).await.unwrap().initiated, 1);
+    let integrity: String =
+        sqlx::query_scalar("PRAGMA integrity_check").fetch_one(&restored.pool).await.unwrap();
+    assert_eq!(integrity, "ok");
+    restored.pool.close().await;
+
+    let latest_path = directory.path().join("latest.sqlite");
+    tokio::fs::copy(&snapshot, &latest_path).await.unwrap();
+    let latest = Database::new(latest_path);
+    latest.initialize().await.unwrap();
+    assert_eq!(latest.user_totals(caller).await.unwrap().initiated, 2);
+    latest.pool.close().await;
+    database.pool.close().await;
+}
+
+#[tokio::test]
 async fn storage_roundtrip_and_guild_cleanup() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("private/cloaker.sqlite");

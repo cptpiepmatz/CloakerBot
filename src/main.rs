@@ -150,6 +150,15 @@ async fn main() -> miette::Result<()> {
 
     let state = LazyLock::force(&STATE);
     state.database.initialize().await?;
+    let backup_seconds = std::env::var("BACKUP_INTERVAL_SECONDS")
+        .unwrap_or_else(|_| "300".into())
+        .parse::<u64>()
+        .into_diagnostic()?;
+    if !(1..=86400).contains(&backup_seconds) {
+        return Err(miette::miette!("BACKUP_INTERVAL_SECONDS must be between 1 and 86400"));
+    }
+    let backups =
+        tokio::spawn(state.database.maintain_backups(Duration::from_secs(backup_seconds)));
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
 
@@ -185,7 +194,8 @@ async fn main() -> miette::Result<()> {
     tokio::select! {
         server = http_server => server.into_diagnostic()?.into_diagnostic()?,
         handler = event_handler => handler.into_diagnostic()?,
-        roles = linked_roles => roles.into_diagnostic()?
+        roles = linked_roles => roles.into_diagnostic()?,
+        backup = backups => backup.into_diagnostic()?
     }
     Err(miette::miette!("a bot worker stopped unexpectedly"))
 }
