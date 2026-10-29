@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+7. Random toggle buttons: selected the existing enabled/disabled quote according to the resulting configuration.
+
 6. `counter` miss: used the shared missed-counter quote.
 
 5. `counter` success: used the shared successful-counter quote.

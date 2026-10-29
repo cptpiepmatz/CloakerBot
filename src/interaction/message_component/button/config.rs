@@ -235,8 +235,10 @@ async fn handle_random(
 
     let random_config = guild_config.random.complete();
 
-    // FILLME: get a quote here
-    let quote = "some quote";
+    let quote = match random_config.enabled {
+        true => QUOTES.config.random.enabled,
+        false => QUOTES.config.random.disabled
+    };
     let reply = match random_config.enabled {
         true => config::random::enabled(
             crate::interaction::application_command::config::random::MENTION.deref(),
