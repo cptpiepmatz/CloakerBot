@@ -12,6 +12,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Integration review
 
+- Formatted the workspace with the existing nightly rustfmt configuration, preserving the project's import grouping, brace style, and sparse comments.
+
 - Preserved a confirmed parry even if caller lookup/removal fails: the original target was defended, but no returned takedown was confirmed. Caller absence is checked before fetching roles; unexpected retaliation errors are logged without losing the defense statistic.
 
 - Connected the takedown outcome boundary to real configured/fallback-channel log delivery. Logs identify called/random/danger-zone sources and counters/parries without pinging; skipped immune/absent targets stay quiet. Log failures never change gameplay results or statistics, and public logs do not expose transport errors.

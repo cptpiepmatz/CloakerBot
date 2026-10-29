@@ -21,8 +21,9 @@ pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
 pub fn owner_update() -> std::borrow::Cow<'static, str> {
     use std::ops::Deref;
-    use twilight_mention::Mention;
+
     use application_command::{config, counter, help};
+    use twilight_mention::Mention;
 
     crate::assets::owner_notifications::msg01_v3_update(
         crate::BOT_USER_ID.mention(),

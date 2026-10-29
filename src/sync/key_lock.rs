@@ -56,7 +56,8 @@ where
             let mut locks = self.locks.lock();
             *locks.entry(key).or_insert_with(|| {
                 let mutex_box = Box::new(Notify::new());
-                // instantly notify so that the next request will resolve immediately
+                // instantly notify so that the next request will resolve
+                // immediately
                 mutex_box.notify_one();
                 Box::leak(mutex_box)
             })

@@ -8,14 +8,14 @@ use std::time::Duration;
 use std::{io, iter};
 
 use derive_more::From;
-use miette::{Diagnostic, IntoDiagnostic};
-use thiserror::Error;
 use futures::stream::{self, StreamExt, select};
 use interaction::COMMANDS_REGISTER;
+use miette::{Diagnostic, IntoDiagnostic};
 use songbird::Songbird;
 use songbird::shards::TwilightMap;
 use sync::Eject;
 use takedown::sounds::Sound;
+use thiserror::Error;
 use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
@@ -102,10 +102,10 @@ struct State {
     cache: ObservableCache,
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
-    owner_notifications: PersistentData<PersistentOwnerNotifications>
-    ,owner_notification_locks: KeyLock<Id<UserMarker>>
-    ,linked_roles: PersistentData<data::linked_roles::PersistentLinkedRoles>
-    ,linked_role_locks: KeyLock<Id<UserMarker>>
+    owner_notifications: PersistentData<PersistentOwnerNotifications>,
+    owner_notification_locks: KeyLock<Id<UserMarker>>,
+    linked_roles: PersistentData<data::linked_roles::PersistentLinkedRoles>,
+    linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -152,9 +152,9 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache_rx,
         songbird,
         owner_notifications,
-        owner_notification_locks: Default::default()
-        ,linked_roles: PersistentData::load_blocking().unwrap().unwrap_or_default()
-        ,linked_role_locks: Default::default()
+        owner_notification_locks: Default::default(),
+        linked_roles: PersistentData::load_blocking().unwrap().unwrap_or_default(),
+        linked_role_locks: Default::default()
     }
 });
 
@@ -169,7 +169,8 @@ async fn main() -> miette::Result<()> {
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
     LazyLock::force(&COMMANDS_REGISTER);
-    link::application_role_connection::register_metadata().await
+    link::application_role_connection::register_metadata()
+        .await
         .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;
 
     let http_server = tokio::spawn(link::serve());

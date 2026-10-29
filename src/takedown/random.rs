@@ -25,9 +25,12 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
             continue;
         }
 
-        if !config_random.min.is_finite() || !config_random.max.is_finite()
-            || config_random.min <= 0.0 || config_random.min > config_random.max
-            || config_random.max > 24.0 * 365.0 {
+        if !config_random.min.is_finite() ||
+            !config_random.max.is_finite() ||
+            config_random.min <= 0.0 ||
+            config_random.min > config_random.max ||
+            config_random.max > 24.0 * 365.0
+        {
             macros::warn!("invalid random interval for guild {guild_id}");
             random_takedown_schedule.remove(guild_id);
             continue;
@@ -64,9 +67,9 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
     for (target_id, guild_id) in due {
         if let Err(error) = takedown(target_id, guild_id, TakedownType::Random).await {
             match error {
-                crate::takedown::TakedownFail::Client(_)
-                | crate::takedown::TakedownFail::Join(_)
-                | crate::takedown::TakedownFail::Audio(_) => {
+                crate::takedown::TakedownFail::Client(_) |
+                crate::takedown::TakedownFail::Join(_) |
+                crate::takedown::TakedownFail::Audio(_) => {
                     macros::warn!("random takedown failed in {guild_id}: {error:?}");
                 }
                 _ => {}

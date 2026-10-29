@@ -70,13 +70,10 @@ pub async fn action(
     application_command::defer(interaction).await?;
 
     let content = match takedown::counter::counter(guild_id, author_id) {
-        Ok(target_id) => replies::counter::success(
-            target_id.mention(),
-            crate::assets::QUOTES.counter.success
-        ),
-        Err(()) => replies::counter::miss(
-            crate::assets::QUOTES.counter.miss
-        )
+        Ok(target_id) => {
+            replies::counter::success(target_id.mention(), crate::assets::QUOTES.counter.success)
+        }
+        Err(()) => replies::counter::miss(crate::assets::QUOTES.counter.miss)
     };
 
     application_command::update_defer_msg(interaction, &content).await?;

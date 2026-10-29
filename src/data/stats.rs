@@ -1,7 +1,7 @@
+use std::cmp;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use std::cmp;
 
 use derive_more::{Deref, DerefMut};
 use itertools::Itertools;
@@ -217,12 +217,17 @@ impl AppTakedowns {
         let mut totals = UserTotals::default();
         for guild in self.0.values() {
             if let Some(member) = guild.0.get(&user_id) {
-                totals.initiated += member.takedowns.values().map(|&count| u64::from(count)).sum::<u64>();
-                totals.countered += member.counters.values().map(|&count| u64::from(count)).sum::<u64>() + u64::from(member.parries);
+                totals.initiated +=
+                    member.takedowns.values().map(|&count| u64::from(count)).sum::<u64>();
+                totals.countered +=
+                    member.counters.values().map(|&count| u64::from(count)).sum::<u64>() +
+                        u64::from(member.parries);
             }
             for member in guild.0.values() {
-                totals.received += u64::from(member.takedowns.get(&user_id).copied().unwrap_or_default());
-                totals.received += u64::from(member.counters.get(&user_id).copied().unwrap_or_default());
+                totals.received +=
+                    u64::from(member.takedowns.get(&user_id).copied().unwrap_or_default());
+                totals.received +=
+                    u64::from(member.counters.get(&user_id).copied().unwrap_or_default());
             }
         }
         totals
@@ -249,7 +254,7 @@ impl AppTakedowns {
         for (_, guild_takedowns) in self.0.iter() {
             for (&uid, member_takedowns) in guild_takedowns.0.iter() {
                 let entry = takedown_counts.entry(uid).or_default();
-                    *entry += member_takedowns.takedowns.values().copied().sum::<u32>();
+                *entry += member_takedowns.takedowns.values().copied().sum::<u32>();
             }
         }
 
@@ -684,7 +689,8 @@ mod rank_iter_tests {
 
     #[test]
     fn unsorted_input_keeps_first_rank() {
-        // warns on higher scores after lower ones, but still returns rank=1 always
+        // warns on higher scores after lower ones, but still returns rank=1
+        // always
         let scores = vec![1, 2, 3];
         let result: Vec<_> = RankIter::new(scores.into_iter(), |&x| x).collect();
         let expected = vec![(1, 1), (1, 2), (1, 3)];

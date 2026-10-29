@@ -20,8 +20,13 @@ struct MetadataRecord {
     description: &'static str
 }
 
-fn serialize_kind<S: serde::Serializer>(kind: &MetadataKind, serializer: S) -> Result<S::Ok, S::Error> {
-    serializer.serialize_u8(match kind { MetadataKind::IntegerGreaterThanOrEqual => 2 })
+fn serialize_kind<S: serde::Serializer>(
+    kind: &MetadataKind,
+    serializer: S
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_u8(match kind {
+        MetadataKind::IntegerGreaterThanOrEqual => 2
+    })
 }
 
 /// Construct the Application Role Connection Metadata Object list.
@@ -97,7 +102,9 @@ pub async fn update_metadata(
     let request = RequestBuilder::raw(
         Method::Put,
         format!("users/@me/applications/{}/role-connection", APPLICATION_ID)
-    ).json(&connection).build()?;
+    )
+    .json(&connection)
+    .build()?;
     client.request::<serde_json::Value>(request).await?;
     Ok(())
 }
@@ -129,20 +136,28 @@ async fn refresh_and_store(
     Ok(tokens)
 }
 
-async fn sync_user(user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>) -> Result<(), SyncError> {
+async fn sync_user(
+    user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
+) -> Result<(), SyncError> {
     let _lock = STATE.linked_role_locks.lock(user_id).await;
-    let Some(mut tokens) = STATE.linked_roles.read().await.get(&user_id).cloned() else { return Ok(()); };
+    let Some(mut tokens) = STATE.linked_roles.read().await.get(&user_id).cloned()
+    else {
+        return Ok(());
+    };
     if tokens.expires_at <= chrono::Utc::now() + chrono::Duration::seconds(60) {
         tokens = refresh_and_store(user_id, &tokens).await?;
     }
     let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
     match update_metadata(&client, user_id).await {
-        Err(error) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) => {
+        Err(error) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) =>
+        {
             tokens = refresh_and_store(user_id, &tokens).await?;
             let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
             update_metadata(&client, user_id).await?;
         }
-        result => { result?; }
+        result => {
+            result?;
+        }
     }
     Ok(())
 }

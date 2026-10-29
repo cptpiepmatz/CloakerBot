@@ -138,7 +138,9 @@ impl CalcDuration for (wav::Header, wav::BitDepth) {
             BitDepth::Empty => 0
         };
 
-        Duration::from_secs_f64(samples as f64 / f64::from(self.0.channel_count) / f64::from(self.0.sampling_rate))
+        Duration::from_secs_f64(
+            samples as f64 / f64::from(self.0.channel_count) / f64::from(self.0.sampling_rate)
+        )
     }
 }
 

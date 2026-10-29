@@ -133,7 +133,9 @@ pub async fn action(
     })
     .await
     {
-        Ok(TakedownSuccess { .. }) => cloaker::success(command.target_id.mention(), crate::assets::QUOTES.cloaker.success),
+        Ok(TakedownSuccess { .. }) => {
+            cloaker::success(command.target_id.mention(), crate::assets::QUOTES.cloaker.success)
+        }
         Err(TakedownFail::Countered { by_id, .. }) => {
             cloaker::countered(by_id.mention(), crate::assets::QUOTES.cloaker.countered)
         }
@@ -145,8 +147,8 @@ pub async fn action(
             TakedownFail::Fled => cloaker::fail::fled(),
             TakedownFail::Immune => cloaker::fail::immune(),
             TakedownFail::Rejected => cloaker::fail::rejected(BOT_USER_ID.mention()),
-            TakedownFail::Client(err) => cloaker::fail::other(err)
-            ,TakedownFail::Audio(err) => cloaker::fail::other(err)
+            TakedownFail::Client(err) => cloaker::fail::other(err),
+            TakedownFail::Audio(err) => cloaker::fail::other(err)
         })
     };
 

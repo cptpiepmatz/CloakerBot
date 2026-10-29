@@ -70,8 +70,10 @@ const MISSING_ACCESS_ERROR_CODE: u64 = 50001;
 fn missing_permissions(error: &twilight_http::Error) -> bool {
     matches!(error.kind(), ErrorType::Response {
         error: ApiError::General(GeneralApiError {
-            code: MISSING_PERMS_ERROR_CODE | MISSING_ACCESS_ERROR_CODE, ..
-        }), ..
+            code: MISSING_PERMS_ERROR_CODE | MISSING_ACCESS_ERROR_CODE,
+            ..
+        }),
+        ..
     })
 }
 
@@ -129,15 +131,25 @@ async fn record_outcome(
                 TakedownType::Called { caller_id } => caller_id,
                 TakedownType::Random | TakedownType::DangerZone { .. } => BOT_USER_ID
             };
-            STATE.stats.write().await.takedowns.entry(guild_id).or_default()
+            STATE
+                .stats
+                .write()
+                .await
+                .takedowns
+                .entry(guild_id)
+                .or_default()
                 .increment_takedown(caller_id, target_id);
         }
         Err(TakedownFail::Countered { by_id, outcome }) => {
             let mut stats = STATE.stats.write().await;
             let stats = stats.takedowns.entry(guild_id).or_default();
             match outcome {
-                CounterOutcome::Parried => { stats.increment_parry(*by_id); }
-                CounterOutcome::Removed { user_id } => { stats.increment_counter(*by_id, *user_id); }
+                CounterOutcome::Parried => {
+                    stats.increment_parry(*by_id);
+                }
+                CounterOutcome::Removed { user_id } => {
+                    stats.increment_counter(*by_id, *user_id);
+                }
             }
         }
         Err(_) => {}
@@ -180,9 +192,8 @@ async fn execute_takedown(
     )
     .await;
 
-
-    // leave the channel after everything that happened, we cannot do a thing if it
-    // fails to leave
+    // leave the channel after everything that happened, we cannot do a thing if
+    // it fails to leave
     let _ = call.leave().await;
     takedown_res
 }
@@ -220,8 +231,11 @@ async fn takedown_in_voice(
 
     notification_track_handle.stop().map_err(TakedownFail::Audio)?;
 
-    let bot_channel = STATE.cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());
-    if bot_channel != Some(channel_id) || call.current_channel() != Some(ChannelId::from(channel_id)) {
+    let bot_channel =
+        STATE.cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());
+    if bot_channel != Some(channel_id) ||
+        call.current_channel() != Some(ChannelId::from(channel_id))
+    {
         return Err(TakedownFail::Rejected);
     }
 

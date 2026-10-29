@@ -3,7 +3,8 @@ use std::fmt;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use twilight_model::id::{Id, marker::UserMarker};
+use twilight_model::id::Id;
+use twilight_model::id::marker::UserMarker;
 
 use crate::data::Persist;
 
@@ -12,7 +13,9 @@ use crate::data::Persist;
 pub struct SecretToken(String);
 
 impl SecretToken {
-    pub fn expose(&self) -> &str { &self.0 }
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
 }
 
 impl TryFrom<String> for SecretToken {
@@ -43,5 +46,6 @@ pub type PersistentLinkedRoles = HashMap<Id<UserMarker>, StoredTokens>;
 
 impl Persist for PersistentLinkedRoles {
     type Item = Self;
+
     const DATA_PATH: &'static str = "./data/linked_roles.json";
 }

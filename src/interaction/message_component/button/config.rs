@@ -54,7 +54,8 @@ impl From<ConfigButton> for MessageComponentCustomId {
 
 impl From<ConfigUnsetButton> for MessageComponentCustomId {
     fn from(value: ConfigUnsetButton) -> Self {
-        use {ConfigUnsetButton as CUB, MessageComponentCustomId as MCCId};
+        use ConfigUnsetButton as CUB;
+        use MessageComponentCustomId as MCCId;
 
         match value {
             CUB::DangerZones => MCCId::ConfigUnsetDangerZones,
@@ -69,7 +70,8 @@ impl From<ConfigUnsetButton> for MessageComponentCustomId {
 
 impl From<ConfigRandomButton> for MessageComponentCustomId {
     fn from(value: ConfigRandomButton) -> Self {
-        use {ConfigRandomButton as CRB, MessageComponentCustomId as MCCId};
+        use ConfigRandomButton as CRB;
+        use MessageComponentCustomId as MCCId;
 
         match value {
             CRB::Enable => MCCId::ConfigEnableRandom,
@@ -82,10 +84,10 @@ impl TryFrom<MessageComponentCustomId> for ConfigButton {
     type Error = ConfigButtonActionError;
 
     fn try_from(value: MessageComponentCustomId) -> Result<Self, Self::Error> {
-        use {
-            ConfigButton as CB, ConfigRandomButton as CRB, ConfigUnsetButton as CUB,
-            MessageComponentCustomId as MCCId
-        };
+        use ConfigButton as CB;
+        use ConfigRandomButton as CRB;
+        use ConfigUnsetButton as CUB;
+        use MessageComponentCustomId as MCCId;
 
         Ok(match value {
             MCCId::ConfigUnsetDangerZones => CB::Unset(CUB::DangerZones),

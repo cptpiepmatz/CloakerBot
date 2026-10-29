@@ -9,21 +9,29 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 use crate::util::ClientError;
 use crate::{BOT_USER_ID, STATE};
 
-pub async fn fallback_channel(guild_id: Id<GuildMarker>) -> Result<Option<Id<ChannelMarker>>, ClientError> {
+pub async fn fallback_channel(
+    guild_id: Id<GuildMarker>
+) -> Result<Option<Id<ChannelMarker>>, ClientError> {
     cache_bot_member(guild_id).await?;
 
-    let Some(guild) = STATE.cache.guild(guild_id) else {
+    let Some(guild) = STATE.cache.guild(guild_id)
+    else {
         return Ok(None);
     };
     let mut candidates: Vec<_> = [guild.system_channel_id(), guild.public_updates_channel_id()]
-        .into_iter().flatten().collect();
+        .into_iter()
+        .flatten()
+        .collect();
     drop(guild);
 
     if let Some(channels) = STATE.cache.guild_channels(guild_id) {
-        let mut general: Vec<_> = channels.iter().filter_map(|id| {
-            let channel = STATE.cache.channel(*id)?;
-            (channel.name.as_deref() == Some("general")).then_some(*id)
-        }).collect();
+        let mut general: Vec<_> = channels
+            .iter()
+            .filter_map(|id| {
+                let channel = STATE.cache.channel(*id)?;
+                (channel.name.as_deref() == Some("general")).then_some(*id)
+            })
+            .collect();
         general.sort();
         candidates.extend(general);
     }
@@ -51,11 +59,17 @@ pub async fn log_takedown(
     if matches!(result, Err(TakedownFail::Immune | TakedownFail::NotFound)) {
         return Ok(());
     }
-    let configured = STATE.guild_configs.read().await.get(&guild_id).and_then(|config| config.log_channel);
+    let configured =
+        STATE.guild_configs.read().await.get(&guild_id).and_then(|config| config.log_channel);
     let channel_id = match configured {
         Some(channel_id) => {
             cache_bot_member(guild_id).await?;
-            if !can_log(channel_id) || !STATE.cache.channel(channel_id).is_some_and(|channel| channel.guild_id == Some(guild_id)) {
+            if !can_log(channel_id) ||
+                !STATE
+                    .cache
+                    .channel(channel_id)
+                    .is_some_and(|channel| channel.guild_id == Some(guild_id))
+            {
                 return Ok(());
             }
             channel_id
@@ -74,7 +88,11 @@ pub async fn log_takedown(
         Ok(_) => "Target removed from voice".into(),
         Err(TakedownFail::Countered { by_id, outcome }) => match outcome {
             CounterOutcome::Parried => format!("Parried by {}", by_id.mention()),
-            CounterOutcome::Removed { user_id } => format!("Countered by {}; {} removed from voice", by_id.mention(), user_id.mention())
+            CounterOutcome::Removed { user_id } => format!(
+                "Countered by {}; {} removed from voice",
+                by_id.mention(),
+                user_id.mention()
+            )
         },
         Err(TakedownFail::Fled) => "Target left before the takedown".into(),
         Err(TakedownFail::Rejected) => "Bot was moved or disconnected".into(),
@@ -90,12 +108,16 @@ pub async fn log_takedown(
 }
 
 fn can_log(channel_id: Id<ChannelMarker>) -> bool {
-    let Some(channel) = STATE.cache.channel(channel_id) else { return false; };
+    let Some(channel) = STATE.cache.channel(channel_id)
+    else {
+        return false;
+    };
     if !matches!(channel.kind, ChannelType::GuildText | ChannelType::GuildAnnouncement) {
         return false;
     }
-    STATE.cache.permissions().in_channel(BOT_USER_ID, channel_id)
-        .is_ok_and(|permissions| permissions.contains(Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES))
+    STATE.cache.permissions().in_channel(BOT_USER_ID, channel_id).is_ok_and(|permissions| {
+        permissions.contains(Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES)
+    })
 }
 
 pub async fn fallback_description(guild_id: Id<GuildMarker>) -> String {

@@ -22,20 +22,20 @@ use persist::Persist;
 use crate::{STATE, util};
 
 mod persist {
-    // public interfaces require public types, this makes the `Persist` trait public
-    // but still unavailable from outside this module
+    // public interfaces require public types, this makes the `Persist` trait
+    // public but still unavailable from outside this module
 
-    use std::path::Path;
     use std::io;
+    use std::path::Path;
 
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
     use serde::ser::Serialize;
-    use tokio::io::AsyncWriteExt;
     #[cfg(not(debug_assertions))]
     use serde_json::to_string as json_to_string;
     #[cfg(debug_assertions)]
     use serde_json::to_string_pretty as json_to_string;
+    use tokio::io::AsyncWriteExt;
 
     use crate::data::LoadPersistentDataError;
 
