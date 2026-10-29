@@ -266,8 +266,12 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
     STATE.cache.observe(&event).await;
     match event {
         // clear persistent data from this guild
-        DiscordEvent::GuildDelete(_) => {
-            // TODO: handle cleanup of deleted guild data
+        DiscordEvent::GuildDelete(deleted) if deleted.unavailable != Some(true) => {
+            let _lock = STATE.takedown_locks.lock(deleted.id).await;
+            STATE.guild_configs.write().await.remove(&deleted.id);
+            STATE.stats.write().await.takedowns.remove(&deleted.id);
+            STATE.random_takedown_schedule.write().await.remove(&deleted.id);
+            STATE.owner_notifications.write().await.remove_ref(&deleted.id);
         }
 
         // handle interactions

@@ -97,6 +97,15 @@ where
     pub fn insert_ref(&mut self, ref_key: R, acc_key: A) -> Option<A> {
         self.reference_map.insert(ref_key, acc_key)
     }
+
+    /// Removes a reference and drops its value if no other reference uses it.
+    pub fn remove_ref(&mut self, ref_key: &R) {
+        if let Some(accessor) = self.reference_map.remove(ref_key) {
+            if !self.reference_map.values().any(|value| value == &accessor) {
+                self.accessor_map.remove(&accessor);
+            }
+        }
+    }
 }
 
 impl<R, A, V> Default for RefAccessMap<R, A, V>
