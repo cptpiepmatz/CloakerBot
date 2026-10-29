@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+21. Random-takedown failure policy: expected gameplay failures do not abort the scheduler; transport/join/audio failures are warned and other guilds still run. Due entries are consumed and locks released before executing takedowns, preventing recursive config-read deadlocks and duplicate scheduling. Invalid persisted intervals are rejected before random sampling (positive finite ordered hours, at most one year).
+
 20. Voice rejection: checked the gateway-observed bot voice channel as well as Songbird's channel after the counter window, before either target or caller removal. Songbird's local desired channel alone is insufficient to detect a moderator moving/disconnecting the bot. No failure audio is attempted in a rejected channel.
 
 19. Permission error code: Discord's 50013 is Missing Permissions; 50001 is Missing Access. Centralized both checks for target and caller removal. A blocked returned takedown remains a parry, not a successful counter.

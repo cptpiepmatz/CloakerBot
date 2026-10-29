@@ -16,10 +16,19 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
     let mut rng = StdRng::from_os_rng();
     let guild_configs = STATE.guild_configs.read().await;
     let mut random_takedown_schedule = STATE.random_takedown_schedule.write().await;
+    let mut due = Vec::new();
     for (guild_id, config) in guild_configs.iter() {
         let config_random = config.random.complete();
 
         if !config_random.enabled {
+            random_takedown_schedule.remove(guild_id);
+            continue;
+        }
+
+        if !config_random.min.is_finite() || !config_random.max.is_finite()
+            || config_random.min <= 0.0 || config_random.min > config_random.max
+            || config_random.max > 24.0 * 365.0 {
+            macros::warn!("invalid random interval for guild {guild_id}");
             random_takedown_schedule.remove(guild_id);
             continue;
         }
@@ -46,9 +55,23 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
         };
 
         let target_id = guild_voice_states.iter().choose(&mut rng).expect("at least 3");
-        // TODO: consider if this should return an error
-        let _ = takedown(*target_id, *guild_id, TakedownType::Random).await;
+        due.push((*target_id, *guild_id));
         random_takedown_schedule.remove(guild_id);
+    }
+    drop(random_takedown_schedule);
+    drop(guild_configs);
+
+    for (target_id, guild_id) in due {
+        if let Err(error) = takedown(target_id, guild_id, TakedownType::Random).await {
+            match error {
+                crate::takedown::TakedownFail::Client(_)
+                | crate::takedown::TakedownFail::Join(_)
+                | crate::takedown::TakedownFail::Audio(_) => {
+                    macros::warn!("random takedown failed in {guild_id}: {error:?}");
+                }
+                _ => {}
+            }
+        }
     }
 
     Ok(())
