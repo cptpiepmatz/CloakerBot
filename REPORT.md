@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+4. `cloaker` failure: used the dedicated failure quote while preserving the specific failure reason.
+
 3. `cloaker` countered: used the dedicated countered quote.
 
 2. `cloaker` success: used the shared success quote instead of returning a placeholder to Discord.

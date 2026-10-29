@@ -137,7 +137,7 @@ pub async fn action(
         Err(TakedownFail::Countered { by_id }) => {
             cloaker::countered(by_id.mention(), crate::assets::QUOTES.cloaker.countered)
         }
-        Err(fail) => cloaker::fail::template("TODO: quote", match fail {
+        Err(fail) => cloaker::fail::template(crate::assets::QUOTES.cloaker.fail, match fail {
             TakedownFail::Countered { .. } => unreachable!(),
             TakedownFail::Join(_) => cloaker::fail::join(),
             TakedownFail::MissingPermissions => cloaker::fail::missing_perms(),
