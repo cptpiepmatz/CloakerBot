@@ -1,13 +1,11 @@
-use std::any::Any;
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::LazyLock;
 
 use axum::extract::Query;
-use axum::response::{Html, IntoResponse, Redirect};
+use axum::response::{Html, Redirect};
 use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
-use futures::TryFutureExt;
 use http::StatusCode;
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;

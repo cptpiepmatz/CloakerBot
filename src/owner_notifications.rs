@@ -1,13 +1,10 @@
-use std::ops::Deref;
-
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
-use twilight_mention::Mention;
 use twilight_model::channel::Message;
 
+use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
 use crate::util::ClientError;
-use crate::{BOT_USER_ID, STATE, assets};
 
 pub async fn on_message(message: &Message) -> Result<(), ClientError> {
     let Some(guild_id) = message.guild_id

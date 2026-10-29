@@ -110,4 +110,3 @@ features = ["macros", "no_logger"]
 
 [build-dependencies]
 hound.workspace = true
-
