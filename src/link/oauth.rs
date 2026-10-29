@@ -64,6 +64,11 @@ pub async fn callback(
         return Err(StatusCode::FORBIDDEN);
     }
 
+    if !PENDING_STATES.lock().remove(&discord_state).is_some_and(|created| created.elapsed() < STATE_LIFETIME) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    let jar = jar.remove(Cookie::build("state").path(CALLBACK_PATH));
+
     let tokens = oauth_tokens(&code).await.map_err(err500)?;
 
     let client = TwilightClient::new(format!("Bearer {}", tokens.access_token.expose()));
@@ -84,10 +89,6 @@ pub async fn callback(
     if let Err(error) = notify_connected(me_user.id).await {
         macros::warn!("linked-role confirmation DM failed: {error:?}");
     }
-    if !PENDING_STATES.lock().remove(&discord_state).is_some_and(|created| created.elapsed() < STATE_LIFETIME) {
-        return Err(StatusCode::FORBIDDEN);
-    }
-    let jar = jar.remove(Cookie::build("state").path(CALLBACK_PATH));
 
     Ok((jar, Html("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>CloakerBot connected</title><h1>Account connected 🔗</h1><p>Your global takedown, victim, and counter stats are now available for Discord linked roles and will update automatically.</p><p>You can close this page or <a href=\"https://discord.com/channels/@me/\">return to Discord</a>.</p></html>")))
 }

@@ -2,6 +2,10 @@
 
 Each original TODO, FIXME, and FILLME is handled separately. No remote API tests are added; validation uses compilation, formatting, and the existing local tests. Live Discord behavior still needs deployment verification.
 
+## Integration review
+
+- Consumed and validated the callback nonce before token exchange or any account/DM side effects, so invalid state cannot perform work before being rejected.
+
 ## Completed items
 
 33. Owner announcement stats: replaced the speculative local/global list with the three actual metadata keys and their semantics, explaining the user-scoped/global limitation and synchronization interval.
