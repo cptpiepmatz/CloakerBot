@@ -75,8 +75,7 @@ pub async fn action(
             crate::assets::QUOTES.counter.success
         ),
         Err(()) => replies::counter::miss(
-            // FILLME: add another quote here
-            "[insert quote here]"
+            crate::assets::QUOTES.counter.miss
         )
     };
 

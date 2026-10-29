@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+6. `counter` miss: used the shared missed-counter quote.
+
 5. `counter` success: used the shared successful-counter quote.
 
 4. `cloaker` failure: used the dedicated failure quote while preserving the specific failure reason.
