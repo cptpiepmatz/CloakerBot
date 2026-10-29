@@ -58,7 +58,6 @@ pub async fn callback(
     let client = TwilightClient::new(format!("Bearer {}", tokens.access_token.expose()));
     let me_data =
         client.current_authorization().await.map_err(err500)?.model().await.map_err(err500)?;
-    // TODO: update metadata
 
     let me_user = match me_data.user {
         None => return Err(StatusCode::FORBIDDEN),
@@ -69,6 +68,7 @@ pub async fn callback(
     let _lock = STATE.linked_role_locks.lock(me_user.id).await;
     STATE.linked_roles.write().await.insert(me_user.id, tokens);
     STATE.linked_roles.store().await.map_err(err500)?;
+    super::application_role_connection::update_metadata(&client, me_user.id).await.map_err(err500)?;
 
     let private_channel = STATE
         .client

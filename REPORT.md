@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+29. OAuth callback metadata: published current stats immediately after linking and made update errors fail the callback rather than falsely confirming a completed connection. Persisted credentials remain available for periodic retry if Discord temporarily rejects the metadata request.
+
 28. OAuth token persistence: persisted user-keyed access/refresh tokens and expiry, loading them on startup and flushing before callback success. Token types accept only Bearer, lifetimes are nonzero, required scopes are checked, and secret-token debug output is redacted. The new `data/linked_roles.json` contains credentials: keep `data/` private with deployment filesystem permissions and never publish or back it up unprotected; no encryption key is embedded in the repository.
 
 27. Role-connection update implementation: completed the user-scoped PUT with a typed payload and Discord-required string metadata values. Computed global initiated/received/counter-plus-parry totals directly from stored guild stats, using 64-bit totals without sorting ranks or holding stats locks across HTTP.
