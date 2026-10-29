@@ -214,6 +214,11 @@ async fn takedown_in_voice(
 
     notification_track_handle.stop().map_err(TakedownFail::Audio)?;
 
+    let bot_channel = STATE.cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());
+    if bot_channel != Some(channel_id) || call.current_channel() != Some(ChannelId::from(channel_id)) {
+        return Err(TakedownFail::Rejected);
+    }
+
     let caller_id = match kind {
         TakedownType::Called { caller_id } => Some(caller_id),
         TakedownType::Random => None,
@@ -273,12 +278,6 @@ async fn takedown_in_voice(
     if target_end_channel_id != channel_id.into() {
         fail_sound.play_and_wait(call, None).await;
         return Err(TakedownFail::Fled);
-    }
-
-    // TODO: check for rejection, check if this works now
-    if call.current_channel() != ChannelId::from(channel_id).into() {
-        fail_sound.play_and_wait(call, None).await;
-        return Err(TakedownFail::Rejected);
     }
 
     // no counter, continue with takedown

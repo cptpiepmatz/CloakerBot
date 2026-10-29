@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+20. Voice rejection: checked the gateway-observed bot voice channel as well as Songbird's channel after the counter window, before either target or caller removal. Songbird's local desired channel alone is insufficient to detect a moderator moving/disconnecting the bot. No failure audio is attempted in a rejected channel.
+
 19. Permission error code: Discord's 50013 is Missing Permissions; 50001 is Missing Access. Centralized both checks for target and caller removal. A blocked returned takedown remains a parry, not a successful counter.
 
 18. Other takedown errors: retained `ClientError` for HTTP and decoding errors and added a typed audio-control failure instead of panicking when the notification track cannot be stopped. Join failures remain separate.
