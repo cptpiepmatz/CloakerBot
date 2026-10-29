@@ -89,20 +89,25 @@ pub async fn takedown(
     guild_id: Id<GuildMarker>,
     kind: TakedownType
 ) -> TakedownResult {
-    // TODO: split this function into multiple
     // TODO: put this into inner function to allow tracking stats
-
-    let rng = &mut rand::rngs::StdRng::from_os_rng();
     let guild_configs = STATE.guild_configs.read().await;
-    let config = GuildConfig::default();
-    let config = guild_configs.get(&guild_id).unwrap_or(&config);
-    let mut guild_stats = STATE.stats.write().await;
-    let stats = guild_stats.takedowns.entry(guild_id).or_default();
+    let config = guild_configs.get(&guild_id).cloned().unwrap_or_default();
+    drop(guild_configs);
+    execute_takedown(target_id, guild_id, kind, &config).await
+}
+
+async fn execute_takedown(
+    target_id: Id<UserMarker>,
+    guild_id: Id<GuildMarker>,
+    kind: TakedownType,
+    config: &GuildConfig
+) -> TakedownResult {
+    let rng = &mut rand::rngs::StdRng::from_os_rng();
+    let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
 
-    let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
     let (_planned_takedown_guard, counter_rx) =
         upsert_takedown_plan(target_id, guild_id, !matches!(kind, TakedownType::DangerZone { .. }));
 
