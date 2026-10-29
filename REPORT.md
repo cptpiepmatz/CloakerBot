@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+33. Owner announcement stats: replaced the speculative local/global list with the three actual metadata keys and their semantics, explaining the user-scoped/global limitation and synchronization interval.
+
 32. Linked-role lifecycle: registered metadata at startup and added a minute-based background synchronizer, including startup/restart recovery. Refreshes expiring tokens, persists rotated credentials before use, retries an unauthorized update once with refreshed credentials, and removes revoked (`invalid_grant`) grants. Per-user locks serialize relinking and refresh; transient failures leave credentials available for retry. Metadata tracks global stats, so deletion of guild stats is reflected on the next synchronization.
 
 31. OAuth consent decision: kept explicit `prompt=consent` because linking is a user-initiated grant of stats-writing access. Hardened that flow with secure/HTTP-only/SameSite=Lax callback-scoped cookies and single-use server-side nonces expiring after five minutes (bounded pending store). Callback success clears the cookie; replayed/expired state is rejected. HTTPS termination must preserve the configured redirect URI.

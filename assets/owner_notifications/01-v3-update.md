@@ -92,18 +92,17 @@ This allows servers to define criteria a user must reach in order to get a role.
 
 With the introduction of v3 it is now possible to use the {CloakerBot} as a
 source for such criteria.
-Users can link their Discord account to the bot to receive based on their stats.
+Users can link their Discord account to the bot to qualify for roles based on their stats.
 The metadata that the bot will provide are:
 
-<!-- TODO: use the real stats we can provide -->
+- how many successful takedowns you initiated globally (`times_smacked`)
 
-- how many times you successfully targeted a takedown globally,
+- how many times you were taken down globally, including returned counters (`times_called`)
 
-- and locally on the current server
+- how many successful counters and parries you performed globally (`times_countered`)
 
-- and how many times you've been hit by the bot globally,
-
-- and locally on the current server
+Discord connections are user-scoped, so server-local criteria are not available.
+Stats update automatically about once a minute while the bot is running.
 
 
 ## 🪛 Nicer Configuration
