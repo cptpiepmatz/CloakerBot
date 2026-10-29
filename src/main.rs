@@ -197,9 +197,12 @@ async fn main() -> miette::Result<()> {
         }
     });
 
-    let (server_result, (), ()) = tokio::try_join!(http_server, event_handler, linked_roles).into_diagnostic()?;
-    server_result.into_diagnostic()?;
-    Ok(())
+    tokio::select! {
+        server = http_server => server.into_diagnostic()?.into_diagnostic()?,
+        handler = event_handler => handler.into_diagnostic()?,
+        roles = linked_roles => roles.into_diagnostic()?
+    }
+    Err(miette::miette!("a bot worker stopped unexpectedly"))
 }
 
 #[derive(Debug)]

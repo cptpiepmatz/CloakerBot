@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Integration review
 
+- Supervised HTTP, gateway/event, and linked-role tasks with `select!`, so a bind failure or stopped worker is reported immediately instead of waiting forever for the other workers.
+
 - Consumed and validated the callback nonce before token exchange or any account/DM side effects, so invalid state cannot perform work before being rejected.
 
 ## Completed items
