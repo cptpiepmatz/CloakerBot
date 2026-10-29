@@ -17,12 +17,13 @@ pub async fn check_danger_zones(
 ) -> Result<(), CheckDangerZonesError> {
     let channel_id = require!(Some(update.new) => Ok(()));
 
-    let guild_configs = STATE.guild_configs.read().await;
-    let config = GuildConfig::default();
-    let config = guild_configs.get(&update.guild_id).unwrap_or(&config);
-
-    let danger_zones = &config.danger_zones;
-    require!(danger_zones.contains(&channel_id) => Ok(()));
+    let is_danger_zone = STATE
+        .guild_configs
+        .read()
+        .await
+        .get(&update.guild_id)
+        .is_some_and(|config| config.danger_zones.contains(&channel_id));
+    require!(is_danger_zone => Ok(()));
 
     match takedown(update.user_id, update.guild_id, TakedownType::DangerZone { channel_id }).await {
         Err(TakedownFail::Client(err)) => Err(err.into()),

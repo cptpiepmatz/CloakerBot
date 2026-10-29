@@ -43,36 +43,28 @@ impl ObservableCache {
     }
 
     pub async fn observe(&self, event: &DiscordEvent) {
-        match event {
-            Event::VoiceStateUpdate(update) => self.handle_voice_state_update(update).await,
-            _ => {}
-        }
-
+        let update = match event {
+            Event::VoiceStateUpdate(update) => self.voice_channel_update(update),
+            _ => None
+        };
         self.inner.update(event);
+        if let Some(update) = update {
+            let _ = self.emitter.send(CacheUpdateEvent::VoiceChannelUpdate(update)).await;
+        }
     }
 
-    async fn handle_voice_state_update(&self, update: &VoiceStateUpdate) {
+    fn voice_channel_update(&self, update: &VoiceStateUpdate) -> Option<VoiceChannelCacheUpdate> {
         let user_id = update.user_id;
-        let guild_id = util::require!(Some(update.guild_id));
+        let guild_id = update.guild_id?;
 
         let event_channel_id = update.channel_id;
         let cache_channel_id =
             self.inner.voice_state(user_id, guild_id).map(|cache_ref| cache_ref.channel_id());
 
         match (cache_channel_id, event_channel_id) {
-            (None, None) => {}
-            (Some(old), Some(new)) if old == new => {}
-            (old, new) => {
-                let _ = self
-                    .emitter
-                    .send(CacheUpdateEvent::VoiceChannelUpdate(VoiceChannelCacheUpdate {
-                        guild_id,
-                        user_id,
-                        old,
-                        new
-                    }))
-                    .await;
-            }
+            (None, None) => None,
+            (Some(old), Some(new)) if old == new => None,
+            (old, new) => Some(VoiceChannelCacheUpdate { guild_id, user_id, old, new })
         }
     }
 }

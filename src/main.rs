@@ -287,8 +287,9 @@ enum HandleDiscordEventError {
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
-    STATE.songbird.process(&event).await;
+    // observe voice changes before songbird waits on an active call
     STATE.cache.observe(&event).await;
+    STATE.songbird.process(&event).await;
     match event {
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(deleted) if deleted.unavailable != Some(true) => {

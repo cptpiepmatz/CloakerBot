@@ -172,6 +172,11 @@ async fn execute_takedown(
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
+    if let TakedownType::DangerZone { channel_id: expected } = kind {
+        if channel_id != expected {
+            return Err(TakedownFail::Fled);
+        }
+    }
 
     let (_planned_takedown_guard, counter_rx) =
         upsert_takedown_plan(target_id, guild_id, !matches!(kind, TakedownType::DangerZone { .. }));
