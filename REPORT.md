@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+30. Linking confirmation: replaced the terse placeholder DM with an explanation of stats, role requirements, and disconnecting. Added a browser success page so blocked DMs do not turn a successful connection into an HTTP failure. DM delivery is best-effort and logged separately.
+
 29. OAuth callback metadata: published current stats immediately after linking and made update errors fail the callback rather than falsely confirming a completed connection. Persisted credentials remain available for periodic retry if Discord temporarily rejects the metadata request.
 
 28. OAuth token persistence: persisted user-keyed access/refresh tokens and expiry, loading them on startup and flushing before callback success. Token types accept only Bearer, lifetimes are nonzero, required scopes are checked, and secret-token debug output is redacted. The new `data/linked_roles.json` contains credentials: keep `data/` private with deployment filesystem permissions and never publish or back it up unprotected; no encryption key is embedded in the repository.

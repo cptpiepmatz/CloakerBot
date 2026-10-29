@@ -4,7 +4,7 @@ use std::error::Error;
 use std::sync::LazyLock;
 
 use axum::extract::Query;
-use axum::response::{IntoResponse, Redirect};
+use axum::response::{Html, IntoResponse, Redirect};
 use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use futures::TryFutureExt;
@@ -38,7 +38,7 @@ pub const CALLBACK_PATH: &str = "/callback";
 pub async fn callback(
     Query(params): Query<CallbackParams>,
     jar: SignedCookieJar
-) -> Result<Redirect, StatusCode> {
+) -> Result<Html<&'static str>, StatusCode> {
     fn err500(err: impl Error) -> StatusCode {
         macros::error!("callback error: {err}");
         StatusCode::INTERNAL_SERVER_ERROR
@@ -70,23 +70,29 @@ pub async fn callback(
     STATE.linked_roles.store().await.map_err(err500)?;
     super::application_role_connection::update_metadata(&client, me_user.id).await.map_err(err500)?;
 
+    if let Err(error) = notify_connected(me_user.id).await {
+        macros::warn!("linked-role confirmation DM failed: {error:?}");
+    }
+
+    Ok(Html("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>CloakerBot connected</title><h1>Account connected 🔗</h1><p>Your global takedown, victim, and counter stats are now available for Discord linked roles and will update automatically.</p><p>You can close this page or <a href=\"https://discord.com/channels/@me/\">return to Discord</a>.</p></html>"))
+}
+
+async fn notify_connected(user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>) -> Result<(), crate::util::ClientError> {
     let private_channel = STATE
         .client
-        .create_private_channel(me_user.id)
+        .create_private_channel(user_id)
         .await
-        .map_err(err500)?
+        ?
         .model()
         .await
-        .map_err(err500)?;
-    // FILLME: do a proper message
+        ?;
     STATE
         .client
         .create_message(private_channel.id)
-        .content("connected 🔗")
+        .content("## 🔗 Account connected\nYour global takedown, victim, and counter stats are now available for Discord linked roles. Stats update automatically; server admins choose the role requirements. You can disconnect CloakerBot in Discord's User Settings → Authorized Apps.")
         .await
-        .map_err(err500)?;
-
-    Ok(Redirect::to("https://discord.com/channels/@me/"))
+        ?;
+    Ok(())
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
