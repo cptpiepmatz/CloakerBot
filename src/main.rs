@@ -56,8 +56,6 @@ compile_error!("the feature `dev` and `prod` are mutually exclusive");
 #[cfg(all(not(feature = "dev"), not(feature = "prod")))]
 compile_error!("one of the features `dev` or `prod` are required");
 
-// TODO: implement linked roles
-
 #[rustfmt::skip]
 const CLIENT_ID: u64 = macros::env!(
     "DISCORD_CLIENT_ID", 
@@ -171,11 +169,11 @@ async fn main() -> miette::Result<()> {
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
     LazyLock::force(&COMMANDS_REGISTER);
-    // application_role_connection::register_metadata_records()
-    //     .await
-    //     .expect("registering metadata records failed");
+    link::application_role_connection::register_metadata().await
+        .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;
 
     let http_server = tokio::spawn(link::serve());
+    let linked_roles = tokio::spawn(link::application_role_connection::maintain_connections());
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
@@ -199,7 +197,7 @@ async fn main() -> miette::Result<()> {
         }
     });
 
-    let (server_result, ()) = tokio::try_join!(http_server, event_handler).into_diagnostic()?;
+    let (server_result, (), ()) = tokio::try_join!(http_server, event_handler, linked_roles).into_diagnostic()?;
     server_result.into_diagnostic()?;
     Ok(())
 }

@@ -181,5 +181,35 @@ async fn oauth_tokens(code: &str) -> reqwest::Result<Tokens> {
         .error_for_status()?
         .json()
         .await
-        .map_err(|err| dbg!(err))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RefreshError {
+    #[error("OAuth token request failed")]
+    Request(#[from] reqwest::Error),
+    #[error("OAuth authorization was revoked")]
+    Revoked,
+    #[error(transparent)]
+    MissingScopes(#[from] MissingScopes)
+}
+
+pub async fn refresh_tokens(refresh_token: &SecretToken) -> Result<StoredTokens, RefreshError> {
+    let body: HashMap<_, &str> = map! {
+            client_id: CLIENT_ID.as_str(),
+            client_secret: CLIENT_SECRET.as_str(),
+            grant_type: "refresh_token",
+            refresh_token: refresh_token.expose()
+        };
+    let response = STATE.http_client.post("https://discord.com/api/v10/oauth2/token")
+        .form(&body).send().await?;
+    if response.status() == StatusCode::BAD_REQUEST {
+        let error = response.error_for_status_ref().expect_err("400 response");
+        #[derive(Deserialize)]
+        struct OAuthError { error: String }
+        return match response.json::<OAuthError>().await {
+            Ok(body) if body.error == "invalid_grant" => Err(RefreshError::Revoked),
+            _ => Err(RefreshError::Request(error))
+        };
+    }
+    Ok(response.error_for_status()?.json::<Tokens>().await?.into_stored()?)
 }

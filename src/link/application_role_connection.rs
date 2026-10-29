@@ -104,3 +104,66 @@ pub async fn update_metadata(
     client.request::<serde_json::Value>(request).await?;
     Ok(())
 }
+
+#[derive(Debug, thiserror::Error)]
+enum SyncError {
+    #[error(transparent)]
+    Refresh(#[from] super::oauth::RefreshError),
+    #[error(transparent)]
+    Http(#[from] twilight_http::Error),
+    #[error(transparent)]
+    Persist(#[from] std::io::Error)
+}
+
+async fn refresh_and_store(
+    user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>,
+    tokens: &crate::data::linked_roles::StoredTokens
+) -> Result<crate::data::linked_roles::StoredTokens, SyncError> {
+    let tokens = match super::oauth::refresh_tokens(&tokens.refresh_token).await {
+        Err(super::oauth::RefreshError::Revoked) => {
+            STATE.linked_roles.write().await.remove(&user_id);
+            STATE.linked_roles.store().await?;
+            return Err(super::oauth::RefreshError::Revoked.into());
+        }
+        result => result?
+    };
+    STATE.linked_roles.write().await.insert(user_id, tokens.clone());
+    STATE.linked_roles.store().await?;
+    Ok(tokens)
+}
+
+async fn sync_user(user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>) -> Result<(), SyncError> {
+    let _lock = STATE.linked_role_locks.lock(user_id).await;
+    let Some(mut tokens) = STATE.linked_roles.read().await.get(&user_id).cloned() else { return Ok(()); };
+    if tokens.expires_at <= chrono::Utc::now() + chrono::Duration::seconds(60) {
+        tokens = refresh_and_store(user_id, &tokens).await?;
+    }
+    let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
+    match update_metadata(&client, user_id).await {
+        Err(error) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) => {
+            tokens = refresh_and_store(user_id, &tokens).await?;
+            let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
+            update_metadata(&client, user_id).await?;
+        }
+        result => { result?; }
+    }
+    Ok(())
+}
+
+pub async fn maintain_connections() {
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+    interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+    loop {
+        interval.tick().await;
+        let users: Vec<_> = STATE.linked_roles.read().await.keys().copied().collect();
+        for user_id in users {
+            match sync_user(user_id).await {
+                Err(SyncError::Refresh(super::oauth::RefreshError::Revoked)) => {
+                    macros::info!("removed revoked linked-role connection for {user_id}");
+                }
+                Err(error) => macros::warn!("linked-role sync failed for {user_id}: {error:?}"),
+                Ok(()) => {}
+            }
+        }
+    }
+}
