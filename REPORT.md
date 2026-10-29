@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+16. Broken called-takedown tracking: restored `increment_takedown` at the outcome boundary, only after successful removal, with a short stats write lock.
+
 15. Takedown outcome boundary: made the public function observe every inner result, including early failures. This central boundary is where statistics and linked-role/log side effects can run without being skipped by `?` in execution.
 
 14. Takedown decomposition: separated configuration snapshotting from execution and the existing in-voice phase. Removed the unused global stats guard across network/audio waits and moved the per-guild lock before target checks so queued requests revalidate the current voice state.

@@ -103,6 +103,10 @@ async fn record_outcome(
     kind: TakedownType,
     result: &TakedownResult
 ) {
+    if let (Ok(_), TakedownType::Called { caller_id }) = (result, kind) {
+        STATE.stats.write().await.takedowns.entry(guild_id).or_default()
+            .increment_takedown(caller_id, target_id);
+    }
     if let Err(error) = result {
         macros::info!("takedown in {guild_id} targeting {target_id} ({kind:?}): {error:?}");
     }
@@ -140,10 +144,6 @@ async fn execute_takedown(
     .await;
 
     // TODO: track more stats
-    if let (Ok(_), TakedownType::Called { caller_id }) = (&takedown_res, kind) {
-        // FIXME: this tracking
-        // stats.takedowns.increment(caller_id, target_id);
-    }
 
     // leave the channel after everything that happened, we cannot do a thing if it
     // fails to leave
