@@ -44,10 +44,10 @@ pub enum TakedownFail {
         by_id: Id<UserMarker>,
         outcome: CounterOutcome
     },
-    // TODO: maybe this needs a variant for other discord-related errors
     Join(JoinError),
-
-    // Any error that could happen when interacting with discord via their http interface.
+    /// Audio playback control failed.
+    Audio(songbird::tracks::ControlError),
+    /// An HTTP request or response-body decoding failed.
     Client(ClientError),
     /// Missing permissions to either join the channel or kick the target.
     MissingPermissions,
@@ -203,7 +203,7 @@ async fn takedown_in_voice(
         }
     };
 
-    notification_track_handle.stop().expect("track is owned here");
+    notification_track_handle.stop().map_err(TakedownFail::Audio)?;
 
     let caller_id = match kind {
         TakedownType::Called { caller_id } => Some(caller_id),

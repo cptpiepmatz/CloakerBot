@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+18. Other takedown errors: retained `ClientError` for HTTP and decoding errors and added a typed audio-control failure instead of panicking when the notification track cannot be stopped. Join failures remain separate.
+
 17. Additional stats: recorded random/danger-zone successes under the bot, successful returned takedowns as counters, and defenses without a returned takedown as parries. `CounterOutcome` carries the removed user only when one was actually removed. Fixed global punisher aggregation to add across guilds rather than overwrite, which is required for accurate linked-role totals.
 
 16. Broken called-takedown tracking: restored `increment_takedown` at the outcome boundary, only after successful removal, with a short stats write lock.

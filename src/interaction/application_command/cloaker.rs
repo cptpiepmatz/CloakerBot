@@ -146,6 +146,7 @@ pub async fn action(
             TakedownFail::Immune => cloaker::fail::immune(),
             TakedownFail::Rejected => cloaker::fail::rejected(BOT_USER_ID.mention()),
             TakedownFail::Client(err) => cloaker::fail::other(err)
+            ,TakedownFail::Audio(err) => cloaker::fail::other(err)
         })
     };
 
