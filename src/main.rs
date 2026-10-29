@@ -162,6 +162,10 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 async fn main() -> miette::Result<()> {
     // console_subscriber::init();
 
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .map_err(|_| miette::miette!("could not select the TLS crypto provider"))?;
+
     let state = LazyLock::force(&STATE);
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");

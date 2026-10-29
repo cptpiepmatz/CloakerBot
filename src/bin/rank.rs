@@ -42,6 +42,9 @@ bitflags::bitflags! {
 
 #[tokio::main]
 async fn main() {
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("could not select the TLS crypto provider");
     let discord_token = env::var("DISCORD_TOKEN").expect("missing env variable DISCORD_TOKEN");
     let client = twilight_http::Client::new(discord_token);
     let member = client.guild_member(GUILD_ID, USER_ID).await.unwrap().model().await.unwrap();

@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Dependency refresh
 
+- Selected one shared Ring TLS provider before constructing clients in both binaries. reqwest 0.13 uses `rustls-no-provider` so it does not introduce AWS-LC alongside the Discord stack's Ring provider, avoiding ambiguous-provider startup panics and an unnecessary native crypto build.
+
 - No Rust compiler version is pinned: there is no toolchain file or `rust-version`, and both Docker builds use `rust:latest`. Kept that policy; validation uses installed stable Rust 1.99.1. The workspace already uses Rust 2024.
 - Updated the full lockfile and direct requirements for current stable release lines, including Twilight 0.17, Songbird 0.6 (DAVE support), reqwest 0.13, rand 0.10, parking_lot 0.13, imageproc 0.27, axum-extra 0.12, syn 3, toml 1.1, konst 0.4, heapless 0.9, itertools 0.15, strum 0.28, and console-subscriber 0.5.
 - Migrated component IDs/modal-only select requirements and RNG initialization to the updated APIs; enabled reqwest's explicit form and Rustls features.
