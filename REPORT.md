@@ -2,6 +2,14 @@
 
 Each original TODO, FIXME, and FILLME is handled separately. No remote API tests are added; validation uses compilation, formatting, and the existing local tests. Live Discord behavior still needs deployment verification.
 
+## Dependency refresh
+
+- No Rust compiler version is pinned: there is no toolchain file or `rust-version`, and both Docker builds use `rust:latest`. Kept that policy; validation uses installed stable Rust 1.99.1. The workspace already uses Rust 2024.
+- Updated the full lockfile and direct requirements for current stable release lines, including Twilight 0.17, Songbird 0.6 (DAVE support), reqwest 0.13, rand 0.10, parking_lot 0.13, imageproc 0.27, axum-extra 0.12, syn 3, toml 1.1, konst 0.4, heapless 0.9, itertools 0.15, strum 0.28, and console-subscriber 0.5.
+- Migrated component IDs/modal-only select requirements and RNG initialization to the updated APIs; enabled reqwest's explicit form and Rustls features.
+- Twilight 0.17 still has no native role-connection client/models, but its raw request API no longer needs a patched routing enum. Removed the Git dependency patch and retained the typed adapter on upstream Twilight.
+- Replaced the macro error adapter with syn's native compile-error output, removing the direct `proc-macro-error2` dependency and its old compatibility warning. Removed deprecated `std::u32` imports exposed by checks.
+
 ## Integration review
 
 - Supervised HTTP, gateway/event, and linked-role tasks with `select!`, so a bind failure or stopped worker is reported immediately instead of waiting forever for the other workers.

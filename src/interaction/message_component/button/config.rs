@@ -105,6 +105,7 @@ impl ConfigUnsetButton {
     pub fn component(self) -> Component {
         let custom_id = MessageComponentCustomId::from(self).to_string();
         Component::Button(Button {
+            id: None,
             custom_id: Some(custom_id),
             disabled: false,
             emoji: Some(EmojiReactionType::Unicode { name: "🗑️".to_string() }),
@@ -121,6 +122,7 @@ impl ConfigRandomButton {
         let custom_id = MessageComponentCustomId::from(self).to_string();
         Component::Button(match self {
             ConfigRandomButton::Enable => Button {
+                id: None,
                 custom_id: Some(custom_id),
                 disabled: false,
                 emoji: Some(EmojiReactionType::Unicode { name: "💫".to_string() }),
@@ -130,6 +132,7 @@ impl ConfigRandomButton {
                 sku_id: None
             },
             ConfigRandomButton::Disable => Button {
+                id: None,
                 custom_id: Some(custom_id),
                 disabled: false,
                 emoji: Some(EmojiReactionType::Unicode { name: "🛑".to_string() }),
@@ -250,6 +253,7 @@ async fn handle_random(
     };
 
     let component = Component::ActionRow(ActionRow {
+        id: None,
         components: vec![match variant {
             // use the inverse component to toggle config
             CRB::Enable => CRB::Disable.component(),

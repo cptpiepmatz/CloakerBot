@@ -29,6 +29,8 @@ pub fn component(current: &[Id<ChannelMarker>]) -> Component {
         current.iter().map(|cid| SelectDefaultValue::Channel(*cid)).collect();
 
     Component::SelectMenu(SelectMenu {
+        id: None,
+        required: None,
         channel_types: Some(vec![ChannelType::GuildVoice]),
         custom_id: MessageComponentCustomId::DangerZonesSelect.to_string(),
         default_values: Some(default_values),

@@ -91,6 +91,8 @@ pub fn component(variant: ImmunitySelect, current: &[Id<RoleMarker>]) -> Compone
     let default_values: Vec<_> = current.iter().map(|rid| SelectDefaultValue::Role(*rid)).collect();
 
     Component::SelectMenu(SelectMenu {
+        id: None,
+        required: None,
         channel_types: None,
         custom_id: variant.to_string(),
         default_values: Some(default_values),

@@ -1,6 +1,5 @@
 use common::log::LogLevel;
 use proc_macro::TokenStream;
-use proc_macro_error2::{Diagnostic, proc_macro_error};
 use proc_macro2::TokenStream as TokenStream2;
 
 mod env;
@@ -11,7 +10,7 @@ fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream
     let input = TokenStream2::from(input);
     let output = match f(input) {
         Ok(output) => output,
-        Err(err) => Diagnostic::from(err).abort()
+        Err(err) => err.into_compile_error()
     };
     TokenStream::from(output)
 }
@@ -19,7 +18,6 @@ fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream
 macro_rules! defer_macros {
     ($($ident:ident: $f:expr),* $(,)?) => {$(
         #[proc_macro]
-        #[proc_macro_error]
         pub fn $ident(input: TokenStream) -> TokenStream {
             defer(input, $f)
         }

@@ -156,8 +156,8 @@ pub async fn action(
         .flags(MessageFlags::EPHEMERAL)
         .content(content)
         .components([
-            Component::ActionRow(ActionRow { components: vec![role_select] }),
-            Component::ActionRow(ActionRow { components: vec![button] })
+            Component::ActionRow(ActionRow { id: None, components: vec![role_select] }),
+            Component::ActionRow(ActionRow { id: None, components: vec![button] })
         ])
         .build();
 

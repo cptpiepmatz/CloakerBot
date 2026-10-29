@@ -153,7 +153,7 @@ async fn execute_takedown(
     kind: TakedownType,
     config: &GuildConfig
 ) -> TakedownResult {
-    let rng = &mut rand::rngs::StdRng::from_os_rng();
+    let rng = &mut rand::rngs::StdRng::from_rng(&mut rand::rng());
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;

@@ -30,6 +30,8 @@ pub fn component(current: Option<Id<ChannelMarker>>) -> Component {
         current.into_iter().map(|channel_id| SelectDefaultValue::Channel(channel_id)).collect();
 
     Component::SelectMenu(SelectMenu {
+        id: None,
+        required: None,
         channel_types: Some(vec![ChannelType::GuildText]),
         custom_id: MessageComponentCustomId::LogChannelSelect.to_string(),
         default_values: Some(default_values),

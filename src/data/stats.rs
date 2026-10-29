@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use std::{cmp, u32};
+use std::cmp;
 
 use derive_more::{Deref, DerefMut};
 use itertools::Itertools;

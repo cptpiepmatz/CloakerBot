@@ -132,6 +132,7 @@ pub async fn action(
     };
 
     let component = Component::ActionRow(ActionRow {
+        id: None,
         components: vec![match complete_random.enabled {
             // use the inverse component to toggle config
             true => CRB::Disable.component(),

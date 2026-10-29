@@ -2,7 +2,6 @@ use derive_more::From;
 use serde::Serialize;
 use twilight_http::Client;
 use twilight_http::request::{Method, RequestBuilder};
-use twilight_http::routing::Path;
 
 use crate::{APPLICATION_ID, STATE};
 
@@ -59,7 +58,6 @@ pub enum RegisterMetadataRecordsError {
 pub async fn register_metadata() -> Result<(), RegisterMetadataRecordsError> {
     let request = RequestBuilder::raw(
         Method::Put,
-        Path::ApplicationIdRoleConnections(APPLICATION_ID.into()),
         format!("applications/{}/role-connections/metadata", APPLICATION_ID)
     )
     .json(&metadata())
@@ -98,7 +96,6 @@ pub async fn update_metadata(
     };
     let request = RequestBuilder::raw(
         Method::Put,
-        Path::UsersMeApplicationsIdRoleConnection,
         format!("users/@me/applications/{}/role-connection", APPLICATION_ID)
     ).json(&connection).build()?;
     client.request::<serde_json::Value>(request).await?;

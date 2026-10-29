@@ -74,8 +74,8 @@ pub async fn action(
             crate::logging::fallback_description(guild_id).await
         ))
         .components([
-            Component::ActionRow(ActionRow { components: vec![channel_select] }),
-            Component::ActionRow(ActionRow { components: vec![button] })
+            Component::ActionRow(ActionRow { id: None, components: vec![channel_select] }),
+            Component::ActionRow(ActionRow { id: None, components: vec![button] })
         ])
         .build();
 

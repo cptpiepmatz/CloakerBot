@@ -3,7 +3,7 @@ use std::time::Duration;
 use chrono::{DateTime, Local};
 use rand::rngs::StdRng;
 use rand::seq::IteratorRandom;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 
 use crate::STATE;
 use crate::data::config::{CompleteDefault, GuildConfig, GuildConfigRandom};
@@ -13,7 +13,7 @@ use crate::takedown::{TakedownResult, TakedownType, takedown};
 pub enum CheckRandomError {}
 
 pub async fn handle_random_check() -> Result<(), CheckRandomError> {
-    let mut rng = StdRng::from_os_rng();
+    let mut rng = StdRng::from_rng(&mut rand::rng());
     let guild_configs = STATE.guild_configs.read().await;
     let mut random_takedown_schedule = STATE.random_takedown_schedule.write().await;
     let mut due = Vec::new();
