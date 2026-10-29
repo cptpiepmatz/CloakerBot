@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT guild_id, caller_id, target_id, takedowns, counters FROM takedown_counts",
+  "describe": {
+    "columns": [
+      {
+        "name": "guild_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "takedown_counts",
+            "name": "guild_id"
+          }
+        }
+      },
+      {
+        "name": "caller_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "takedown_counts",
+            "name": "caller_id"
+          }
+        }
+      },
+      {
+        "name": "target_id",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "takedown_counts",
+            "name": "target_id"
+          }
+        }
+      },
+      {
+        "name": "takedowns",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "takedown_counts",
+            "name": "takedowns"
+          }
+        }
+      },
+      {
+        "name": "counters",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "takedown_counts",
+            "name": "counters"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fba974a9a663bf1e04644150643fbb78aafc598e91708adfbb456323beb8f965"
+}

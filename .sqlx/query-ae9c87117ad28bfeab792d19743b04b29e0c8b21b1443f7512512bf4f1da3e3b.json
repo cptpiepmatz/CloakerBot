@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT guild_id, user_id, parries FROM parry_counts",
+  "describe": {
+    "columns": [
+      {
+        "name": "guild_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "parry_counts",
+            "name": "guild_id"
+          }
+        }
+      },
+      {
+        "name": "user_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "parry_counts",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "name": "parries",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "parry_counts",
+            "name": "parries"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ae9c87117ad28bfeab792d19743b04b29e0c8b21b1443f7512512bf4f1da3e3b"
+}

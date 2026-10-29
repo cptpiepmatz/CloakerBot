@@ -120,18 +120,12 @@ pub async fn action(
     };
 
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
-    let guild_configs = STATE.guild_configs.read().await;
-    let current = match guild_configs.get(&guild_id) {
-        None => &[],
-        Some(GuildConfig {
-            immunity: GuildConfigImmunity { general, random, general_silent, random_silent },
-            ..
-        }) => match variant {
-            ImmunitySelect::General => general.as_slice(),
-            ImmunitySelect::Random => random.as_slice(),
-            ImmunitySelect::GeneralSilent => general_silent.as_slice(),
-            ImmunitySelect::RandomSilent => random_silent.as_slice()
-        }
+    let config = STATE.database.guild_config(guild_id).await?;
+    let current = match variant {
+        ImmunitySelect::General => config.immunity.general.as_slice(),
+        ImmunitySelect::Random => config.immunity.random.as_slice(),
+        ImmunitySelect::GeneralSilent => config.immunity.general_silent.as_slice(),
+        ImmunitySelect::RandomSilent => config.immunity.random_silent.as_slice()
     };
 
     let role_select = message_component::role_select::immunity::component(variant, current);

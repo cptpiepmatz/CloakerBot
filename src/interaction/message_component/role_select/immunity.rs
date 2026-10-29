@@ -125,14 +125,15 @@ pub async fn action(
     let roles: Result<Vec<RoleId>, _> = data.values.iter().map(|v| v.parse::<RoleId>()).collect();
     let roles = roles.map_err(|_| ImmunitySelectActionError::InvalidValues(data.values.clone()))?;
 
-    let mut guild_configs = STATE.guild_configs.write().await;
-    let guild_config = guild_configs.entry(guild_id).or_default();
-    match variant {
-        ImmunitySelect::General => guild_config.immunity.general = roles.clone(),
-        ImmunitySelect::Random => guild_config.immunity.random = roles.clone(),
-        ImmunitySelect::GeneralSilent => guild_config.immunity.general_silent = roles.clone(),
-        ImmunitySelect::RandomSilent => guild_config.immunity.random_silent = roles.clone()
-    }
+    STATE
+        .database
+        .update_config(guild_id, |config| match variant {
+            ImmunitySelect::General => config.immunity.general = roles.clone(),
+            ImmunitySelect::Random => config.immunity.random = roles.clone(),
+            ImmunitySelect::GeneralSilent => config.immunity.general_silent = roles.clone(),
+            ImmunitySelect::RandomSilent => config.immunity.random_silent = roles.clone()
+        })
+        .await?;
 
     let roles_insert = roles.iter().map(|r| format!("- {}", r.mention())).join("\n");
     use assets::replies::config;

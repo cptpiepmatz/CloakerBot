@@ -160,13 +160,27 @@ pub async fn action(
     use ConfigButton as CB;
 
     let guild_id = interaction.guild_id.ok_or(ConfigButtonActionError::NotInGuild)?;
-    let mut guild_configs = STATE.guild_configs.write().await;
-    let guild_config = guild_configs.entry(guild_id).or_default();
-
     let variant = ConfigButton::try_from(custom_id)?;
+    let guild_config = STATE
+        .database
+        .update_config(guild_id, |config| match variant {
+            CB::Unset(ConfigUnsetButton::DangerZones) => config.danger_zones.clear(),
+            CB::Unset(ConfigUnsetButton::ImmunityGeneral) => config.immunity.general.clear(),
+            CB::Unset(ConfigUnsetButton::ImmunityRandom) => config.immunity.random.clear(),
+            CB::Unset(ConfigUnsetButton::ImmunityGeneralSilent) => {
+                config.immunity.general_silent.clear()
+            }
+            CB::Unset(ConfigUnsetButton::ImmunityRandomSilent) => {
+                config.immunity.random_silent.clear()
+            }
+            CB::Unset(ConfigUnsetButton::LogChannel) => config.log_channel = None,
+            CB::Random(ConfigRandomButton::Enable) => config.random.enabled = Some(true),
+            CB::Random(ConfigRandomButton::Disable) => config.random.enabled = Some(false)
+        })
+        .await?;
     let (reply, component) = match variant {
-        CB::Unset(cub) => handle_unset(guild_config, cub, guild_id).await?,
-        CB::Random(crb) => handle_random(guild_config, crb).await?
+        CB::Unset(cub) => handle_unset(cub, guild_id).await?,
+        CB::Random(crb) => handle_random(&guild_config, crb).await?
     };
 
     let data = InteractionResponseDataBuilder::new()
@@ -187,20 +201,10 @@ pub async fn action(
 }
 
 async fn handle_unset(
-    guild_config: &mut GuildConfig,
     variant: ConfigUnsetButton,
     guild_id: twilight_model::id::Id<twilight_model::id::marker::GuildMarker>
 ) -> Result<(String, Option<Component>), HandleMessageComponentError> {
     use ConfigUnsetButton as CUB;
-
-    match variant {
-        CUB::DangerZones => guild_config.danger_zones.clear(),
-        CUB::ImmunityGeneral => guild_config.immunity.general.clear(),
-        CUB::ImmunityRandom => guild_config.immunity.random.clear(),
-        CUB::ImmunityGeneralSilent => guild_config.immunity.general_silent.clear(),
-        CUB::ImmunityRandomSilent => guild_config.immunity.random_silent.clear(),
-        CUB::LogChannel => guild_config.log_channel = Default::default()
-    }
 
     // will be pulled out, when the other variant is deprecated fully
     let reply = match variant {
@@ -228,15 +232,10 @@ async fn handle_unset(
 }
 
 async fn handle_random(
-    guild_config: &mut GuildConfig,
+    guild_config: &GuildConfig,
     variant: ConfigRandomButton
 ) -> Result<(String, Option<Component>), HandleMessageComponentError> {
     use ConfigRandomButton as CRB;
-
-    match variant {
-        CRB::Enable => guild_config.random.enabled = Some(true),
-        CRB::Disable => guild_config.random.enabled = Some(false)
-    }
 
     let random_config = guild_config.random.complete();
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO takedown_counts (guild_id, caller_id, target_id, takedowns, counters) VALUES (?, ?, ?, ?, ?) ON CONFLICT (guild_id, caller_id, target_id) DO UPDATE SET takedowns = takedowns + excluded.takedowns, counters = counters + excluded.counters",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "d497763193c3183d4986a69d58a15503826b51d40cb3bc958bf29cf8ab43971c"
+}

@@ -205,6 +205,7 @@ use mention;
 
 #[derive(Debug, From)]
 pub enum HandleApplicationCommandError {
+    Database(sqlx::Error),
     TryFromInteraction(TryFromInteractionError),
 
     ConfigAction(ConfigActionError),

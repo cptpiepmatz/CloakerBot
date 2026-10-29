@@ -67,10 +67,7 @@ pub async fn action(
         None
     };
 
-    let mut guild_configs = STATE.guild_configs.write().await;
-    let guild_config = guild_configs.entry(guild_id).or_default();
-    guild_config.log_channel = channel;
-    drop(guild_configs);
+    STATE.database.update_config(guild_id, |config| config.log_channel = channel).await?;
 
     let content = match channel {
         Some(ch_id) => assets::replies::config::log_channel::set(

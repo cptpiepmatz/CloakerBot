@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT channel_id FROM danger_zones WHERE guild_id = ? ORDER BY channel_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "channel_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "danger_zones",
+            "name": "channel_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6eff32b8f763f596b19bae692d248457876e69637b9674586668338d945b4575"
+}

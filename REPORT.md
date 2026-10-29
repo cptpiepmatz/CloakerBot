@@ -7,6 +7,11 @@
 - The database will live at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a small connection pool. New Unix directories/files are private; Windows inherits the directory ACL. SQL statement logging is disabled for credential safety.
 - Offline query metadata will be checked in so normal builds do not need a schema database. The initial migration creates fresh databases automatically; it is a schema migration, not a legacy data migration.
 
+- Replaced all persistent state maps and the half-second JSON flush worker with a single database handle. Config reads are on demand; edits use short `BEGIN IMMEDIATE` transactions so concurrent component changes cannot overwrite one another. No transaction is held across Discord requests or playback.
+- Takedown/counter/parry writes use atomic SQL increments. Ranking calculations keep their existing tested Rust read model, loaded as an owned, consistent snapshot per request rather than a synchronized cache. Linked-role totals are calculated directly in SQL.
+- OAuth credential writes and owner-notification acknowledgements commit immediately. Existing per-user locks continue to serialize refresh/relink and announcement sends. Database errors propagate through the existing diagnostic boundaries; failure to record an already completed takedown is logged without misreporting the gameplay result.
+- Random schedules are claimed transactionally, including a config recheck; changing random settings invalidates the existing schedule in the same transaction. Guild deletion cascades through config, stats, schedules, and owner references while preserving linked accounts and owners still referenced by another guild.
+
 The following sections describe the earlier TODO/dependency work; their JSON-persistence details are superseded by this replacement.
 
 Resolved all 33 original TODO, FIXME, and FILLME markers, each in a separate initial commit on `vibin`. No new tests were added; the existing sound-duration assertion was made precise. Live Discord behavior still needs deployment verification.

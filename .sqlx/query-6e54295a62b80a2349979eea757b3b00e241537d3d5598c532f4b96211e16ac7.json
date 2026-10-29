@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE owner_notifications SET allow_dms = ?, latest_msg_index = ? WHERE user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6e54295a62b80a2349979eea757b3b00e241537d3d5598c532f4b96211e16ac7"
+}

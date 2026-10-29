@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO guild_owners (guild_id, user_id) VALUES (?, ?) ON CONFLICT (guild_id) DO UPDATE SET user_id = excluded.user_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "13f709ac09b47550be557920b0e314e894cffac67cb8398067c20188504d3be1"
+}

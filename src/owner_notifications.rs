@@ -6,7 +6,13 @@ use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
 use crate::util::ClientError;
 
-pub async fn on_message(message: &Message) -> Result<(), ClientError> {
+#[derive(Debug, derive_more::From)]
+pub enum OwnerNotificationError {
+    Client(ClientError),
+    Database(sqlx::Error)
+}
+
+pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError> {
     let Some(guild_id) = message.guild_id
     else {
         return Ok(());
@@ -23,9 +29,7 @@ pub async fn on_message(message: &Message) -> Result<(), ClientError> {
     }
 
     let _lock = STATE.owner_notification_locks.lock(owner_id).await;
-    let notified =
-        STATE.owner_notifications.read().await.acc_get(&owner_id).cloned().unwrap_or_default();
-    STATE.owner_notifications.write().await.insert(guild_id, owner_id, notified.clone());
+    let notified = STATE.database.owner_notification(guild_id, owner_id).await?;
     if notified.allow_dms == Some(false) || notified.latest_msg_index >= 1 {
         return Ok(());
     }
@@ -33,10 +37,13 @@ pub async fn on_message(message: &Message) -> Result<(), ClientError> {
     let content = crate::interaction::owner_update();
     match send_update(owner_id, &content).await {
         Ok(()) => {
-            STATE.owner_notifications.write().await.insert(guild_id, owner_id, OwnerNotified {
-                allow_dms: Some(true),
-                latest_msg_index: 1
-            });
+            STATE
+                .database
+                .save_owner_notification(owner_id, &OwnerNotified {
+                    allow_dms: Some(true),
+                    latest_msg_index: 1
+                })
+                .await?;
         }
         Err(ClientError::Http(error))
             if matches!(error.kind(), ErrorType::Response {
@@ -45,12 +52,14 @@ pub async fn on_message(message: &Message) -> Result<(), ClientError> {
             }) =>
         {
             STATE
-                .owner_notifications
-                .write()
-                .await
-                .insert(guild_id, owner_id, OwnerNotified { allow_dms: Some(false), ..notified });
+                .database
+                .save_owner_notification(owner_id, &OwnerNotified {
+                    allow_dms: Some(false),
+                    ..notified
+                })
+                .await?;
         }
-        Err(error) => return Err(error)
+        Err(error) => return Err(error.into())
     }
     Ok(())
 }

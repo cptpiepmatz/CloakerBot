@@ -26,11 +26,7 @@ use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 
-use crate::data::config::PersistentGuildConfig;
-use crate::data::owner_notifications::PersistentOwnerNotifications;
-use crate::data::random::PersistentTakedownSchedule;
-use crate::data::stats::PersistentAppStats;
-use crate::data::{PersistentData, handle_persist_data};
+use crate::data::Database;
 use crate::interaction::{HandleInteractionError, handle_interaction};
 use crate::sync::{KeyLock, VolatileMap};
 use crate::takedown::PlannedTakedown;
@@ -82,7 +78,6 @@ const REDIRECT_URI: &str = macros::env!(
 );
 
 const RANDOM_CHECK_EVERY: Duration = Duration::from_secs(15);
-const PERSIST_DATA_EVERY: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 struct State {
@@ -90,21 +85,17 @@ struct State {
     client: Client,
     http_client: reqwest::Client,
     ready: AtomicBool,
-    guild_configs: PersistentData<PersistentGuildConfig>,
-    stats: PersistentData<PersistentAppStats>,
+    database: Database,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
     /// Planned takedowns per guild.
     ///
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
-    random_takedown_schedule: PersistentData<PersistentTakedownSchedule>,
     cache: ObservableCache,
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
-    owner_notifications: PersistentData<PersistentOwnerNotifications>,
     owner_notification_locks: KeyLock<Id<UserMarker>>,
-    linked_roles: PersistentData<data::linked_roles::PersistentLinkedRoles>,
     linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
@@ -127,13 +118,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let shard = Eject::new(shard);
 
-    let guild_configs = PersistentData::load_blocking().unwrap().unwrap_or_default();
-    let guild_stats = PersistentData::load_blocking().unwrap().unwrap_or_default();
-    let random_takedown_schedule = PersistentData::load_blocking().unwrap().unwrap_or_default();
-
     let takedown_locks = Default::default();
     let planned_takedowns = Default::default();
-    let owner_notifications = PersistentData::load_blocking().unwrap().unwrap_or_default();
 
     let (cache, cache_rx) = ObservableCache::new();
     let cache_rx = Eject::new(cache_rx);
@@ -143,17 +129,13 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         client,
         http_client,
         ready,
-        guild_configs,
-        stats: guild_stats,
+        database: Database::new("data/cloaker.sqlite"),
         takedown_locks,
         planned_takedowns,
-        random_takedown_schedule,
         cache,
         cache_rx,
         songbird,
-        owner_notifications,
         owner_notification_locks: Default::default(),
-        linked_roles: PersistentData::load_blocking().unwrap().unwrap_or_default(),
         linked_role_locks: Default::default()
     }
 });
@@ -167,6 +149,7 @@ async fn main() -> miette::Result<()> {
         .map_err(|_| miette::miette!("could not select the TLS crypto provider"))?;
 
     let state = LazyLock::force(&STATE);
+    state.database.initialize().await?;
     let shard = state.shard.eject().expect("shard went missing");
     let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
 
@@ -186,13 +169,10 @@ async fn main() -> miette::Result<()> {
 
     let random_check_interval = IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
         .map(|_| BotEvent::RandomCheck);
-    let persist_data_interval = IntervalStream::new(tokio::time::interval(PERSIST_DATA_EVERY))
-        .map(|_| BotEvent::PersistData);
 
     let cache_updates = ReceiverStream::new(cache_rx).map(BotEvent::CacheUpdate);
 
     let events = select(discord_events, random_check_interval);
-    let events = select(events, persist_data_interval);
     let mut events = select(events, cache_updates);
 
     let event_handler = tokio::spawn(async {
@@ -214,7 +194,6 @@ async fn main() -> miette::Result<()> {
 enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
-    PersistData,
     CacheUpdate(CacheUpdateEvent)
 }
 
@@ -225,9 +204,6 @@ enum HandleEventError {
     Fatal,
     #[error("Discord event failed: {0:?}")]
     Discord(HandleDiscordEventError),
-    #[error("persisting bot data failed")]
-    #[diagnostic(help("check that the data directory is writable and storage is available"))]
-    Persist(#[source] io::Error),
     #[error("danger-zone check failed: {0:?}")]
     CheckDangerZones(CheckDangerZonesError),
     #[error("random-takedown check failed: {0:?}")]
@@ -262,7 +238,6 @@ async fn handle_event(event: BotEvent) {
                     Err(source) => HandleEventError::check_fatal(source)?
                 },
                 BotEvent::RandomCheck => handle_random_check().await?,
-                BotEvent::PersistData => handle_persist_data().await?,
                 BotEvent::CacheUpdate(update) => match update {
                     CacheUpdateEvent::VoiceChannelUpdate(update) => {
                         check_danger_zones(update).await?
@@ -282,8 +257,9 @@ async fn handle_event(event: BotEvent) {
 
 #[derive(Debug, From)]
 enum HandleDiscordEventError {
+    Database(sqlx::Error),
     Interaction(HandleInteractionError),
-    OwnerNotification(crate::util::ClientError)
+    OwnerNotification(owner_notifications::OwnerNotificationError)
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -294,10 +270,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         // clear persistent data from this guild
         DiscordEvent::GuildDelete(deleted) if deleted.unavailable != Some(true) => {
             let _lock = STATE.takedown_locks.lock(deleted.id).await;
-            STATE.guild_configs.write().await.remove(&deleted.id);
-            STATE.stats.write().await.takedowns.remove(&deleted.id);
-            STATE.random_takedown_schedule.write().await.remove(&deleted.id);
-            STATE.owner_notifications.write().await.remove_ref(&deleted.id);
+            STATE.database.remove_guild(deleted.id).await?;
         }
 
         // handle interactions

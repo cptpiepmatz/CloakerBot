@@ -89,6 +89,7 @@ bitflags::bitflags! {
 #[derive(Debug, Error)]
 #[error(transparent)]
 pub enum CreateRanksGraphicError {
+    Database(#[from] sqlx::Error),
     Http(#[from] TwilightHttpError),
     DeserializeBody(#[from] DeserializeBodyError),
     Reqwest(#[from] reqwest::Error),
@@ -102,7 +103,7 @@ pub async fn create_ranks_graphic(
 ) -> Result<Bytes, CreateRanksGraphicError> {
     let member_data = fetch_member_data(user_id, guild_id).await?;
     let stats = calculate_ranks(user_id, guild_id).await?;
-    let immunity = has_immunity(guild_id, &member_data.roles).await;
+    let immunity = has_immunity(guild_id, &member_data.roles).await?;
     let badges = determine_badges(&stats, &immunity);
 
     let mut canvas = RgbaImage::new(TEMPLATE.width(), TEMPLATE.height());
@@ -254,8 +255,8 @@ async fn fetch_member_data(
 async fn calculate_ranks(
     user_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>
-) -> Result<Stats, tokio::task::JoinError> {
-    let stats = STATE.stats.read().await;
+) -> Result<Stats, CreateRanksGraphicError> {
+    let stats = STATE.database.stats().await?;
 
     // Running these calculations can be CPU-intensive, which would bog down the
     // current worker thread. If the heavy work runs on this thread, other Tokio
@@ -324,6 +325,7 @@ async fn calculate_ranks(
         }
     })
     .await
+    .map_err(Into::into)
 }
 
 struct Immunity {
@@ -331,12 +333,11 @@ struct Immunity {
     random: bool
 }
 
-async fn has_immunity(guild_id: Id<GuildMarker>, user_roles: &[Id<RoleMarker>]) -> Immunity {
-    let guild_configs = STATE.guild_configs.read().await;
-    let Some(guild_config) = guild_configs.get(&guild_id)
-    else {
-        return Immunity { general: false, random: false };
-    };
+async fn has_immunity(
+    guild_id: Id<GuildMarker>,
+    user_roles: &[Id<RoleMarker>]
+) -> Result<Immunity, sqlx::Error> {
+    let guild_config = STATE.database.guild_config(guild_id).await?;
 
     let contains_any = |immunity_roles: &[Id<RoleMarker>]| {
         user_roles.into_iter().any(|user_role| immunity_roles.contains(user_role))
@@ -348,10 +349,10 @@ async fn has_immunity(guild_id: Id<GuildMarker>, user_roles: &[Id<RoleMarker>]) 
     let random_immunity = contains_any(&immunity.random);
     let random_silent_immunity = contains_any(&immunity.random_silent);
 
-    Immunity {
+    Ok(Immunity {
         general: general_immunity || general_silent_immunity,
         random: random_immunity || random_silent_immunity
-    }
+    })
 }
 
 fn determine_badges(stats: &Stats, immunity: &Immunity) -> Badges {

@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT allow_dms, latest_msg_index FROM owner_notifications WHERE user_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "allow_dms",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "owner_notifications",
+            "name": "allow_dms"
+          }
+        }
+      },
+      {
+        "name": "latest_msg_index",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "owner_notifications",
+            "name": "latest_msg_index"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "40dcfb727b9356d2f3ff05a169b80b81cbcdd58d595e8a3c989fbfcc6dbf9b87"
+}

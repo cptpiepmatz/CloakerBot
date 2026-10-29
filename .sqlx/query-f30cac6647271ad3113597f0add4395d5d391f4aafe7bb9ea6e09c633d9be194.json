@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO immunity_roles (guild_id, kind, role_id) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "f30cac6647271ad3113597f0add4395d5d391f4aafe7bb9ea6e09c633d9be194"
+}

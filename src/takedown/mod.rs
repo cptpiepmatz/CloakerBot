@@ -36,6 +36,7 @@ pub struct TakedownSuccess;
 
 #[derive(Debug, From)]
 pub enum TakedownFail {
+    Database(sqlx::Error),
     /// The takedown was countered.
     ///
     /// `by_id` refers to the user who countered the bot.
@@ -105,9 +106,7 @@ pub async fn takedown(
     if STATE.cache.guild(guild_id).is_none() {
         return Err(TakedownFail::NotFound);
     }
-    let guild_configs = STATE.guild_configs.read().await;
-    let config = guild_configs.get(&guild_id).cloned().unwrap_or_default();
-    drop(guild_configs);
+    let config = STATE.database.guild_config(guild_id).await?;
     let result = execute_takedown(target_id, guild_id, kind, &config).await;
     record_outcome(target_id, guild_id, kind, &result).await;
     result
@@ -125,34 +124,27 @@ async fn record_outcome(
     kind: TakedownType,
     result: &TakedownResult
 ) {
-    match result {
+    use crate::data::stats::StatEvent;
+    let event = match result {
         Ok(_) => {
             let caller_id = match kind {
                 TakedownType::Called { caller_id } => caller_id,
                 TakedownType::Random | TakedownType::DangerZone { .. } => BOT_USER_ID
             };
-            STATE
-                .stats
-                .write()
-                .await
-                .takedowns
-                .entry(guild_id)
-                .or_default()
-                .increment_takedown(caller_id, target_id);
+            Some(StatEvent::Takedown { caller_id, target_id })
         }
-        Err(TakedownFail::Countered { by_id, outcome }) => {
-            let mut stats = STATE.stats.write().await;
-            let stats = stats.takedowns.entry(guild_id).or_default();
-            match outcome {
-                CounterOutcome::Parried => {
-                    stats.increment_parry(*by_id);
-                }
-                CounterOutcome::Removed { user_id } => {
-                    stats.increment_counter(*by_id, *user_id);
-                }
+        Err(TakedownFail::Countered { by_id, outcome }) => match outcome {
+            CounterOutcome::Parried => Some(StatEvent::Parry { user_id: *by_id }),
+            CounterOutcome::Removed { user_id } => {
+                Some(StatEvent::Counter { caller_id: *by_id, target_id: *user_id })
             }
+        },
+        Err(_) => None
+    };
+    if let Some(event) = event {
+        if let Err(error) = STATE.database.record_stat(guild_id, event).await {
+            macros::error!("could not persist completed takedown in {guild_id}: {error:?}");
         }
-        Err(_) => {}
     }
     if let Err(error) = result {
         macros::info!("takedown in {guild_id} targeting {target_id} ({kind:?}): {error:?}");

@@ -86,11 +86,19 @@ struct UserMetadata {
     times_countered: String
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum UpdateMetadataError {
+    #[error(transparent)]
+    Database(#[from] sqlx::Error),
+    #[error(transparent)]
+    Http(#[from] twilight_http::Error)
+}
+
 pub async fn update_metadata(
     client: &Client,
     user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
-) -> Result<(), twilight_http::Error> {
-    let totals = STATE.stats.read().await.takedowns.user_totals(user_id);
+) -> Result<(), UpdateMetadataError> {
+    let totals = STATE.database.user_totals(user_id).await?;
     let connection = RoleConnection {
         platform_name: "CloakerBot",
         metadata: UserMetadata {
@@ -114,9 +122,9 @@ enum SyncError {
     #[error(transparent)]
     Refresh(#[from] super::oauth::RefreshError),
     #[error(transparent)]
-    Http(#[from] twilight_http::Error),
+    Metadata(#[from] UpdateMetadataError),
     #[error(transparent)]
-    Persist(#[from] std::io::Error)
+    Database(#[from] sqlx::Error)
 }
 
 async fn refresh_and_store(
@@ -125,14 +133,12 @@ async fn refresh_and_store(
 ) -> Result<crate::data::linked_roles::StoredTokens, SyncError> {
     let tokens = match super::oauth::refresh_tokens(&tokens.refresh_token).await {
         Err(super::oauth::RefreshError::Revoked) => {
-            STATE.linked_roles.write().await.remove(&user_id);
-            STATE.linked_roles.store().await?;
+            STATE.database.remove_credentials(user_id).await?;
             return Err(super::oauth::RefreshError::Revoked.into());
         }
         result => result?
     };
-    STATE.linked_roles.write().await.insert(user_id, tokens.clone());
-    STATE.linked_roles.store().await?;
+    STATE.database.save_credentials(user_id, &tokens).await?;
     Ok(tokens)
 }
 
@@ -140,7 +146,7 @@ async fn sync_user(
     user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
 ) -> Result<(), SyncError> {
     let _lock = STATE.linked_role_locks.lock(user_id).await;
-    let Some(mut tokens) = STATE.linked_roles.read().await.get(&user_id).cloned()
+    let Some(mut tokens) = STATE.database.credentials(user_id).await?
     else {
         return Ok(());
     };
@@ -149,7 +155,7 @@ async fn sync_user(
     }
     let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
     match update_metadata(&client, user_id).await {
-        Err(error) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) =>
+        Err(UpdateMetadataError::Http(error)) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) =>
         {
             tokens = refresh_and_store(user_id, &tokens).await?;
             let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
@@ -167,7 +173,13 @@ pub async fn maintain_connections() {
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
     loop {
         interval.tick().await;
-        let users: Vec<_> = STATE.linked_roles.read().await.keys().copied().collect();
+        let users = match STATE.database.linked_users().await {
+            Ok(users) => users,
+            Err(error) => {
+                macros::warn!("could not load linked accounts: {error:?}");
+                continue;
+            }
+        };
         for user_id in users {
             match sync_user(user_id).await {
                 Err(SyncError::Refresh(super::oauth::RefreshError::Revoked)) => {

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE guilds SET random_enabled = ?, random_min_hours = ?, random_max_hours = ? WHERE guild_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "be5334fd52a8c9d4314cbb6433539e712e8e820f14a078798f2432402c7de773"
+}

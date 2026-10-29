@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM immunity_roles WHERE guild_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "141aaf472deee0d5d63bc135a422c21e83bf688e05a34a600ba0235d22cc7232"
+}

@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT guild_id, random_enabled, random_min_hours, random_max_hours FROM guilds WHERE random_enabled = 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "guild_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "guilds",
+            "name": "guild_id"
+          }
+        }
+      },
+      {
+        "name": "random_enabled",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "guilds",
+            "name": "random_enabled"
+          }
+        }
+      },
+      {
+        "name": "random_min_hours",
+        "ordinal": 2,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "guilds",
+            "name": "random_min_hours"
+          }
+        }
+      },
+      {
+        "name": "random_max_hours",
+        "ordinal": 3,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "guilds",
+            "name": "random_max_hours"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c4fee0f03c3cd85f6825f33a85f48306d3a23bc161a61342242b9e28e8c423bf"
+}

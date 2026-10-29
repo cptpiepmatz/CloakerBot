@@ -1,11 +1,7 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker};
-
-use crate::data::{Persist, PersistentData};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct GuildConfig {
@@ -23,7 +19,7 @@ pub struct GuildConfigImmunity {
     pub random_silent: Vec<Id<RoleMarker>>
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
 pub struct GuildConfigRandom {
     pub enabled: Option<bool>,
     pub min: Option<f64>,
@@ -51,13 +47,6 @@ impl CompleteDefault for GuildConfigRandom {
             max: self.max.unwrap_or(default.max)
         }
     }
-}
-
-pub type PersistentGuildConfig = HashMap<Id<GuildMarker>, GuildConfig>;
-impl Persist for PersistentGuildConfig {
-    type Item = Self;
-
-    const DATA_PATH: &'static str = "./data/guild_configs.json";
 }
 
 /// A trait for converting an instance of a type with optional fields into a

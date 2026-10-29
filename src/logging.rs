@@ -48,19 +48,25 @@ async fn cache_bot_member(guild_id: Id<GuildMarker>) -> Result<(), ClientError> 
     Ok(())
 }
 
+#[derive(Debug, derive_more::From)]
+pub enum LogError {
+    Client(ClientError),
+    Http(twilight_http::Error),
+    Database(sqlx::Error)
+}
+
 pub async fn log_takedown(
     guild_id: Id<GuildMarker>,
     target_id: Id<twilight_model::id::marker::UserMarker>,
     kind: crate::takedown::TakedownType,
     result: &crate::takedown::TakedownResult
-) -> Result<(), ClientError> {
+) -> Result<(), LogError> {
     use crate::takedown::{CounterOutcome, TakedownFail, TakedownType};
 
     if matches!(result, Err(TakedownFail::Immune | TakedownFail::NotFound)) {
         return Ok(());
     }
-    let configured =
-        STATE.guild_configs.read().await.get(&guild_id).and_then(|config| config.log_channel);
+    let configured = STATE.database.guild_config(guild_id).await?.log_channel;
     let channel_id = match configured {
         Some(channel_id) => {
             cache_bot_member(guild_id).await?;
@@ -100,6 +106,7 @@ pub async fn log_takedown(
         Err(TakedownFail::Join(_)) => "Could not join voice".into(),
         Err(TakedownFail::Audio(_)) => "Audio playback failed".into(),
         Err(TakedownFail::Client(_)) => "Discord request failed".into(),
+        Err(TakedownFail::Database(_)) => "Could not load guild configuration".into(),
         Err(TakedownFail::Immune | TakedownFail::NotFound) => unreachable!()
     };
     let content = format!("## 📝 Takedown\n{source}\nTarget: {}\n{outcome}", target_id.mention());

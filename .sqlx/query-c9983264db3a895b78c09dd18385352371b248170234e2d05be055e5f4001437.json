@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM random_schedules WHERE guild_id = ? AND scheduled_at <= ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c9983264db3a895b78c09dd18385352371b248170234e2d05be055e5f4001437"
+}

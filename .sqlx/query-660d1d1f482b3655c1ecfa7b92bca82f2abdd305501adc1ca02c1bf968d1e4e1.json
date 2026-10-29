@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT access_token, refresh_token, expires_at FROM linked_accounts WHERE user_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "access_token",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "linked_accounts",
+            "name": "access_token"
+          }
+        }
+      },
+      {
+        "name": "refresh_token",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "linked_accounts",
+            "name": "refresh_token"
+          }
+        }
+      },
+      {
+        "name": "expires_at",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "linked_accounts",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "660d1d1f482b3655c1ecfa7b92bca82f2abdd305501adc1ca02c1bf968d1e4e1"
+}

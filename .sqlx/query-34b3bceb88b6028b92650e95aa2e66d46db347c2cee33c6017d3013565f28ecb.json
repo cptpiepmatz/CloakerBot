@@ -1,0 +1,35 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT (SELECT coalesce(sum(takedowns), 0) FROM takedown_counts WHERE caller_id = ?) AS \"initiated!: i64\", (SELECT coalesce(sum(takedowns + counters), 0) FROM takedown_counts WHERE target_id = ?) AS \"received!: i64\", ((SELECT coalesce(sum(counters), 0) FROM takedown_counts WHERE caller_id = ?) + (SELECT coalesce(sum(parries), 0) FROM parry_counts WHERE user_id = ?)) AS \"countered!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "initiated!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "received!: i64",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      },
+      {
+        "name": "countered!: i64",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "34b3bceb88b6028b92650e95aa2e66d46db347c2cee33c6017d3013565f28ecb"
+}

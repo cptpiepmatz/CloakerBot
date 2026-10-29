@@ -9,8 +9,6 @@ use serde::{Deserialize, Serialize};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, UserMarker};
 
-use crate::data::persist::Persist;
-
 /// Statistics of the app.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct AppStats {
@@ -341,7 +339,6 @@ impl AppTakedowns {
     }
 }
 
-pub type PersistentAppStats = AppStats;
 #[derive(Debug, Default, Clone, Copy)]
 pub struct UserTotals {
     pub initiated: u64,
@@ -349,10 +346,142 @@ pub struct UserTotals {
     pub countered: u64
 }
 
-impl Persist for PersistentAppStats {
-    type Item = Self;
+#[derive(Debug, Clone, Copy)]
+pub enum StatEvent {
+    Takedown { caller_id: Id<UserMarker>, target_id: Id<UserMarker> },
+    Counter { caller_id: Id<UserMarker>, target_id: Id<UserMarker> },
+    Parry { user_id: Id<UserMarker> }
+}
 
-    const DATA_PATH: &'static str = "./data/stats.json";
+impl super::Database {
+    pub async fn record_stat(
+        &self,
+        guild_id: Id<GuildMarker>,
+        event: StatEvent
+    ) -> Result<(), sqlx::Error> {
+        let guild = guild_id.to_string();
+        let mut transaction = self.pool.begin_with("BEGIN IMMEDIATE").await?;
+        sqlx::query!("INSERT OR IGNORE INTO guilds (guild_id) VALUES (?)", guild)
+            .execute(&mut *transaction)
+            .await?;
+        match event {
+            StatEvent::Parry { user_id } => {
+                let user = user_id.to_string();
+                sqlx::query!(
+                    "INSERT INTO parry_counts (guild_id, user_id, parries) VALUES (?, ?, 1) ON \
+                     CONFLICT (guild_id, user_id) DO UPDATE SET parries = parries + 1",
+                    guild,
+                    user
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+            StatEvent::Takedown { caller_id, target_id } |
+            StatEvent::Counter { caller_id, target_id } => {
+                let caller = caller_id.to_string();
+                let target = target_id.to_string();
+                let counters = i64::from(matches!(event, StatEvent::Counter { .. }));
+                let takedowns = 1 - counters;
+                sqlx::query!(
+                    "INSERT INTO takedown_counts (guild_id, caller_id, target_id, takedowns, \
+                     counters) VALUES (?, ?, ?, ?, ?) ON CONFLICT (guild_id, caller_id, \
+                     target_id) DO UPDATE SET takedowns = takedowns + excluded.takedowns, \
+                     counters = counters + excluded.counters",
+                    guild,
+                    caller,
+                    target,
+                    takedowns,
+                    counters
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+        }
+        transaction.commit().await?;
+        Ok(())
+    }
+
+    /// Loads a consistent, owned snapshot for the existing ranking
+    /// calculations.
+    pub async fn stats(&self) -> Result<AppStats, sqlx::Error> {
+        use super::database::{decode_error, discord_id};
+
+        let mut transaction = self.pool.begin().await?;
+        let mut stats = AppStats::default();
+        for row in sqlx::query!(
+            "SELECT guild_id, caller_id, target_id, takedowns, counters FROM takedown_counts"
+        )
+        .fetch_all(&mut *transaction)
+        .await?
+        {
+            let member = stats
+                .takedowns
+                .entry(discord_id(row.guild_id)?)
+                .or_default()
+                .0
+                .entry(discord_id(row.caller_id)?)
+                .or_default();
+            let target = discord_id(row.target_id)?;
+            member.takedowns.insert(
+                target,
+                row.takedowns.try_into().map_err(|_| decode_error("invalid takedown count"))?
+            );
+            member.counters.insert(
+                target,
+                row.counters.try_into().map_err(|_| decode_error("invalid counter count"))?
+            );
+        }
+        for row in sqlx::query!("SELECT guild_id, user_id, parries FROM parry_counts")
+            .fetch_all(&mut *transaction)
+            .await?
+        {
+            stats
+                .takedowns
+                .entry(discord_id(row.guild_id)?)
+                .or_default()
+                .0
+                .entry(discord_id(row.user_id)?)
+                .or_default()
+                .parries =
+                row.parries.try_into().map_err(|_| decode_error("invalid parry count"))?;
+        }
+        transaction.commit().await?;
+        Ok(stats)
+    }
+
+    pub async fn user_totals(&self, user_id: Id<UserMarker>) -> Result<UserTotals, sqlx::Error> {
+        use super::database::decode_error;
+
+        let user = user_id.to_string();
+        let row = sqlx::query!(
+            "SELECT (SELECT coalesce(sum(takedowns), 0) FROM takedown_counts WHERE caller_id = ?) \
+             AS \"initiated!: i64\", (SELECT coalesce(sum(takedowns + counters), 0) FROM \
+             takedown_counts WHERE target_id = ?) AS \"received!: i64\", ((SELECT \
+             coalesce(sum(counters), 0) FROM takedown_counts WHERE caller_id = ?) + (SELECT \
+             coalesce(sum(parries), 0) FROM parry_counts WHERE user_id = ?)) AS \"countered!: \
+             i64\"",
+            user,
+            user,
+            user,
+            user
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(UserTotals {
+            initiated: row
+                .initiated
+                .try_into()
+                .map_err(|_| decode_error("invalid initiated total"))?,
+            received: row
+                .received
+                .try_into()
+                .map_err(|_| decode_error("invalid received total"))?,
+            countered: row
+                .countered
+                .try_into()
+                .map_err(|_| decode_error("invalid counter total"))?
+        })
+    }
 }
 
 #[cfg(test)]

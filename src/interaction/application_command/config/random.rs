@@ -91,32 +91,20 @@ pub async fn action(
     use ConfigRandomButton as CRB;
 
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
-    let mut guild_configs = STATE.guild_configs.write().await;
-    let guild_config = guild_configs.entry(guild_id).or_default();
-    let random_config = &guild_config.random;
-
-    let (enabled, mut min, mut max) = match (min, max) {
-        (None, None) => (random_config.enabled, random_config.min, random_config.max),
-        (Some(max), None) => (Some(true), Some(max), random_config.min),
-        (None, Some(min)) => (Some(true), random_config.min, Some(min)),
-        (Some(max), Some(min)) => (Some(true), Some(max), Some(min))
-    };
-
-    if matches!(min, Some(m) if m < 0.0) {
-        min = None;
-    }
-
-    if matches!(max, Some(m) if m < 0.0) {
-        max = None;
-    }
-
-    guild_config.random = GuildConfigRandom { enabled, min, max };
-
-    {
-        // remove schedule entry so that the next check can update
-        let mut random_takedown_schedule = STATE.random_takedown_schedule.write().await;
-        random_takedown_schedule.remove(&guild_id);
-    }
+    let guild_config = STATE
+        .database
+        .update_config(guild_id, |config| {
+            if min.is_some() || max.is_some() {
+                config.random.enabled = Some(true);
+            }
+            if let Some(min) = min {
+                config.random.min = (min >= 0.0).then_some(min);
+            }
+            if let Some(max) = max {
+                config.random.max = (max >= 0.0).then_some(max);
+            }
+        })
+        .await?;
 
     let complete_random = guild_config.random.complete();
     let content = match guild_config.random.enabled {

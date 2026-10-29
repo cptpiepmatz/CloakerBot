@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM owner_notifications WHERE NOT EXISTS (SELECT 1 FROM guild_owners WHERE guild_owners.user_id = owner_notifications.user_id)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "29d7cb654d447fa073dc2d7d993a81415d6647335a2344c1d096a51f2c51e694"
+}

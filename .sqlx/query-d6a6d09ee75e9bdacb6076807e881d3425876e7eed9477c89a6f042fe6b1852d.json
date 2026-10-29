@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO parry_counts (guild_id, user_id, parries) VALUES (?, ?, 1) ON CONFLICT (guild_id, user_id) DO UPDATE SET parries = parries + 1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d6a6d09ee75e9bdacb6076807e881d3425876e7eed9477c89a6f042fe6b1852d"
+}

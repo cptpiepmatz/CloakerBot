@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO linked_accounts (user_id, access_token, refresh_token, expires_at) VALUES (?, ?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET access_token = excluded.access_token, refresh_token = excluded.refresh_token, expires_at = excluded.expires_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "6d1955fb08fbc32b2e865123016726b2acfb02ce13120f3fb7ce4933370059c4"
+}

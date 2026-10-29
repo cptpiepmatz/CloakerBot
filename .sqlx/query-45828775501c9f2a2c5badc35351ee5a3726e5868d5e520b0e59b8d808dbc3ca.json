@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO danger_zones (guild_id, channel_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "45828775501c9f2a2c5badc35351ee5a3726e5868d5e520b0e59b8d808dbc3ca"
+}

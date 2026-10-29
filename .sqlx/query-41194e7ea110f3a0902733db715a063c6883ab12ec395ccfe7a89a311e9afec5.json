@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT kind, role_id FROM immunity_roles WHERE guild_id = ? ORDER BY kind, role_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "kind",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "immunity_roles",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "name": "role_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "immunity_roles",
+            "name": "role_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "41194e7ea110f3a0902733db715a063c6883ab12ec395ccfe7a89a311e9afec5"
+}

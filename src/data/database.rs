@@ -33,7 +33,11 @@ impl Database {
             directory.recursive(true);
             #[cfg(unix)]
             directory.mode(0o700);
-            directory.create(parent).await.into_diagnostic().wrap_err("creating the database directory")?;
+            directory
+                .create(parent)
+                .await
+                .into_diagnostic()
+                .wrap_err("creating the database directory")?;
         }
         let mut file = tokio::fs::OpenOptions::new();
         file.write(true).create_new(true);
@@ -41,10 +45,14 @@ impl Database {
         file.mode(0o600);
         match file.open(&self.path).await {
             Ok(file) => drop(file),
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {},
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
             Err(error) => return Err(error).into_diagnostic().wrap_err("creating the database")
         }
-        sqlx::migrate!().run(&self.pool).await.into_diagnostic().wrap_err("initializing the database schema")?;
+        sqlx::migrate!()
+            .run(&self.pool)
+            .await
+            .into_diagnostic()
+            .wrap_err("initializing the database schema")?;
         Ok(())
     }
 }

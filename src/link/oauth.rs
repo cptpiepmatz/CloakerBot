@@ -91,8 +91,7 @@ pub async fn callback(
 
     let tokens = tokens.into_stored().map_err(err500)?;
     let _lock = STATE.linked_role_locks.lock(me_user.id).await;
-    STATE.linked_roles.write().await.insert(me_user.id, tokens);
-    STATE.linked_roles.store().await.map_err(err500)?;
+    STATE.database.save_credentials(me_user.id, &tokens).await.map_err(err500)?;
     super::application_role_connection::update_metadata(&client, me_user.id)
         .await
         .map_err(err500)?;

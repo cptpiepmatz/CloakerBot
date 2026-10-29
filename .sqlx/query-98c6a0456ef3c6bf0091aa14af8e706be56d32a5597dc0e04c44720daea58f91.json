@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO random_schedules (guild_id, scheduled_at) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "98c6a0456ef3c6bf0091aa14af8e706be56d32a5597dc0e04c44720daea58f91"
+}

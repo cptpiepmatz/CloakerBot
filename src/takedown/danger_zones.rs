@@ -9,6 +9,7 @@ use crate::util::{ClientError, require};
 
 #[derive(Debug, From)]
 pub enum CheckDangerZonesError {
+    Database(sqlx::Error),
     Client(ClientError)
 }
 
@@ -17,16 +18,13 @@ pub async fn check_danger_zones(
 ) -> Result<(), CheckDangerZonesError> {
     let channel_id = require!(Some(update.new) => Ok(()));
 
-    let is_danger_zone = STATE
-        .guild_configs
-        .read()
-        .await
-        .get(&update.guild_id)
-        .is_some_and(|config| config.danger_zones.contains(&channel_id));
+    let is_danger_zone =
+        STATE.database.guild_config(update.guild_id).await?.danger_zones.contains(&channel_id);
     require!(is_danger_zone => Ok(()));
 
     match takedown(update.user_id, update.guild_id, TakedownType::DangerZone { channel_id }).await {
         Err(TakedownFail::Client(err)) => Err(err.into()),
+        Err(TakedownFail::Database(err)) => Err(err.into()),
         Err(_) | Ok(_) => Ok(())
     }
 }

@@ -16,6 +16,7 @@ pub mod role_select;
 
 #[derive(Debug, From)]
 pub enum HandleMessageComponentError {
+    Database(sqlx::Error),
     NoMessageComponent,
     UnknownCustomId(String),
 

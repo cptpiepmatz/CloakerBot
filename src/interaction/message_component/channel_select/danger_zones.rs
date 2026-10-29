@@ -60,9 +60,7 @@ pub async fn action(
     let channels =
         channels.map_err(|_| DangerZonesSelectActionError::InvalidValues(data.values.clone()))?;
 
-    let mut guild_configs = STATE.guild_configs.write().await;
-    let guild_config = guild_configs.entry(guild_id).or_default();
-    guild_config.danger_zones = channels.clone();
+    STATE.database.update_config(guild_id, |config| config.danger_zones = channels.clone()).await?;
 
     let content = match channels.is_empty() {
         true => {
