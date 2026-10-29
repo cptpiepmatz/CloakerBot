@@ -1,37 +1,54 @@
 use derive_more::From;
-use serde_json::{Value, json};
+use serde::Serialize;
 use twilight_http::Client;
 use twilight_http::request::{Method, RequestBuilder};
 use twilight_http::routing::Path;
 
 use crate::{APPLICATION_ID, STATE};
 
-// TODO: replace this when application role connection support lands
+#[derive(Serialize)]
+#[repr(u8)]
+enum MetadataKind {
+    IntegerGreaterThanOrEqual = 2
+}
+
+#[derive(Serialize)]
+struct MetadataRecord {
+    #[serde(rename = "type", serialize_with = "serialize_kind")]
+    kind: MetadataKind,
+    key: &'static str,
+    name: &'static str,
+    description: &'static str
+}
+
+fn serialize_kind<S: serde::Serializer>(kind: &MetadataKind, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_u8(match kind { MetadataKind::IntegerGreaterThanOrEqual => 2 })
+}
 
 /// Construct the Application Role Connection Metadata Object list.
 ///
 /// This is sent to discord to define what metadata we provide.
-fn metadata() -> Value {
-    json!([
-        {
-            "type": 2, // INTEGER_GREATER_THAN_OR_EQUAL,
-            "key": "times_smacked",
-            "name": "Time Smacked",
-            "description": "Number of successful takedowns initiated."
+fn metadata() -> [MetadataRecord; 3] {
+    [
+        MetadataRecord {
+            kind: MetadataKind::IntegerGreaterThanOrEqual,
+            key: "times_smacked",
+            name: "Times Smacked",
+            description: "Number of successful takedowns initiated globally."
         },
-        {
-            "type": 2,
-            "key": "times_called",
-            "name": "Times Called",
-            "description": "Number of times the user was taken down."
+        MetadataRecord {
+            kind: MetadataKind::IntegerGreaterThanOrEqual,
+            key: "times_called",
+            name: "Times Called",
+            description: "Number of times the user was taken down globally."
         },
-        {
-            "type": 2,
-            "key": "times_countered",
-            "name": "Times Countered",
-            "description": "Number of successful counters and parries."
+        MetadataRecord {
+            kind: MetadataKind::IntegerGreaterThanOrEqual,
+            key: "times_countered",
+            name: "Times Countered",
+            description: "Number of successful counters and parries globally."
         }
-    ])
+    ]
 }
 
 #[derive(Debug, From)]
@@ -48,7 +65,7 @@ pub async fn register_metadata() -> Result<(), RegisterMetadataRecordsError> {
     .json(&metadata())
     .build()?;
 
-    STATE.client.request::<Value>(request).await?;
+    STATE.client.request::<serde_json::Value>(request).await?;
 
     Ok(())
 }
