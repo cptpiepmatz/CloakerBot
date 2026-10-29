@@ -72,8 +72,7 @@ pub async fn action(
     let content = match takedown::counter::counter(guild_id, author_id) {
         Ok(target_id) => replies::counter::success(
             target_id.mention(),
-            // FILLME: add quote here
-            "[insert quote here]"
+            crate::assets::QUOTES.counter.success
         ),
         Err(()) => replies::counter::miss(
             // FILLME: add another quote here
