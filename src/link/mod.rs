@@ -10,15 +10,15 @@ use crate::{COOKIE_SECRET, OAUTH_PORT};
 pub mod application_role_connection;
 pub mod oauth;
 
-pub async fn serve() {
+pub async fn serve() -> std::io::Result<()> {
     let router = Router::new()
         .route("/", get(async || "👋"))
         .route(oauth::LINKED_ROLE_PATH, get(oauth::linked_role))
         .route(oauth::CALLBACK_PATH, get(oauth::callback))
         .with_state(Key::from(COOKIE_SECRET.as_bytes()));
 
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", OAUTH_PORT)).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", OAUTH_PORT)).await?;
 
     macros::info!("HTTP server listening on port {}", OAUTH_PORT);
-    axum::serve(listener, router).await.unwrap();
+    axum::serve(listener, router).await
 }

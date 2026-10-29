@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+25. Error rendering: added miette diagnostics for event failures with persistence/reconnection advice and rendered reports instead of panicking spawned handlers. HTTP bind/serve and task-join errors propagate to the miette-returning entry point. Remote callback errors continue returning safe HTTP statuses rather than leaking reports to browsers.
+
 24. Owner notifications: on a human guild owner's message, sent the v3 announcement once per owner across guilds. Loaded notification history from disk, serialized concurrent sends per owner, respected previously blocked DMs, and remembered Discord's 50007 refusal rather than retrying on every message. Long announcements are split safely below Discord's UTF-16 message limit; transient failures remain retryable. No message-content intent is required.
 
 23. Deleted guild cleanup: removed configuration, stats, random schedule, and owner-notification references only on actual removal, never temporary unavailability. Shared owner records survive while another guild refers to them. Cleanup shares the takedown lock through outcome recording, and queued takedowns reject guilds absent from cache to avoid recreating deleted stats.

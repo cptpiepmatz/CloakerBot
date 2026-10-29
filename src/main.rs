@@ -8,6 +8,8 @@ use std::time::Duration;
 use std::{io, iter};
 
 use derive_more::From;
+use miette::{Diagnostic, IntoDiagnostic};
+use thiserror::Error;
 use futures::stream::{self, StreamExt, select};
 use interaction::COMMANDS_REGISTER;
 use songbird::Songbird;
@@ -55,8 +57,6 @@ compile_error!("the feature `dev` and `prod` are mutually exclusive");
 compile_error!("one of the features `dev` or `prod` are required");
 
 // TODO: implement linked roles
-
-// TODO: use miette to render nice errors
 
 #[rustfmt::skip]
 const CLIENT_ID: u64 = macros::env!(
@@ -157,7 +157,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 });
 
 #[tokio::main]
-async fn main() {
+async fn main() -> miette::Result<()> {
     // console_subscriber::init();
 
     let state = LazyLock::force(&STATE);
@@ -195,7 +195,9 @@ async fn main() {
         }
     });
 
-    tokio::try_join!(http_server, event_handler).unwrap();
+    let (server_result, ()) = tokio::try_join!(http_server, event_handler).into_diagnostic()?;
+    server_result.into_diagnostic()?;
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -206,12 +208,19 @@ enum BotEvent {
     CacheUpdate(CacheUpdateEvent)
 }
 
-#[derive(Debug, From)]
+#[derive(Debug, Error, Diagnostic, From)]
 enum HandleEventError {
+    #[error("gateway requires reconnection")]
+    #[diagnostic(help("check the Discord connection and restart the bot if it cannot reconnect"))]
     Fatal,
+    #[error("Discord event failed: {0:?}")]
     Discord(HandleDiscordEventError),
-    Persist(io::Error),
+    #[error("persisting bot data failed")]
+    #[diagnostic(help("check that the data directory is writable and storage is available"))]
+    Persist(#[source] io::Error),
+    #[error("danger-zone check failed: {0:?}")]
     CheckDangerZones(CheckDangerZonesError),
+    #[error("random-takedown check failed: {0:?}")]
     RandomCheck(CheckRandomError)
 }
 
@@ -255,7 +264,10 @@ async fn handle_event(event: BotEvent) {
         Ok(())
     }
 
-    run(event).await.unwrap();
+    if let Err(error) = run(event).await {
+        let report = miette::Report::new(error);
+        macros::error!("{report:?}");
+    }
 }
 
 #[derive(Debug, From)]
