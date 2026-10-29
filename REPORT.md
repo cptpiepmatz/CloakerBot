@@ -12,6 +12,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Integration review
 
+- Made persistence write/sync a private temporary file before atomically replacing the destination, preserving the last complete JSON file on a failed write. This is particularly important for rotated OAuth refresh tokens. New Unix files use mode 0600; Windows inherits the data directory's ACL.
+
 - Supervised HTTP, gateway/event, and linked-role tasks with `select!`, so a bind failure or stopped worker is reported immediately instead of waiting forever for the other workers.
 
 - Consumed and validated the callback nonce before token exchange or any account/DM side effects, so invalid state cannot perform work before being rejected.

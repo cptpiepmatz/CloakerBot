@@ -26,11 +26,12 @@ mod persist {
     // but still unavailable from outside this module
 
     use std::path::Path;
-    use std::{fs, io};
+    use std::io;
 
     use async_trait::async_trait;
     use serde::de::DeserializeOwned;
     use serde::ser::Serialize;
+    use tokio::io::AsyncWriteExt;
     #[cfg(not(debug_assertions))]
     use serde_json::to_string as json_to_string;
     #[cfg(debug_assertions)]
@@ -56,12 +57,19 @@ mod persist {
         async fn store(&self) -> io::Result<()> {
             let data_path = Path::new(Self::DATA_PATH);
             if let Some(parent_path) = data_path.parent() {
-                fs::create_dir_all(parent_path)?;
+                tokio::fs::create_dir_all(parent_path).await?;
             }
-            fs::write(
-                Self::DATA_PATH,
-                json_to_string(self).expect("data should always be serializable")
-            )
+            let content = json_to_string(self).map_err(io::Error::other)?;
+            let temporary_path = data_path.with_extension("json.tmp");
+            let mut options = tokio::fs::OpenOptions::new();
+            options.create(true).truncate(true).write(true);
+            #[cfg(unix)]
+            options.mode(0o600);
+            let mut file = options.open(&temporary_path).await?;
+            file.write_all(content.as_bytes()).await?;
+            file.sync_all().await?;
+            drop(file);
+            tokio::fs::rename(temporary_path, data_path).await
         }
     }
 }
