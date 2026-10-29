@@ -65,6 +65,15 @@ pub enum TakedownFail {
 }
 
 const MISSING_PERMS_ERROR_CODE: u64 = 50013;
+const MISSING_ACCESS_ERROR_CODE: u64 = 50001;
+
+fn missing_permissions(error: &twilight_http::Error) -> bool {
+    matches!(error.kind(), ErrorType::Response {
+        error: ApiError::General(GeneralApiError {
+            code: MISSING_PERMS_ERROR_CODE | MISSING_ACCESS_ERROR_CODE, ..
+        }), ..
+    })
+}
 
 /// Takedown plan.
 ///
@@ -244,11 +253,7 @@ async fn takedown_in_voice(
         if let Err(err) =
             STATE.client.update_guild_member(guild_id, caller_id).channel_id(None).await
         {
-            // TODO: check if this code is the missing permissions code
-            if matches!(err.kind(), ErrorType::Response {
-                error: ApiError::General(GeneralApiError { code: MISSING_PERMS_ERROR_CODE, .. }),
-                ..
-            }) {
+            if missing_permissions(&err) {
                 fail_sound.play_and_wait(&mut call, None).await;
                 return fail;
             }
@@ -284,10 +289,7 @@ async fn takedown_in_voice(
     }
 
     if let Err(err) = STATE.client.update_guild_member(guild_id, target_id).channel_id(None).await {
-        if matches!(err.kind(), ErrorType::Response {
-            error: ApiError::General(GeneralApiError { code: MISSING_PERMS_ERROR_CODE, .. }),
-            ..
-        }) {
+        if missing_permissions(&err) {
             fail_sound.play_and_wait(&mut call, None).await;
             return Err(TakedownFail::MissingPermissions);
         }
