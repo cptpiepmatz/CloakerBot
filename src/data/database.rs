@@ -16,6 +16,7 @@ impl Database {
         let path = path.as_ref().to_owned();
         let options = SqliteConnectOptions::new()
             .filename(&path)
+            .create_if_missing(true)
             .foreign_keys(true)
             .journal_mode(SqliteJournalMode::Wal)
             .synchronous(SqliteSynchronous::Full)
@@ -29,24 +30,10 @@ impl Database {
         use miette::{Context, IntoDiagnostic};
 
         if let Some(parent) = self.path.parent().filter(|path| !path.as_os_str().is_empty()) {
-            let mut directory = tokio::fs::DirBuilder::new();
-            directory.recursive(true);
-            #[cfg(unix)]
-            directory.mode(0o700);
-            directory
-                .create(parent)
+            tokio::fs::create_dir_all(parent)
                 .await
                 .into_diagnostic()
                 .wrap_err("creating the database directory")?;
-        }
-        let mut file = tokio::fs::OpenOptions::new();
-        file.write(true).create_new(true);
-        #[cfg(unix)]
-        file.mode(0o600);
-        match file.open(&self.path).await {
-            Ok(file) => drop(file),
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(error) => return Err(error).into_diagnostic().wrap_err("creating the database")
         }
         sqlx::migrate!()
             .run(&self.pool)

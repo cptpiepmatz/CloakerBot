@@ -4,7 +4,7 @@
 
 - Starting fresh, as requested: no JSON importer, dual-write mode, or legacy-format compatibility.
 - Added SQLx 0.9 with only SQLite/Tokio, checked-query, embedded-migration, and time features. The initial schema is normalized and uses strict tables, foreign keys, nonnegative counters, bounded random intervals, and cascading guild cleanup.
-- The database lives at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a four-connection pool. New Unix directories/files use modes 0700/0600; Windows inherits the directory ACL. Existing directory/file permissions are not changed. SQL statement logging is disabled for credential safety.
+- The database lives at `data/cloaker.sqlite`, using WAL, FULL synchronous commits, a five-second busy timeout, and a four-connection pool. Directory/file creation uses normal filesystem defaults; SQLite creates the database itself, without platform-specific permission handling. SQL statement logging is disabled for credential safety.
 - Offline query metadata is checked into `.sqlx`, with offline mode enabled in `.cargo/config.toml`, so normal builds need no schema database or SQLx CLI. The initial migration creates fresh databases automatically before workers start; it is a schema migration, not a legacy data migration.
 
 - Replaced all persistent state maps and the half-second JSON flush worker with a single database handle. Config reads are on demand; edits use short `BEGIN IMMEDIATE` transactions so concurrent component changes cannot overwrite one another. No transaction is held across Discord requests or playback.
@@ -17,7 +17,7 @@
 ### Running and developing
 
 - Run normally; startup creates `data/cloaker.sqlite` and applies the embedded `migrations/`. Old JSON files are ignored, not imported or deleted. The entire `data/` directory remains ignored by Git.
-- Keep `data/` private: the database contains plaintext OAuth credentials, as can its `-wal`/`-shm` sidecars and backups. SQLite is not encryption. In containers, mount a persistent, access-controlled directory at `/cloaker-bot/data`.
+- The database and its sidecars/backups contain plaintext OAuth credentials; do not publish them. In containers, mount persistent storage at `/cloaker-bot/data`.
 - Use SQLite's backup API or stop the bot before copying a database. Do not copy only the main file while the bot is running in WAL mode. SQLite improves local durability but cannot atomically commit Discord token rotation or a voice removal together with a database write.
 - After editing queries or adding schema migrations, use a disposable schema database and regenerate offline metadata (PowerShell):
 
