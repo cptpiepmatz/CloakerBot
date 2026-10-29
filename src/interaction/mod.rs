@@ -19,6 +19,21 @@ mod message_component;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
+pub fn owner_update() -> std::borrow::Cow<'static, str> {
+    use std::ops::Deref;
+    use twilight_mention::Mention;
+    use application_command::{config, counter, help};
+
+    crate::assets::owner_notifications::msg01_v3_update(
+        crate::BOT_USER_ID.mention(),
+        config::danger_zones::MENTION.deref(),
+        config::immunity::MENTION.deref(),
+        config::log_channel::MENTION.deref(),
+        counter::MENTION.deref(),
+        help::MENTION.deref()
+    )
+}
+
 #[derive(Debug, From)]
 pub enum HandleInteractionError {
     MessageComponent(HandleMessageComponentError),

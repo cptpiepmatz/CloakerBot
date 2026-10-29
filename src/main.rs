@@ -105,6 +105,7 @@ struct State {
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
     owner_notifications: PersistentData<PersistentOwnerNotifications>
+    ,owner_notification_locks: KeyLock<Id<UserMarker>>
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -132,7 +133,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let takedown_locks = Default::default();
     let planned_takedowns = Default::default();
-    let owner_notifications = Default::default();
+    let owner_notifications = PersistentData::load_blocking().unwrap().unwrap_or_default();
 
     let (cache, cache_rx) = ObservableCache::new();
     let cache_rx = Eject::new(cache_rx);
@@ -150,7 +151,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache,
         cache_rx,
         songbird,
-        owner_notifications
+        owner_notifications,
+        owner_notification_locks: Default::default()
     }
 });
 
@@ -258,7 +260,8 @@ async fn handle_event(event: BotEvent) {
 
 #[derive(Debug, From)]
 enum HandleDiscordEventError {
-    Interaction(HandleInteractionError)
+    Interaction(HandleInteractionError),
+    OwnerNotification(crate::util::ClientError)
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -278,6 +281,8 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         DiscordEvent::InteractionCreate(interaction_create) => {
             handle_interaction(&interaction_create).await?
         }
+
+        DiscordEvent::MessageCreate(message) => owner_notifications::on_message(&message).await?,
 
         _ => ()
     }

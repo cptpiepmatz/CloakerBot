@@ -7,8 +7,8 @@ use crate::util::ref_access_map::RefAccessMap;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct OwnerNotified {
-    allow_dms: Option<bool>,
-    latest_msg_index: usize
+    pub allow_dms: Option<bool>,
+    pub latest_msg_index: usize
 }
 
 pub type PersistentOwnerNotifications =
