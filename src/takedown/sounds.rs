@@ -130,16 +130,15 @@ trait CalcDuration {
 
 impl CalcDuration for (wav::Header, wav::BitDepth) {
     fn calc_duration(&self) -> Duration {
-        let bytes_per_second = self.0.bytes_per_second;
-        let data_bytes: usize = match &self.1 {
-            BitDepth::Eight(samples) => samples.len() * mem::size_of::<u8>(),
-            BitDepth::Sixteen(samples) => samples.len() * mem::size_of::<i16>(),
-            BitDepth::TwentyFour(samples) => samples.len() * mem::size_of::<i32>(),
-            BitDepth::ThirtyTwoFloat(samples) => samples.len() * mem::size_of::<f32>(),
+        let samples = match &self.1 {
+            BitDepth::Eight(samples) => samples.len(),
+            BitDepth::Sixteen(samples) => samples.len(),
+            BitDepth::TwentyFour(samples) => samples.len(),
+            BitDepth::ThirtyTwoFloat(samples) => samples.len(),
             BitDepth::Empty => 0
         };
 
-        Duration::from_secs_f64(data_bytes as f64 / bytes_per_second as f64)
+        Duration::from_secs_f64(samples as f64 / f64::from(self.0.channel_count) / f64::from(self.0.sampling_rate))
     }
 }
 
@@ -154,7 +153,6 @@ mod tests {
     fn calc_duration_works() {
         let duration =
             wav::read(&mut Cursor::new(assets::sounds::WULULULULU)).unwrap().calc_duration();
-        // TODO: get a more precise time and check with that, use std::time::Duration
-        assert_eq!(duration.as_secs(), 5);
+        assert_eq!(duration, std::time::Duration::from_nanos(5_217_777_778));
     }
 }
