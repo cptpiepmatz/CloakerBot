@@ -106,6 +106,8 @@ struct State {
     songbird: Songbird,
     owner_notifications: PersistentData<PersistentOwnerNotifications>
     ,owner_notification_locks: KeyLock<Id<UserMarker>>
+    ,linked_roles: PersistentData<data::linked_roles::PersistentLinkedRoles>
+    ,linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -153,6 +155,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         songbird,
         owner_notifications,
         owner_notification_locks: Default::default()
+        ,linked_roles: PersistentData::load_blocking().unwrap().unwrap_or_default()
+        ,linked_role_locks: Default::default()
     }
 });
 

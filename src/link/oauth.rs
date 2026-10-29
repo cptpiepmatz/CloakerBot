@@ -16,6 +16,7 @@ use url::Url;
 
 use crate::util::map;
 use crate::{CLIENT_SECRET, LazyString, REDIRECT_URI, STATE};
+use crate::data::linked_roles::{SecretToken, StoredTokens};
 
 static CLIENT_ID: LazyString = LazyLock::new(|| crate::CLIENT_ID.to_string());
 
@@ -54,16 +55,20 @@ pub async fn callback(
 
     let tokens = oauth_tokens(&code).await.map_err(err500)?;
 
-    let client = TwilightClient::new(format!("{} {}", tokens.token_type, tokens.access_token));
+    let client = TwilightClient::new(format!("Bearer {}", tokens.access_token.expose()));
     let me_data =
         client.current_authorization().await.map_err(err500)?.model().await.map_err(err500)?;
-    // TODO: store tokens and stuff
     // TODO: update metadata
 
     let me_user = match me_data.user {
         None => return Err(StatusCode::FORBIDDEN),
         Some(user) => user
     };
+
+    let tokens = tokens.into_stored().map_err(err500)?;
+    let _lock = STATE.linked_role_locks.lock(me_user.id).await;
+    STATE.linked_roles.write().await.insert(me_user.id, tokens);
+    STATE.linked_roles.store().await.map_err(err500)?;
 
     let private_channel = STATE
         .client
@@ -105,12 +110,36 @@ fn oauth_url() -> (Url, Nonce) {
 }
 
 #[derive(Debug, Deserialize)]
+enum Bearer {
+    #[serde(rename = "Bearer", alias = "bearer")]
+    Bearer
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("Discord did not grant identify and role_connections.write")]
+pub struct MissingScopes;
+
+#[derive(Debug, Deserialize)]
 pub struct Tokens {
-    access_token: String,
-    token_type: String,
-    expires_in: u32,
-    refresh_token: String,
+    access_token: SecretToken,
+    token_type: Bearer,
+    expires_in: std::num::NonZeroU32,
+    refresh_token: SecretToken,
     scope: String
+}
+
+impl Tokens {
+    pub fn into_stored(self) -> Result<StoredTokens, MissingScopes> {
+        if !["identify", "role_connections.write"].iter()
+            .all(|required| self.scope.split_whitespace().any(|scope| scope == *required)) {
+            return Err(MissingScopes);
+        }
+        Ok(StoredTokens {
+            access_token: self.access_token,
+            refresh_token: self.refresh_token,
+            expires_at: chrono::Utc::now() + chrono::Duration::seconds(i64::from(self.expires_in.get()))
+        })
+    }
 }
 
 async fn oauth_tokens(code: &str) -> reqwest::Result<Tokens> {

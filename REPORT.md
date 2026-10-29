@@ -4,6 +4,8 @@ Each original TODO, FIXME, and FILLME is handled separately. No remote API tests
 
 ## Completed items
 
+28. OAuth token persistence: persisted user-keyed access/refresh tokens and expiry, loading them on startup and flushing before callback success. Token types accept only Bearer, lifetimes are nonzero, required scopes are checked, and secret-token debug output is redacted. The new `data/linked_roles.json` contains credentials: keep `data/` private with deployment filesystem permissions and never publish or back it up unprotected; no encryption key is embedded in the repository.
+
 27. Role-connection update implementation: completed the user-scoped PUT with a typed payload and Discord-required string metadata values. Computed global initiated/received/counter-plus-parry totals directly from stored guild stats, using 64-bit totals without sorting ranks or holding stats locks across HTTP.
 
 26. Role-connection API adapter: inspected the pinned Twilight 0.16 client/model APIs; native support is absent. Replaced untyped metadata JSON with a typed record and numeric metadata-kind serializer while retaining Twilight's authenticated, rate-limited raw request adapter and the existing routing patch. No speculative major dependency upgrade was introduced.
