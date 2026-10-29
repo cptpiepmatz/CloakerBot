@@ -41,6 +41,7 @@ mod assets;
 mod data;
 mod interaction;
 mod link;
+mod logging;
 mod owner_notifications;
 mod ranks;
 mod sync;

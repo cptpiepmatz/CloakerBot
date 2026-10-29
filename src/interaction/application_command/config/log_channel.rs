@@ -71,8 +71,7 @@ pub async fn action(
         .flags(MessageFlags::EPHEMERAL)
         .content(replies::config::log_channel::select(
             BOT_USER_ID.mention(),
-            // TODO: get fallback log channel here
-            "[insert channel here]"
+            crate::logging::fallback_description(guild_id).await
         ))
         .components([
             Component::ActionRow(ActionRow { components: vec![channel_select] }),

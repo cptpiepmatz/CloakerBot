@@ -60,7 +60,7 @@ strum = { version = "0.27", features = ["derive"] }
 thiserror = "2"
 
 # discord integration
-twilight-cache-inmemory = "0.16.0"
+twilight-cache-inmemory = { version = "0.16.0", features = ["permission-calculator"] }
 twilight-gateway = "0.16.0"
 twilight-http = "0.16.0"
 twilight-mention = "0.16.0"

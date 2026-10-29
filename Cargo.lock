@@ -5092,6 +5092,7 @@ dependencies = [
  "dashmap",
  "serde",
  "twilight-model",
+ "twilight-util",
 ]
 
 [[package]]
