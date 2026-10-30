@@ -1,6 +1,6 @@
 CREATE TABLE guilds (
-    guild_id TEXT PRIMARY KEY NOT NULL CHECK (guild_id <> ''),
-    log_channel_id TEXT,
+    guild_id TEXT PRIMARY KEY NOT NULL CHECK (guild_id != ''),
+    log_channel_id TEXT CHECK (log_channel_id != ''),
     random_enabled INTEGER CHECK (random_enabled IN (0, 1)),
     random_min_hours REAL CHECK (random_min_hours > 0 AND random_min_hours <= 8760),
     random_max_hours REAL CHECK (random_max_hours > 0 AND random_max_hours <= 8760),
@@ -9,21 +9,21 @@ CREATE TABLE guilds (
 
 CREATE TABLE danger_zones (
     guild_id TEXT NOT NULL REFERENCES guilds ON DELETE CASCADE,
-    channel_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL CHECK (channel_id != ''),
     PRIMARY KEY (guild_id, channel_id)
 ) STRICT;
 
 CREATE TABLE immunity_roles (
     guild_id TEXT NOT NULL REFERENCES guilds ON DELETE CASCADE,
     kind TEXT NOT NULL CHECK (kind IN ('general', 'random', 'general_silent', 'random_silent')),
-    role_id TEXT NOT NULL,
+    role_id TEXT NOT NULL CHECK (role_id != ''),
     PRIMARY KEY (guild_id, kind, role_id)
 ) STRICT;
 
 CREATE TABLE takedown_counts (
     guild_id TEXT NOT NULL REFERENCES guilds ON DELETE CASCADE,
-    caller_id TEXT NOT NULL,
-    target_id TEXT NOT NULL,
+    caller_id TEXT NOT NULL CHECK (caller_id != ''),
+    target_id TEXT NOT NULL CHECK (target_id != ''),
     takedowns INTEGER NOT NULL DEFAULT 0 CHECK (takedowns >= 0),
     counters INTEGER NOT NULL DEFAULT 0 CHECK (counters >= 0),
     PRIMARY KEY (guild_id, caller_id, target_id)
@@ -34,7 +34,7 @@ CREATE INDEX takedown_callers ON takedown_counts (caller_id);
 
 CREATE TABLE parry_counts (
     guild_id TEXT NOT NULL REFERENCES guilds ON DELETE CASCADE,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL CHECK (user_id != ''),
     parries INTEGER NOT NULL CHECK (parries >= 0),
     PRIMARY KEY (guild_id, user_id)
 ) STRICT;
@@ -51,7 +51,7 @@ BEGIN
 END;
 
 CREATE TABLE owner_notifications (
-    user_id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT PRIMARY KEY NOT NULL CHECK (user_id != ''),
     allow_dms INTEGER CHECK (allow_dms IN (0, 1)),
     latest_msg_index INTEGER NOT NULL DEFAULT 0 CHECK (latest_msg_index >= 0)
 ) STRICT;
@@ -64,7 +64,7 @@ CREATE TABLE guild_owners (
 CREATE INDEX owner_guilds ON guild_owners (user_id);
 
 CREATE TABLE linked_accounts (
-    user_id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT PRIMARY KEY NOT NULL CHECK (user_id != ''),
     access_token TEXT NOT NULL CHECK (length(access_token) > 0),
     refresh_token TEXT NOT NULL CHECK (length(refresh_token) > 0),
     expires_at INTEGER NOT NULL
