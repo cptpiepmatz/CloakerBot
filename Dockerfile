@@ -46,11 +46,15 @@ COPY common ./common
 COPY macros ./macros
 COPY assets ./assets
 COPY src ./src
+ARG BOT_ENV=dev
 RUN <<EOF
+if $env.BOT_ENV not-in [prod dev] {
+    error make { msg: "BOT_ENV must be prod or dev" }
+}
 let target = open --raw /rust-target | str trim
-^cargo build --locked --target $target
+^cargo build --locked --release --no-default-features --features $env.BOT_ENV --target $target
 mkdir /out
-cp $"target/($target)/debug/CloakerBot" /out/CloakerBot
+cp $"target/($target)/release/CloakerBot" /out/CloakerBot
 EOF
 
 FROM debian:bookworm-slim AS run
