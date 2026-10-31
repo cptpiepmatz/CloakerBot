@@ -28,11 +28,9 @@ impl Error for PanicDiagnostic {
 pub fn init() {
     miette::set_panic_hook();
     let fallback = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |info| {
-        match info.payload().downcast_ref::<Report>() {
-            Some(report) => writeln!(std::io::stderr(), "{report:?}").unwrap_or_else(|_| ()),
-            None => fallback(info)
-        }
+    std::panic::set_hook(Box::new(move |info| match info.payload().downcast_ref::<Report>() {
+        Some(report) => writeln!(std::io::stderr(), "{report:?}").unwrap_or_else(|_| ()),
+        None => fallback(info)
     }));
 }
 

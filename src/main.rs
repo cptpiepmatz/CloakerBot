@@ -100,7 +100,7 @@ struct State {
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
     owner_notification_locks: KeyLock<Id<UserMarker>>,
-    linked_role_locks: KeyLock<Id<UserMarker>>,
+    linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -115,7 +115,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-        BOT_USER_ID,
+        BOT_USER_ID
     );
 
     let shard = Eject::new(shard);
@@ -143,7 +143,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache_rx,
         songbird,
         owner_notification_locks: Default::default(),
-        linked_role_locks: Default::default(),
+        linked_role_locks: Default::default()
     }
 });
 
@@ -164,7 +164,7 @@ async fn main() -> miette::Result<()> {
         return Err(miette::miette!("BACKUP_INTERVAL_SECONDS must be between 1 and 86400"));
     }
     let backups = tokio::spawn(state.database.maintain_backups(BACKUP_INTERVAL).instrument(
-        tracing::info_span!("database_backups", interval_seconds = BACKUP_INTERVAL.as_secs()),
+        tracing::info_span!("database_backups", interval_seconds = BACKUP_INTERVAL.as_secs())
     ));
 
     let shard = state.shard.eject().expect_report("shard went missing");
@@ -181,7 +181,7 @@ async fn main() -> miette::Result<()> {
     let http_server = tokio::spawn(link::serve().instrument(tracing::info_span!("http_server")));
     let linked_roles = tokio::spawn(
         link::application_role_connection::maintain_connections()
-            .instrument(tracing::info_span!("linked_role_maintenance")),
+            .instrument(tracing::info_span!("linked_role_maintenance"))
     );
 
     let discord_events = stream::unfold(shard, |mut shard| async {
@@ -198,13 +198,13 @@ async fn main() -> miette::Result<()> {
 
     let event_handler = tokio::spawn(async {
         futures::pin_mut!(events);
-        
+
         loop {
             match events.next().await {
                 None => return, // event stream ended
                 Some(BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => break,
                 Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
-                _ => continue,
+                _ => continue
             }
         }
 
@@ -220,7 +220,7 @@ async fn main() -> miette::Result<()> {
         roles = linked_roles => roles.into_diagnostic()?,
         backup = backups => backup.into_diagnostic()?
     }
-    
+
     Err(miette::miette!("a bot worker stopped unexpectedly"))
 }
 
@@ -228,7 +228,7 @@ async fn main() -> miette::Result<()> {
 enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
-    CacheUpdate(CacheUpdateEvent),
+    CacheUpdate(CacheUpdateEvent)
 }
 
 #[derive(Debug, Error, From)]
@@ -240,7 +240,7 @@ enum HandleEventError {
     #[error("danger-zone check failed: {0:?}")]
     CheckDangerZones(CheckDangerZonesError),
     #[error("random-takedown check failed: {0:?}")]
-    RandomCheck(CheckRandomError),
+    RandomCheck(CheckRandomError)
 }
 
 impl HandleEventError {
@@ -248,7 +248,7 @@ impl HandleEventError {
         type E = ReceiveMessageErrorType;
         match source.kind() {
             E::Reconnect => Err(HandleEventError::Fatal),
-            _ => Ok(()),
+            _ => Ok(())
         }
     }
 }
@@ -264,12 +264,12 @@ async fn handle_event(event: BotEvent) {
         match event {
             BotEvent::Discord(event) => match event {
                 Ok(event) => handle_discord_event(event).await?,
-                Err(source) => HandleEventError::check_fatal(source)?,
+                Err(source) => HandleEventError::check_fatal(source)?
             },
             BotEvent::RandomCheck => handle_random_check().await?,
             BotEvent::CacheUpdate(update) => match update {
-                CacheUpdateEvent::VoiceChannelUpdate(update) => check_danger_zones(update).await?,
-            },
+                CacheUpdateEvent::VoiceChannelUpdate(update) => check_danger_zones(update).await?
+            }
         }
 
         Ok(())
@@ -284,7 +284,7 @@ async fn handle_event(event: BotEvent) {
 enum HandleDiscordEventError {
     Database(sqlx::Error),
     Interaction(HandleInteractionError),
-    OwnerNotification(owner_notifications::OwnerNotificationError),
+    OwnerNotification(owner_notifications::OwnerNotificationError)
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -305,7 +305,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 
         DiscordEvent::MessageCreate(message) => owner_notifications::on_message(&message).await?,
 
-        _ => (),
+        _ => ()
     }
 
     Ok(())
