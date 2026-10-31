@@ -148,10 +148,25 @@ impl CalcDuration for (wav::Header, wav::BitDepth) {
 
 #[cfg(test)]
 mod tests {
+    use std::any::TypeId;
     use std::io::Cursor;
 
     use crate::assets;
     use crate::takedown::sounds::CalcDuration;
+
+    #[test]
+    fn songbird_uses_same_symphonia_core() {
+        assert_eq!(
+            TypeId::of::<symphonia::core::codecs::CodecRegistry>(),
+            TypeId::of::<songbird::input::core::codecs::CodecRegistry>(),
+            "Symphonia must match Songbird's version so audio features apply to its decoder"
+        );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn bundled_sounds_load() {
+        super::Sound::load_eagerly();
+    }
 
     #[test]
     fn calc_duration_works() {
