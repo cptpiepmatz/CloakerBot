@@ -81,8 +81,8 @@ const REDIRECT_URI: &str = macros::env!(
 );
 
 const RANDOM_CHECK_EVERY: Duration = Duration::from_secs(15);
-const DEFAULT_BACKUP_INTERVAL: Duration = Duration::from_secs(300);
-const BACKUP_INTERVAL_SECONDS_ENV: &str = "BACKUP_INTERVAL_SECONDS";
+const BACKUP_INTERVAL: Duration =
+    Duration::from_secs(macros::env!("BACKUP_INTERVAL_SECONDS", 300u64));
 
 #[derive(Debug)]
 struct State {
@@ -160,16 +160,11 @@ async fn main() -> miette::Result<()> {
     let state = LazyLock::force(&STATE);
 
     // prepare backups
-    let backup_interval = std::env::var(BACKUP_INTERVAL_SECONDS_ENV)
-        .map(|value| value.parse::<u64>())
-        .into_diagnostic()?
-        .map(Duration::from_secs)
-        .unwrap_or(DEFAULT_BACKUP_INTERVAL);
-    if !(Duration::from_secs(1)..=Duration::from_secs(86400)).contains(&backup_interval) {
-        return Err(miette::miette!("{BACKUP_INTERVAL_SECONDS_ENV} must be between 1 and 86400"));
+    if !(Duration::from_secs(1)..=Duration::from_secs(86400)).contains(&BACKUP_INTERVAL) {
+        return Err(miette::miette!("BACKUP_INTERVAL_SECONDS must be between 1 and 86400"));
     }
-    let backups = tokio::spawn(state.database.maintain_backups(backup_interval).instrument(
-        tracing::info_span!("database_backups", interval_seconds = backup_interval.as_secs()),
+    let backups = tokio::spawn(state.database.maintain_backups(BACKUP_INTERVAL).instrument(
+        tracing::info_span!("database_backups", interval_seconds = BACKUP_INTERVAL.as_secs()),
     ));
 
     let shard = state.shard.eject().expect_report("shard went missing");
