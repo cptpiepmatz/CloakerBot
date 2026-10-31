@@ -1,4 +1,0 @@
-[package]
-name = "cloaker-bot-common"
-version.workspace = true
-edition.workspace = true

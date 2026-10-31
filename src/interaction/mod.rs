@@ -42,10 +42,16 @@ pub enum HandleInteractionError {
     ApplicationCommandAutocomplete(HandleApplicationCommandAutocompleteError)
 }
 
+#[tracing::instrument(skip_all, fields(
+    interaction_id = %interaction_create.id,
+    guild_id = ?interaction_create.guild_id,
+    interaction_kind = ?interaction_create.kind
+), err(Debug))]
 pub async fn handle_interaction(
     interaction_create: &InteractionCreate
 ) -> Result<(), HandleInteractionError> {
     let interaction: &Interaction = interaction_create;
+    tracing::debug!("Handling interaction");
     match interaction.kind {
         InteractionType::MessageComponent => handle_message_component(interaction).await?,
 

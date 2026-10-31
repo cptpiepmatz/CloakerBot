@@ -14,7 +14,7 @@ prod = []
 dev = []
 
 [workspace]
-members = ["common", "macros"]
+members = ["macros"]
 package.version = "3.0.0"
 package.edition = "2024"
 
@@ -24,7 +24,6 @@ hound = "3.5"
 
 [dependencies]
 # custom libs
-common = { path = "./common", package = "cloaker-bot-common" }
 macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # data serialization
@@ -39,7 +38,6 @@ tokio = { version = "1", features = ["full", "tracing"] }
 tokio-stream = "0.1"
 futures = "0.3"
 async-trait = "0.1"
-console-subscriber = "0.5"
 
 # concurrency
 parking_lot = "0.13"
@@ -107,9 +105,12 @@ default-features = false
 features = ["json", "form", "rustls-no-provider"]
 
 # logging
-[dependencies.paris]
-version = "1"
-features = ["macros", "no_logger"]
+[dependencies.tracing]
+version = "0.1"
+
+[dependencies.tracing-subscriber]
+version = "0.3"
+features = ["chrono", "env-filter", "json"]
 
 [build-dependencies]
 hound.workspace = true

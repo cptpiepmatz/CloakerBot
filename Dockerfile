@@ -42,7 +42,6 @@ COPY build.rs ./
 COPY .cargo ./.cargo
 COPY .sqlx ./.sqlx
 COPY migrations ./migrations
-COPY common ./common
 COPY macros ./macros
 COPY assets ./assets
 COPY src ./src

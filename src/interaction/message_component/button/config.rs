@@ -223,7 +223,7 @@ async fn handle_unset(
         }
         CUB::LogChannel => config::log_channel::unset(
             BOT_USER_ID.mention(),
-            crate::logging::fallback_description(guild_id).await,
+            crate::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
     };

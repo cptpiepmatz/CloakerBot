@@ -142,6 +142,7 @@ async fn refresh_and_store(
     Ok(tokens)
 }
 
+#[tracing::instrument(skip_all, fields(%user_id))]
 async fn sync_user(
     user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
 ) -> Result<(), SyncError> {
@@ -176,16 +177,16 @@ pub async fn maintain_connections() {
         let users = match STATE.database.linked_users().await {
             Ok(users) => users,
             Err(error) => {
-                macros::warn!("could not load linked accounts: {error:?}");
+                tracing::warn!(?error, "Could not load linked accounts");
                 continue;
             }
         };
         for user_id in users {
             match sync_user(user_id).await {
                 Err(SyncError::Refresh(super::oauth::RefreshError::Revoked)) => {
-                    macros::info!("removed revoked linked-role connection for {user_id}");
+                    tracing::info!(%user_id, "Removed revoked linked-role connection");
                 }
-                Err(error) => macros::warn!("linked-role sync failed for {user_id}: {error:?}"),
+                Err(error) => tracing::warn!(%user_id, ?error, "Linked-role sync failed"),
                 Ok(()) => {}
             }
         }

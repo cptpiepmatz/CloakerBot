@@ -15,6 +15,7 @@ pub enum BackupError {
 impl Database {
     /// Publishes a complete standalone snapshot, leaving the previous one
     /// intact if generation or replacement fails.
+    #[tracing::instrument(skip_all)]
     pub async fn backup(&self) -> Result<(), BackupError> {
         let _lock = self.backup_lock.lock().await;
         let destination = self.backup_path();
@@ -34,6 +35,7 @@ impl Database {
         file.sync_all().await?;
         drop(file);
         tokio::fs::rename(&temporary, &destination).await?;
+        tracing::debug!(path = %destination.display(), "Database snapshot published");
         Ok(())
     }
 
@@ -43,7 +45,7 @@ impl Database {
         loop {
             interval.tick().await;
             if let Err(error) = self.backup().await {
-                macros::warn!("database snapshot failed; retaining the previous backup: {error}");
+                tracing::warn!(%error, "Database snapshot failed; retaining the previous backup");
             }
         }
     }

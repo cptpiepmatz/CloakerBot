@@ -19,6 +19,6 @@ pub async fn serve() -> std::io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", OAUTH_PORT)).await?;
 
-    macros::info!("HTTP server listening on port {}", OAUTH_PORT);
+    tracing::info!(port = OAUTH_PORT, "HTTP server listening");
     axum::serve(listener, router).await
 }

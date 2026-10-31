@@ -18,6 +18,8 @@
     "counterattacker",
     "counterer",
     "itertools",
+    "konst",
+    "miette",
     "parrier",
     "reqwest",
     "shouty",

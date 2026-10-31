@@ -10,7 +10,7 @@ use std::{io, iter};
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
 use interaction::COMMANDS_REGISTER;
-use miette::{Diagnostic, IntoDiagnostic};
+use miette::IntoDiagnostic;
 use songbird::Songbird;
 use songbird::shards::TwilightMap;
 use sync::Eject;
@@ -18,6 +18,7 @@ use takedown::sounds::Sound;
 use thiserror::Error;
 use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
+use tracing::Instrument;
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
 use twilight_gateway::{EventTypeFlags, Shard, StreamExt as TwilightStreamExt};
 use twilight_http::client::Client;
@@ -28,6 +29,7 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 
 use crate::data::Database;
 use crate::interaction::{HandleInteractionError, handle_interaction};
+use crate::panic::ExpectReport;
 use crate::sync::{KeyLock, VolatileMap};
 use crate::takedown::PlannedTakedown;
 use crate::takedown::danger_zones::{CheckDangerZonesError, check_danger_zones};
@@ -36,11 +38,13 @@ use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::trim::trim;
 
 mod assets;
+mod channel_logging;
 mod data;
 mod interaction;
 mod link;
 mod logging;
 mod owner_notifications;
+mod panic;
 mod ranks;
 mod sync;
 mod takedown;
@@ -126,8 +130,8 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let database = tokio::task::block_in_place(|| {
         tokio::runtime::Handle::current()
-            .block_on(Database::initialize("data/cloaker.sqlite"))
-            .expect("database initialization failed")
+            .block_on(Database::init("data/cloaker.sqlite"))
+            .expect_report("could not init database")
     });
 
     State {
@@ -148,7 +152,9 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
 #[tokio::main]
 async fn main() -> miette::Result<()> {
-    // console_subscriber::init();
+    panic::init();
+    logging::init().into_diagnostic()?;
+    tracing::info!("Starting CloakerBot");
 
     rustls::crypto::ring::default_provider()
         .install_default()
@@ -162,10 +168,14 @@ async fn main() -> miette::Result<()> {
     if !(1..=86400).contains(&backup_seconds) {
         return Err(miette::miette!("BACKUP_INTERVAL_SECONDS must be between 1 and 86400"));
     }
-    let backups =
-        tokio::spawn(state.database.maintain_backups(Duration::from_secs(backup_seconds)));
-    let shard = state.shard.eject().expect("shard went missing");
-    let cache_rx = state.cache_rx.eject().expect("cache_rx went missing");
+    let backups = tokio::spawn(
+        state
+            .database
+            .maintain_backups(Duration::from_secs(backup_seconds))
+            .instrument(tracing::info_span!("database_backups", interval_seconds = backup_seconds))
+    );
+    let shard = state.shard.eject().expect_report("shard went missing");
+    let cache_rx = state.cache_rx.eject().expect_report("cache_rx went missing");
 
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
@@ -174,8 +184,11 @@ async fn main() -> miette::Result<()> {
         .await
         .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;
 
-    let http_server = tokio::spawn(link::serve());
-    let linked_roles = tokio::spawn(link::application_role_connection::maintain_connections());
+    let http_server = tokio::spawn(link::serve().instrument(tracing::info_span!("http_server")));
+    let linked_roles = tokio::spawn(
+        link::application_role_connection::maintain_connections()
+            .instrument(tracing::info_span!("linked_role_maintenance"))
+    );
 
     let discord_events = stream::unfold(shard, |mut shard| async {
         shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
@@ -192,7 +205,7 @@ async fn main() -> miette::Result<()> {
     let event_handler = tokio::spawn(async {
         futures::pin_mut!(events);
         while let Some(event) = events.next().await {
-            tokio::spawn(handle_event(event));
+            tokio::spawn(handle_event(event).in_current_span());
         }
     });
 
@@ -212,10 +225,9 @@ enum BotEvent {
     CacheUpdate(CacheUpdateEvent)
 }
 
-#[derive(Debug, Error, Diagnostic, From)]
+#[derive(Debug, Error, From)]
 enum HandleEventError {
     #[error("gateway requires reconnection")]
-    #[diagnostic(help("check the Discord connection and restart the bot if it cannot reconnect"))]
     Fatal,
     #[error("Discord event failed: {0:?}")]
     Discord(HandleDiscordEventError),
@@ -235,6 +247,12 @@ impl HandleEventError {
     }
 }
 
+#[tracing::instrument(skip_all, fields(event_kind = match &event {
+    BotEvent::Discord(Ok(event)) => event.kind().name().unwrap_or("unknown"),
+    BotEvent::Discord(Err(_)) => "gateway_error",
+    BotEvent::RandomCheck => "random_check",
+    BotEvent::CacheUpdate(_) => "cache_update"
+}))]
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
         match (STATE.ready.load(Ordering::Acquire), event) {
@@ -242,7 +260,7 @@ async fn handle_event(event: BotEvent) {
             (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
                 STATE.ready.store(true, Ordering::Release);
-                macros::info!("Bot is ready");
+                tracing::info!("Bot is ready");
             }
             (false, _) => {}
 
@@ -265,8 +283,7 @@ async fn handle_event(event: BotEvent) {
     }
 
     if let Err(error) = run(event).await {
-        let report = miette::Report::new(error);
-        macros::error!("{report:?}");
+        tracing::error!(?error, "Event handling failed");
     }
 }
 
@@ -304,7 +321,10 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 type LazyString = LazyLock<String>;
 macro_rules! lazy_env {
     ($env:literal) => {
-        LazyLock::new(|| std::env::var($env).expect(concat!("missing env variable ", $env)))
+        LazyLock::new(|| {
+            use crate::panic::ExpectReport;
+            std::env::var($env).expect_report(concat!("could not read env variable ", $env))
+        })
     };
 }
 

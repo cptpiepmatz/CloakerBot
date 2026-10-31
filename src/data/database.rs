@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use sqlx::{ConnectOptions, SqlitePool};
+use thiserror::Error;
 use twilight_model::id::Id;
 
 #[derive(Debug)]
@@ -12,10 +13,16 @@ pub struct Database {
     pub(super) backup_lock: tokio::sync::Mutex<()>
 }
 
-impl Database {
-    pub async fn initialize(path: impl AsRef<Path>) -> miette::Result<Self> {
-        use miette::{Context, IntoDiagnostic};
+#[derive(Debug, Error)]
+pub enum InitDatabaseError {
+    #[error("creating the database directory")]
+    Directory(#[from] std::io::Error),
+    #[error("initializing the database schema")]
+    Schema(#[from] sqlx::migrate::MigrateError)
+}
 
+impl Database {
+    pub async fn init(path: impl AsRef<Path>) -> Result<Self, InitDatabaseError> {
         let path = path.as_ref().to_owned();
         let options = SqliteConnectOptions::new()
             .filename(&path)
@@ -27,16 +34,9 @@ impl Database {
             .disable_statement_logging();
         let pool = SqlitePoolOptions::new().max_connections(4).connect_lazy_with(options);
         if let Some(parent) = path.parent().filter(|path| !path.as_os_str().is_empty()) {
-            tokio::fs::create_dir_all(parent)
-                .await
-                .into_diagnostic()
-                .wrap_err("creating the database directory")?;
+            tokio::fs::create_dir_all(parent).await?;
         }
-        sqlx::migrate!()
-            .run(&pool)
-            .await
-            .into_diagnostic()
-            .wrap_err("initializing the database schema")?;
+        sqlx::migrate!().run(&pool).await?;
         Ok(Self { pool, path, backup_lock: Default::default() })
     }
 }

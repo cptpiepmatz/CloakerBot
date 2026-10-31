@@ -15,6 +15,7 @@ use twilight_model::id::marker::{GuildMarker, RoleMarker, UserMarker};
 
 use crate::STATE;
 use crate::assets::graphics::user_rank::{self, badges};
+use crate::panic::ExpectReport;
 use crate::util::iterator_ext::IteratorExt;
 use crate::util::require;
 
@@ -22,7 +23,7 @@ macro_rules! lazy_images {
     ($(static $name:ident = ($path:path) $(.resize($resize:ident))? .expect($expect:literal);)*) => {
         $(static $name: LazyLock<DynamicImage> = LazyLock::new(|| {
             let bytes: &[u8] = $path;
-            let img = image::load_from_memory(bytes).expect($expect);
+            let img = image::load_from_memory(bytes).expect_report($expect);
             $(let img = img.resize($resize, $resize, FilterType::Lanczos3);)?
             img
         });)*
@@ -97,6 +98,7 @@ pub enum CreateRanksGraphicError {
     Join(#[from] tokio::task::JoinError)
 }
 
+#[tracing::instrument(skip_all, fields(%user_id, %guild_id))]
 pub async fn create_ranks_graphic(
     user_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>
@@ -106,7 +108,11 @@ pub async fn create_ranks_graphic(
     let immunity = has_immunity(guild_id, &member_data.roles).await?;
     let badges = determine_badges(&stats, &immunity);
 
-    tokio::task::spawn_blocking(move || render_ranks_graphic(member_data, stats, badges)).await?
+    let span = tracing::Span::current();
+    tokio::task::spawn_blocking(move || {
+        span.in_scope(|| render_ranks_graphic(member_data, stats, badges))
+    })
+    .await?
 }
 
 fn render_ranks_graphic(
@@ -248,12 +254,15 @@ async fn fetch_member_data(
         }
     };
     let small_avatar = http_client.get(small_avatar).send().await?.bytes().await?;
+    let span = tracing::Span::current();
     let (big_avatar, small_avatar) = tokio::task::spawn_blocking(move || {
-        let big_avatar = image::load_from_memory(&big_avatar)?;
-        let big_avatar = big_avatar.resize(207, 207, FilterType::Lanczos3);
-        let small_avatar = image::load_from_memory(&small_avatar)?;
-        let small_avatar = small_avatar.resize(35, 35, FilterType::Lanczos3);
-        Ok::<_, ImageError>((big_avatar, small_avatar))
+        span.in_scope(|| {
+            let big_avatar = image::load_from_memory(&big_avatar)?;
+            let big_avatar = big_avatar.resize(207, 207, FilterType::Lanczos3);
+            let small_avatar = image::load_from_memory(&small_avatar)?;
+            let small_avatar = small_avatar.resize(35, 35, FilterType::Lanczos3);
+            Ok::<_, ImageError>((big_avatar, small_avatar))
+        })
     })
     .await??;
 
@@ -274,42 +283,20 @@ async fn calculate_ranks(
 
     // cpu-heavy rank calculations on a separate thread
     // keep the tokio worker free for other tasks
+    let span = tracing::Span::current();
     tokio::task::spawn_blocking(move || {
-        let is_user = |(_, (uid, _)): &(u32, (Id<UserMarker>, u32))| *uid == user_id;
-        type RankEntry = (u32, (Id<UserMarker>, u32));
-        let match_rank = |rank: (Option<RankEntry>, Option<RankEntry>)| match rank {
-            (None, None) => (1, 0),
-            (None, Some((last_rank, _))) => (last_rank + 1, 0),
-            (Some((rank, (_, count))), _) => (rank, count)
-        };
+        span.in_scope(|| {
+            let is_user = |(_, (uid, _)): &(u32, (Id<UserMarker>, u32))| *uid == user_id;
+            type RankEntry = (u32, (Id<UserMarker>, u32));
+            let match_rank = |rank: (Option<RankEntry>, Option<RankEntry>)| match rank {
+                (None, None) => (1, 0),
+                (None, Some((last_rank, _))) => (last_rank + 1, 0),
+                (Some((rank, (_, count))), _) => (rank, count)
+            };
 
-        let global = {
-            let takedowns = &stats.takedowns;
+            let global = {
+                let takedowns = &stats.takedowns;
 
-            let mut victim_ranks = takedowns.victim_ranks();
-            let victim_rank = victim_ranks.find_and_last(is_user);
-            let (victim_rank, times_smacked) = match_rank(victim_rank);
-
-            let mut punisher_ranks = takedowns.punisher_ranks();
-            let punisher_rank = punisher_ranks.find_and_last(is_user);
-            let (punisher_rank, times_called) = match_rank(punisher_rank);
-
-            let mut counter_ranks = takedowns.counter_ranks();
-            let counter_rank = counter_ranks.find_and_last(is_user);
-            let (counter_rank, times_countered) = match_rank(counter_rank);
-
-            let ranks = Ranks { victim_rank, punisher_rank, counter_rank };
-            let times = Times { times_smacked, times_called, times_countered };
-            (ranks, times)
-        };
-
-        let here = match stats.takedowns.get(&guild_id) {
-            None => {
-                let ranks = Ranks { victim_rank: 1, punisher_rank: 1, counter_rank: 1 };
-                let times = Times { times_smacked: 0, times_called: 0, times_countered: 0 };
-                (ranks, times)
-            }
-            Some(takedowns) => {
                 let mut victim_ranks = takedowns.victim_ranks();
                 let victim_rank = victim_ranks.find_and_last(is_user);
                 let (victim_rank, times_smacked) = match_rank(victim_rank);
@@ -325,15 +312,40 @@ async fn calculate_ranks(
                 let ranks = Ranks { victim_rank, punisher_rank, counter_rank };
                 let times = Times { times_smacked, times_called, times_countered };
                 (ranks, times)
-            }
-        };
+            };
 
-        Stats {
-            global_ranks: global.0,
-            here_ranks: here.0,
-            global_times: global.1,
-            here_times: here.1
-        }
+            let here = match stats.takedowns.get(&guild_id) {
+                None => {
+                    let ranks = Ranks { victim_rank: 1, punisher_rank: 1, counter_rank: 1 };
+                    let times = Times { times_smacked: 0, times_called: 0, times_countered: 0 };
+                    (ranks, times)
+                }
+                Some(takedowns) => {
+                    let mut victim_ranks = takedowns.victim_ranks();
+                    let victim_rank = victim_ranks.find_and_last(is_user);
+                    let (victim_rank, times_smacked) = match_rank(victim_rank);
+
+                    let mut punisher_ranks = takedowns.punisher_ranks();
+                    let punisher_rank = punisher_ranks.find_and_last(is_user);
+                    let (punisher_rank, times_called) = match_rank(punisher_rank);
+
+                    let mut counter_ranks = takedowns.counter_ranks();
+                    let counter_rank = counter_ranks.find_and_last(is_user);
+                    let (counter_rank, times_countered) = match_rank(counter_rank);
+
+                    let ranks = Ranks { victim_rank, punisher_rank, counter_rank };
+                    let times = Times { times_smacked, times_called, times_countered };
+                    (ranks, times)
+                }
+            };
+
+            Stats {
+                global_ranks: global.0,
+                here_ranks: here.0,
+                global_times: global.1,
+                here_times: here.1
+            }
+        })
     })
     .await
     .map_err(Into::into)

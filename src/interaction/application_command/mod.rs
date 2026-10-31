@@ -26,6 +26,7 @@ use crate::interaction::application_command::config::{ConfigActionError, ConfigC
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
+use crate::panic::ExpectReport;
 use crate::{APPLICATION_ID, STATE};
 
 pub(super) mod cloaker;
@@ -105,10 +106,13 @@ pub struct CommandsRegister {
     ranks: Id<CommandMarker>
 }
 
-#[derive(Debug, From)]
+#[derive(Debug, thiserror::Error)]
 pub enum RegisterCommandsError {
-    Http(TwilightHttpError),
-    DeserializeBody(DeserializeBodyError),
+    #[error("could not register commands with Discord")]
+    Http(#[from] TwilightHttpError),
+    #[error("could not decode registered commands")]
+    DeserializeBody(#[from] DeserializeBodyError),
+    #[error("Discord did not return all required command registrations: {0:?}")]
     MissingRegistries(Vec<Command>)
 }
 
@@ -136,7 +140,7 @@ pub static COMMANDS_REGISTER: LazyLock<CommandsRegister> = LazyLock::new(|| {
                         .await?
                 )
             })
-            .expect("registering commands did not work")
+            .expect_report("could not register commands")
     });
 
     let mut command_map = HashMap::new();
@@ -177,7 +181,10 @@ pub static COMMANDS_REGISTER: LazyLock<CommandsRegister> = LazyLock::new(|| {
     let (Some(config), Some(cloaker), Some(counter), Some(help), Some(ranks)) =
         (config, cloaker, counter, help, ranks)
     else {
-        panic!("{:#?}", RegisterCommandsError::MissingRegistries(commands));
+        return Result::<CommandsRegister, _>::Err(RegisterCommandsError::MissingRegistries(
+            commands
+        ))
+        .expect_report("could not init command registry");
     };
 
     CommandsRegister { config, cloaker, counter, help, ranks }

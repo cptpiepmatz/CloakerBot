@@ -774,10 +774,10 @@ where
 
         let score = (self.score_fn)(&next);
         match self.prev_score.cmp(&score) {
-            cmp::Ordering::Less => macros::warn!(
-                "received a higher score ({}) after a lower one ({}); input may not be sorted",
+            cmp::Ordering::Less => tracing::warn!(
                 score,
-                self.prev_score
+                previous_score = self.prev_score,
+                "Received a higher score after a lower one; input may not be sorted"
             ),
             cmp::Ordering::Greater => {
                 // strictly lower score → move to next rank

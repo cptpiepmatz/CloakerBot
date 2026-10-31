@@ -7,8 +7,6 @@ edition.workspace = true
 proc-macro = true
 
 [dependencies]
-common = { path = "../common", package = "cloaker-bot-common" }
-
 proc-macro2 = "1"
 quote = "1"
 syn = "3"

@@ -1,9 +1,7 @@
-use common::log::LogLevel;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
 mod env;
-mod log;
 mod template;
 
 fn defer(input: TokenStream, f: impl Fn(TokenStream2) -> syn::Result<TokenStream2>) -> TokenStream {
@@ -28,9 +26,4 @@ defer_macros! {
     template_md: template::md,
     template_toml: template::toml,
     env: env::env,
-    debug: log::logger("DEBUG", LogLevel::Debug, "cyan"),
-    log: log::logger("LOG", LogLevel::Info, "blue"),
-    info: log::logger("INFO", LogLevel::Info, "green"),
-    warn: log::logger("WARN", LogLevel::Warn, "yellow"),
-    error: log::logger("ERROR", LogLevel::Error, "red"),
 }

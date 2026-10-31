@@ -22,6 +22,7 @@ static PENDING_STATES: LazyLock<parking_lot::Mutex<HashMap<Nonce, std::time::Ins
 const STATE_LIFETIME: std::time::Duration = std::time::Duration::from_secs(300);
 
 pub const LINKED_ROLE_PATH: &str = "/linked-role";
+#[tracing::instrument(skip_all)]
 pub async fn linked_role(jar: SignedCookieJar) -> Result<(SignedCookieJar, Redirect), StatusCode> {
     let (oauth_url, state) = oauth_url();
     let max_age = cookie::time::Duration::minutes(5);
@@ -51,12 +52,13 @@ pub struct CallbackParams {
 }
 
 pub const CALLBACK_PATH: &str = "/callback";
+#[tracing::instrument(skip_all, fields(user_id))]
 pub async fn callback(
     Query(params): Query<CallbackParams>,
     jar: SignedCookieJar
 ) -> Result<(SignedCookieJar, Html<&'static str>), StatusCode> {
     fn err500(err: impl Error) -> StatusCode {
-        macros::error!("callback error: {err}");
+        tracing::error!(error = %err, "OAuth callback failed");
         StatusCode::INTERNAL_SERVER_ERROR
     }
 
@@ -65,7 +67,7 @@ pub async fn callback(
 
     let client_state = jar.get("state").map(|c| Nonce(c.value_trimmed().to_owned()));
     if Some(&discord_state) != client_state.as_ref() {
-        macros::warn!("state verification failed");
+        tracing::warn!("OAuth state verification failed");
         return Err(StatusCode::FORBIDDEN);
     }
 
@@ -74,6 +76,7 @@ pub async fn callback(
         .remove(&discord_state)
         .is_some_and(|created| created.elapsed() < STATE_LIFETIME)
     {
+        tracing::warn!("OAuth state expired or already consumed");
         return Err(StatusCode::FORBIDDEN);
     }
     let jar = jar.remove(Cookie::build("state").path(CALLBACK_PATH));
@@ -89,6 +92,7 @@ pub async fn callback(
         Some(user) => user
     };
 
+    tracing::Span::current().record("user_id", tracing::field::display(me_user.id));
     let tokens = tokens.into_stored().map_err(err500)?;
     let _lock = STATE.linked_role_locks.lock(me_user.id).await;
     STATE.database.save_credentials(me_user.id, &tokens).await.map_err(err500)?;
@@ -97,10 +101,15 @@ pub async fn callback(
         .map_err(err500)?;
 
     if let Err(error) = notify_connected(me_user.id).await {
-        macros::warn!("linked-role confirmation DM failed: {error:?}");
+        tracing::warn!(?error, "Linked-role confirmation DM failed");
     }
 
-    Ok((jar, Html("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>CloakerBot connected</title><h1>Account connected 🔗</h1><p>Your global takedown, victim, and counter stats are now available for Discord linked roles and will update automatically.</p><p>You can close this page or <a href=\"https://discord.com/channels/@me/\">return to Discord</a>.</p></html>")))
+    Ok((
+        jar,
+        Html(
+            "<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>CloakerBot connected</title><h1>Account connected 🔗</h1><p>Your global takedown, victim, and counter stats are now available for Discord linked roles and will update automatically.</p><p>You can close this page or <a href=\"https://discord.com/channels/@me/\">return to Discord</a>.</p></html>",
+        ),
+    ))
 }
 
 async fn notify_connected(

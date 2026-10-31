@@ -70,7 +70,7 @@ pub async fn action(
         .flags(MessageFlags::EPHEMERAL)
         .content(replies::config::log_channel::select(
             BOT_USER_ID.mention(),
-            crate::logging::fallback_description(guild_id).await
+            crate::channel_logging::fallback_description(guild_id).await
         ))
         .components([
             Component::ActionRow(ActionRow { id: None, components: vec![channel_select] }),

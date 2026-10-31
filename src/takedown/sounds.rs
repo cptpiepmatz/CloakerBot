@@ -7,7 +7,6 @@ use std::sync::LazyLock;
 use std::time::Duration;
 use std::{io, mem};
 
-use derive_more::From;
 use futures::future::try_join_all;
 use futures::stream::FuturesUnordered;
 use songbird::Call;
@@ -17,6 +16,7 @@ use tokio::sync::MutexGuard;
 use wav::BitDepth;
 
 use crate::assets;
+use crate::panic::ExpectReport;
 
 pub static WULULULULU: LazyLock<Sound> = lazy_sound!(WULULULULU);
 pub static FAILS: LazyLock<Vec<Sound>> = lazy_sound!(FAILS+);
@@ -91,16 +91,18 @@ impl Debug for Sound {
     }
 }
 
-#[derive(Debug, From)]
+#[derive(Debug, thiserror::Error)]
 pub enum SoundFromBytesError {
-    CodecCache(CodecCacheError),
-    Io(io::Error)
+    #[error("could not cache decoded sound")]
+    CodecCache(#[from] CodecCacheError),
+    #[error("could not read WAV sound")]
+    Io(#[from] io::Error)
 }
 
 macro_rules! lazy_sound {
     ($ident:ident) => {
         LazyLock::new(|| {
-            Sound::from_static_wav_bytes(assets::sounds::$ident).expect(concat!(
+            Sound::from_static_wav_bytes(assets::sounds::$ident).expect_report(concat!(
                 "could not load ",
                 stringify!($ident),
                 " sound"
@@ -115,7 +117,7 @@ macro_rules! lazy_sound {
                 .enumerate()
                 .map(|(i, bytes)| {
                     Sound::from_static_wav_bytes(bytes)
-                        .expect(&format!("could not load {}[{i}] sound", stringify!($ident)))
+                        .expect_report(format!("could not load {}[{i}] sound", stringify!($ident)))
                 })
                 .collect()
         })
