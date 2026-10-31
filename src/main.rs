@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use std::{io, iter};
@@ -90,7 +89,6 @@ struct State {
     shard: Eject<Shard>,
     client: Client,
     http_client: reqwest::Client,
-    ready: AtomicBool,
     database: Database,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
@@ -115,8 +113,6 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let http_client = reqwest::Client::new();
 
-    let ready = AtomicBool::new(false);
-
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
         BOT_USER_ID,
@@ -140,7 +136,6 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         shard,
         client,
         http_client,
-        ready,
         database,
         takedown_locks,
         planned_takedowns,
@@ -208,6 +203,17 @@ async fn main() -> miette::Result<()> {
 
     let event_handler = tokio::spawn(async {
         futures::pin_mut!(events);
+        
+        loop {
+            match events.next().await {
+                None => return, // event stream ended
+                Some(BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => break,
+                Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
+                _ => continue,
+            }
+        }
+
+        tracing::info!("Bot is ready");
         while let Some(event) = events.next().await {
             tokio::spawn(handle_event(event).in_current_span());
         }
@@ -219,6 +225,7 @@ async fn main() -> miette::Result<()> {
         roles = linked_roles => roles.into_diagnostic()?,
         backup = backups => backup.into_diagnostic()?
     }
+    
     Err(miette::miette!("a bot worker stopped unexpectedly"))
 }
 
@@ -259,27 +266,14 @@ impl HandleEventError {
 }))]
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
-        match (STATE.ready.load(Ordering::Acquire), event) {
-            // bot is not ready
-            (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
-            (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
-                STATE.ready.store(true, Ordering::Release);
-                tracing::info!("Bot is ready");
-            }
-            (false, _) => {}
-
-            // bot is ready
-            (true, event) => match event {
-                BotEvent::Discord(event) => match event {
-                    Ok(event) => handle_discord_event(event).await?,
-                    Err(source) => HandleEventError::check_fatal(source)?,
-                },
-                BotEvent::RandomCheck => handle_random_check().await?,
-                BotEvent::CacheUpdate(update) => match update {
-                    CacheUpdateEvent::VoiceChannelUpdate(update) => {
-                        check_danger_zones(update).await?
-                    }
-                },
+        match event {
+            BotEvent::Discord(event) => match event {
+                Ok(event) => handle_discord_event(event).await?,
+                Err(source) => HandleEventError::check_fatal(source)?,
+            },
+            BotEvent::RandomCheck => handle_random_check().await?,
+            BotEvent::CacheUpdate(update) => match update {
+                CacheUpdateEvent::VoiceChannelUpdate(update) => check_danger_zones(update).await?,
             },
         }
 
