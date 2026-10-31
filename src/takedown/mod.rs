@@ -189,8 +189,8 @@ async fn execute_takedown(
     )
     .await;
 
-    // leave the channel after everything that happened, we cannot do a thing if
-    // it fails to leave
+    // leave the channel after everything that happened
+    // nothing we can do if leaving fails
     let _ = call.leave().await;
     takedown_res
 }
@@ -307,7 +307,7 @@ async fn takedown_in_voice(
         return Err(TakedownFail::Fled);
     }
 
-    // no counter, continue with takedown
+    // no counter so continue with takedown
     let has_immune_role = target_roles.iter().any(|role| config.immunity.general.contains(role));
     if has_immune_role {
         fail_sound.play_and_wait(&mut call, None).await;

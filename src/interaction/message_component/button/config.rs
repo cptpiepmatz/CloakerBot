@@ -206,7 +206,7 @@ async fn handle_unset(
 ) -> Result<(String, Option<Component>), HandleMessageComponentError> {
     use ConfigUnsetButton as CUB;
 
-    // will be pulled out, when the other variant is deprecated fully
+    // pull out when the other variant is fully deprecated
     let reply = match variant {
         CUB::DangerZones => config::danger_zones::unset(QUOTES.config.danger_zones.no_channels),
         CUB::ImmunityGeneral => {

@@ -233,7 +233,7 @@ impl HandleEventError {
 async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
         match (STATE.ready.load(Ordering::Acquire), event) {
-            // Bot is not ready
+            // bot is not ready
             (false, BotEvent::Discord(Err(source))) => HandleEventError::check_fatal(source)?,
             (false, BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => {
                 STATE.ready.store(true, Ordering::Release);
@@ -241,7 +241,7 @@ async fn handle_event(event: BotEvent) {
             }
             (false, _) => {}
 
-            // Bot is ready
+            // bot is ready
             (true, event) => match event {
                 BotEvent::Discord(event) => match event {
                     Ok(event) => handle_discord_event(event).await?,

@@ -106,6 +106,14 @@ pub async fn create_ranks_graphic(
     let immunity = has_immunity(guild_id, &member_data.roles).await?;
     let badges = determine_badges(&stats, &immunity);
 
+    tokio::task::spawn_blocking(move || render_ranks_graphic(member_data, stats, badges)).await?
+}
+
+fn render_ranks_graphic(
+    member_data: MemberData,
+    stats: Stats,
+    badges: Badges
+) -> Result<Bytes, CreateRanksGraphicError> {
     let mut canvas = RgbaImage::new(TEMPLATE.width(), TEMPLATE.height());
     image::imageops::overlay(&mut canvas, &member_data.big_avatar, 26, 75);
     image::imageops::overlay(&mut canvas, &member_data.small_avatar, 42, 366);
@@ -115,7 +123,7 @@ pub async fn create_ranks_graphic(
         iter::successors(Some(FIRST_BADGE.0 - (BADGE_SIZE / 2) as i64), |prev| {
             Some(prev - BADGE_SIZE as i64)
         });
-    for x in blender_x_coords.take(badges.bits().count_ones() as usize - 1) {
+    for x in blender_x_coords.take((badges.bits().count_ones() as usize).saturating_sub(1)) {
         image::imageops::overlay(&mut canvas, BLENDER.deref(), x, FIRST_BADGE.1);
     }
 
@@ -135,7 +143,7 @@ pub async fn create_ranks_graphic(
         image::imageops::overlay(&mut canvas, badge, x, FIRST_BADGE.1);
     }
 
-    let mut ctx = DRAWING_CONTEXT.lock().await;
+    let mut ctx = DRAWING_CONTEXT.blocking_lock();
 
     fn draw_cb(
         canvas: &mut RgbaImage,
@@ -192,6 +200,8 @@ pub async fn create_ranks_graphic(
         ctx.draw(&times, draw_cb(&mut canvas, x - width / 2, y));
     }
 
+    drop(ctx);
+
     let bytes = BytesMut::new();
     let mut writer = bytes.writer();
     let encoder = PngEncoder::new(&mut writer);
@@ -228,8 +238,6 @@ async fn fetch_member_data(
         }
     };
     let big_avatar = http_client.get(big_avatar).send().await?.bytes().await?;
-    let big_avatar = image::load_from_memory(&big_avatar)?;
-    let big_avatar = big_avatar.resize(207, 207, image::imageops::FilterType::Lanczos3);
 
     let small_avatar = match member.user.avatar {
         Some(avatar) => {
@@ -240,8 +248,14 @@ async fn fetch_member_data(
         }
     };
     let small_avatar = http_client.get(small_avatar).send().await?.bytes().await?;
-    let small_avatar = image::load_from_memory(&small_avatar)?;
-    let small_avatar = small_avatar.resize(35, 35, image::imageops::FilterType::Lanczos3);
+    let (big_avatar, small_avatar) = tokio::task::spawn_blocking(move || {
+        let big_avatar = image::load_from_memory(&big_avatar)?;
+        let big_avatar = big_avatar.resize(207, 207, FilterType::Lanczos3);
+        let small_avatar = image::load_from_memory(&small_avatar)?;
+        let small_avatar = small_avatar.resize(35, 35, FilterType::Lanczos3);
+        Ok::<_, ImageError>((big_avatar, small_avatar))
+    })
+    .await??;
 
     let nick =
         member.nick.or(member.user.global_name).unwrap_or_else(|| member.user.name.to_string());
@@ -258,11 +272,8 @@ async fn calculate_ranks(
 ) -> Result<Stats, CreateRanksGraphicError> {
     let stats = STATE.database.stats().await?;
 
-    // Running these calculations can be CPU-intensive, which would bog down the
-    // current worker thread. If the heavy work runs on this thread, other Tokio
-    // tasks won't be able to run. By using `spawn_blocking`, we move the
-    // calculation to a separate thread, allowing the worker thread to keep
-    // processing other tasks.
+    // cpu-heavy rank calculations on a separate thread
+    // keep the tokio worker free for other tasks
     tokio::task::spawn_blocking(move || {
         let is_user = |(_, (uid, _)): &(u32, (Id<UserMarker>, u32))| *uid == user_id;
         type RankEntry = (u32, (Id<UserMarker>, u32));
@@ -358,11 +369,11 @@ async fn has_immunity(
 fn determine_badges(stats: &Stats, immunity: &Immunity) -> Badges {
     let mut badges = Badges::empty();
 
-    if stats.here_ranks.punisher_rank == 1 {
+    if stats.here_ranks.punisher_rank == 1 && stats.here_times.times_called > 0 {
         badges.insert(Badges::TOP_STRIKER);
     }
 
-    if stats.here_ranks.victim_rank == 1 {
+    if stats.here_ranks.victim_rank == 1 && stats.here_times.times_smacked > 0 {
         badges.insert(Badges::TOP_VICTIM);
     }
 
@@ -382,7 +393,7 @@ fn determine_badges(stats: &Stats, immunity: &Immunity) -> Badges {
         badges.insert(Badges::RANDOM_IMMUNITY);
     }
 
-    if stats.here_ranks.counter_rank == 1 {
+    if stats.here_ranks.counter_rank == 1 && stats.here_times.times_countered > 0 {
         badges.insert(Badges::TOP_COUNTERER);
     }
 
