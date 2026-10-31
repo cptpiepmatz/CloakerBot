@@ -1,7 +1,12 @@
 {
   "material-icon-theme.folders.associations": {
+    ".sqlx": "database",
     "application_command": "batch",
     "application_command_autocomplete": "custom",
+    "badges": "images",
+    "button": "components",
+    "channel_select": "input",
+    "fails": "error",
     "graphics": "images",
     "help": "docs",
     "interaction": "command",
@@ -9,8 +14,11 @@
     "macros": "snippet",
     "message_component": "components",
     "owner_notifications": "event",
+    "role_select": "input",
     "sync": "ci",
     "takedown": "error",
+    "takedowns": "error",
+    "user_rank": "admin",
   },
   "cSpell.words": [
     "bitflags",
