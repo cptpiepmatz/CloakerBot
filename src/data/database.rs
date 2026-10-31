@@ -13,7 +13,9 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new(path: impl AsRef<Path>) -> Self {
+    pub async fn initialize(path: impl AsRef<Path>) -> miette::Result<Self> {
+        use miette::{Context, IntoDiagnostic};
+
         let path = path.as_ref().to_owned();
         let options = SqliteConnectOptions::new()
             .filename(&path)
@@ -24,24 +26,18 @@ impl Database {
             .busy_timeout(Duration::from_secs(5))
             .disable_statement_logging();
         let pool = SqlitePoolOptions::new().max_connections(4).connect_lazy_with(options);
-        Self { pool, path, backup_lock: Default::default() }
-    }
-
-    pub async fn initialize(&self) -> miette::Result<()> {
-        use miette::{Context, IntoDiagnostic};
-
-        if let Some(parent) = self.path.parent().filter(|path| !path.as_os_str().is_empty()) {
+        if let Some(parent) = path.parent().filter(|path| !path.as_os_str().is_empty()) {
             tokio::fs::create_dir_all(parent)
                 .await
                 .into_diagnostic()
                 .wrap_err("creating the database directory")?;
         }
         sqlx::migrate!()
-            .run(&self.pool)
+            .run(&pool)
             .await
             .into_diagnostic()
             .wrap_err("initializing the database schema")?;
-        Ok(())
+        Ok(Self { pool, path, backup_lock: Default::default() })
     }
 }
 

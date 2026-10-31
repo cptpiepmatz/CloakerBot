@@ -124,12 +124,18 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
     let (cache, cache_rx) = ObservableCache::new();
     let cache_rx = Eject::new(cache_rx);
 
+    let database = tokio::task::block_in_place(|| {
+        tokio::runtime::Handle::current()
+            .block_on(Database::initialize("data/cloaker.sqlite"))
+            .expect("database initialization failed")
+    });
+
     State {
         shard,
         client,
         http_client,
         ready,
-        database: Database::new("data/cloaker.sqlite"),
+        database,
         takedown_locks,
         planned_takedowns,
         cache,
@@ -149,7 +155,6 @@ async fn main() -> miette::Result<()> {
         .map_err(|_| miette::miette!("could not select the TLS crypto provider"))?;
 
     let state = LazyLock::force(&STATE);
-    state.database.initialize().await?;
     let backup_seconds = std::env::var("BACKUP_INTERVAL_SECONDS")
         .unwrap_or_else(|_| "300".into())
         .parse::<u64>()

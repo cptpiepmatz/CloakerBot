@@ -7,10 +7,18 @@ use super::owner_notifications::OwnerNotified;
 use super::stats::StatEvent;
 
 #[tokio::test]
+async fn construction_fails_when_database_directory_is_a_file() {
+    let directory = tempfile::tempdir().unwrap();
+    let parent = directory.path().join("not-a-directory");
+    tokio::fs::write(&parent, b"").await.unwrap();
+
+    assert!(Database::initialize(parent.join("cloaker.sqlite")).await.is_err());
+}
+
+#[tokio::test]
 async fn standalone_backup_and_failed_publication() {
     let directory = tempfile::tempdir().unwrap();
-    let database = Database::new(directory.path().join("cloaker.sqlite"));
-    database.initialize().await.unwrap();
+    let database = Database::initialize(directory.path().join("cloaker.sqlite")).await.unwrap();
     let guild = Id::new(1);
     let caller = Id::new(2);
     let event = StatEvent::Takedown { caller_id: caller, target_id: Id::new(3) };
@@ -40,8 +48,7 @@ async fn standalone_backup_and_failed_publication() {
     database.backup().await.unwrap();
     assert!(!temporary.exists());
 
-    let restored = Database::new(&restored_path);
-    restored.initialize().await.unwrap();
+    let restored = Database::initialize(&restored_path).await.unwrap();
     assert_eq!(restored.user_totals(caller).await.unwrap().initiated, 1);
     let integrity: String =
         sqlx::query_scalar("PRAGMA integrity_check").fetch_one(&restored.pool).await.unwrap();
@@ -50,8 +57,7 @@ async fn standalone_backup_and_failed_publication() {
 
     let latest_path = directory.path().join("latest.sqlite");
     tokio::fs::copy(&snapshot, &latest_path).await.unwrap();
-    let latest = Database::new(latest_path);
-    latest.initialize().await.unwrap();
+    let latest = Database::initialize(latest_path).await.unwrap();
     assert_eq!(latest.user_totals(caller).await.unwrap().initiated, 2);
     latest.pool.close().await;
     database.pool.close().await;
@@ -61,8 +67,7 @@ async fn standalone_backup_and_failed_publication() {
 async fn storage_roundtrip_and_guild_cleanup() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("private/cloaker.sqlite");
-    let database = Database::new(&path);
-    database.initialize().await.unwrap();
+    let database = Database::initialize(&path).await.unwrap();
 
     let guild = Id::new(u64::MAX);
     let other_guild = Id::new(2);
@@ -167,8 +172,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
     database.save_credentials(caller, &tokens).await.unwrap();
     database.pool.close().await;
 
-    let database = Database::new(&path);
-    database.initialize().await.unwrap();
+    let database = Database::initialize(&path).await.unwrap();
     let config = database.guild_config(guild).await.unwrap();
     assert_eq!(config.danger_zones, vec![channel]);
     assert_eq!(config.immunity.general_silent, vec![role]);
@@ -202,8 +206,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
 #[tokio::test]
 async fn concurrent_updates_and_schema_constraints() {
     let directory = tempfile::tempdir().unwrap();
-    let database = Database::new(directory.path().join("cloaker.sqlite"));
-    database.initialize().await.unwrap();
+    let database = Database::initialize(directory.path().join("cloaker.sqlite")).await.unwrap();
     let guild = Id::new(1);
     let caller = Id::new(2);
     let target = Id::new(3);
