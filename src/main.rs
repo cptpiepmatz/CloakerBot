@@ -82,6 +82,8 @@ const REDIRECT_URI: &str = macros::env!(
 );
 
 const RANDOM_CHECK_EVERY: Duration = Duration::from_secs(15);
+const DEFAULT_BACKUP_INTERVAL: Duration = Duration::from_secs(300);
+const BACKUP_INTERVAL_SECONDS_ENV: &str = "BACKUP_INTERVAL_SECONDS";
 
 #[derive(Debug)]
 struct State {
@@ -100,7 +102,7 @@ struct State {
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
     owner_notification_locks: KeyLock<Id<UserMarker>>,
-    linked_role_locks: KeyLock<Id<UserMarker>>
+    linked_role_locks: KeyLock<Id<UserMarker>>,
 }
 
 static STATE: LazyLock<State> = LazyLock::new(|| {
@@ -117,7 +119,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 
     let songbird = Songbird::twilight(
         Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-        BOT_USER_ID
+        BOT_USER_ID,
     );
 
     let shard = Eject::new(shard);
@@ -146,7 +148,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache_rx,
         songbird,
         owner_notification_locks: Default::default(),
-        linked_role_locks: Default::default()
+        linked_role_locks: Default::default(),
     }
 });
 
@@ -161,19 +163,20 @@ async fn main() -> miette::Result<()> {
         .map_err(|_| miette::miette!("could not select the TLS crypto provider"))?;
 
     let state = LazyLock::force(&STATE);
-    let backup_seconds = std::env::var("BACKUP_INTERVAL_SECONDS")
-        .unwrap_or_else(|_| "300".into())
-        .parse::<u64>()
-        .into_diagnostic()?;
-    if !(1..=86400).contains(&backup_seconds) {
-        return Err(miette::miette!("BACKUP_INTERVAL_SECONDS must be between 1 and 86400"));
+
+    // prepare backups
+    let backup_interval = std::env::var(BACKUP_INTERVAL_SECONDS_ENV)
+        .map(|value| value.parse::<u64>())
+        .into_diagnostic()?
+        .map(Duration::from_secs)
+        .unwrap_or(DEFAULT_BACKUP_INTERVAL);
+    if !(Duration::from_secs(1)..=Duration::from_secs(86400)).contains(&backup_interval) {
+        return Err(miette::miette!("{BACKUP_INTERVAL_SECONDS_ENV} must be between 1 and 86400"));
     }
-    let backups = tokio::spawn(
-        state
-            .database
-            .maintain_backups(Duration::from_secs(backup_seconds))
-            .instrument(tracing::info_span!("database_backups", interval_seconds = backup_seconds))
-    );
+    let backups = tokio::spawn(state.database.maintain_backups(backup_interval).instrument(
+        tracing::info_span!("database_backups", interval_seconds = backup_interval.as_secs()),
+    ));
+
     let shard = state.shard.eject().expect_report("shard went missing");
     let cache_rx = state.cache_rx.eject().expect_report("cache_rx went missing");
 
@@ -184,10 +187,11 @@ async fn main() -> miette::Result<()> {
         .await
         .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;
 
+    // spawn server for account linking
     let http_server = tokio::spawn(link::serve().instrument(tracing::info_span!("http_server")));
     let linked_roles = tokio::spawn(
         link::application_role_connection::maintain_connections()
-            .instrument(tracing::info_span!("linked_role_maintenance"))
+            .instrument(tracing::info_span!("linked_role_maintenance")),
     );
 
     let discord_events = stream::unfold(shard, |mut shard| async {
@@ -222,7 +226,7 @@ async fn main() -> miette::Result<()> {
 enum BotEvent {
     Discord(Result<DiscordEvent, ReceiveMessageError>),
     RandomCheck,
-    CacheUpdate(CacheUpdateEvent)
+    CacheUpdate(CacheUpdateEvent),
 }
 
 #[derive(Debug, Error, From)]
@@ -234,7 +238,7 @@ enum HandleEventError {
     #[error("danger-zone check failed: {0:?}")]
     CheckDangerZones(CheckDangerZonesError),
     #[error("random-takedown check failed: {0:?}")]
-    RandomCheck(CheckRandomError)
+    RandomCheck(CheckRandomError),
 }
 
 impl HandleEventError {
@@ -242,7 +246,7 @@ impl HandleEventError {
         type E = ReceiveMessageErrorType;
         match source.kind() {
             E::Reconnect => Err(HandleEventError::Fatal),
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
 }
@@ -268,15 +272,15 @@ async fn handle_event(event: BotEvent) {
             (true, event) => match event {
                 BotEvent::Discord(event) => match event {
                     Ok(event) => handle_discord_event(event).await?,
-                    Err(source) => HandleEventError::check_fatal(source)?
+                    Err(source) => HandleEventError::check_fatal(source)?,
                 },
                 BotEvent::RandomCheck => handle_random_check().await?,
                 BotEvent::CacheUpdate(update) => match update {
                     CacheUpdateEvent::VoiceChannelUpdate(update) => {
                         check_danger_zones(update).await?
                     }
-                }
-            }
+                },
+            },
         }
 
         Ok(())
@@ -291,7 +295,7 @@ async fn handle_event(event: BotEvent) {
 enum HandleDiscordEventError {
     Database(sqlx::Error),
     Interaction(HandleInteractionError),
-    OwnerNotification(owner_notifications::OwnerNotificationError)
+    OwnerNotification(owner_notifications::OwnerNotificationError),
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
@@ -312,7 +316,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 
         DiscordEvent::MessageCreate(message) => owner_notifications::on_message(&message).await?,
 
-        _ => ()
+        _ => (),
     }
 
     Ok(())
