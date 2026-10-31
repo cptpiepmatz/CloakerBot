@@ -44,7 +44,7 @@ pub enum HandleInteractionError {
 
 #[tracing::instrument(skip_all, fields(
     interaction_id = %interaction_create.id,
-    guild_id = ?interaction_create.guild_id,
+    guild_id = interaction_create.guild_id.map(|id| id.get()),
     interaction_kind = ?interaction_create.kind
 ), err(Debug))]
 pub async fn handle_interaction(
