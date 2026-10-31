@@ -51,7 +51,7 @@ pub async fn handle_interaction(
     interaction_create: &InteractionCreate
 ) -> Result<(), HandleInteractionError> {
     let interaction: &Interaction = interaction_create;
-    tracing::debug!("Handling interaction");
+    tracing::debug!("handling interaction");
     match interaction.kind {
         InteractionType::MessageComponent => handle_message_component(interaction).await?,
 

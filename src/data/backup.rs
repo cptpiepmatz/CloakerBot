@@ -35,7 +35,7 @@ impl Database {
         file.sync_all().await?;
         drop(file);
         tokio::fs::rename(&temporary, &destination).await?;
-        tracing::debug!(path = %destination.display(), "Database snapshot published");
+        tracing::debug!(path = %destination.display(), "database snapshot published");
         Ok(())
     }
 
@@ -45,7 +45,7 @@ impl Database {
         loop {
             interval.tick().await;
             if let Err(error) = self.backup().await {
-                tracing::warn!(%error, "Database snapshot failed; retaining the previous backup");
+                tracing::warn!(%error, "database snapshot failed; retaining the previous backup");
             }
         }
     }

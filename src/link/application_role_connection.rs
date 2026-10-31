@@ -177,16 +177,16 @@ pub async fn maintain_connections() {
         let users = match STATE.database.linked_users().await {
             Ok(users) => users,
             Err(error) => {
-                tracing::warn!(?error, "Could not load linked accounts");
+                tracing::warn!(?error, "could not load linked accounts");
                 continue;
             }
         };
         for user_id in users {
             match sync_user(user_id).await {
                 Err(SyncError::Refresh(super::oauth::RefreshError::Revoked)) => {
-                    tracing::info!(%user_id, "Removed revoked linked-role connection");
+                    tracing::info!(%user_id, "removed revoked linked-role connection");
                 }
-                Err(error) => tracing::warn!(%user_id, ?error, "Linked-role sync failed"),
+                Err(error) => tracing::warn!(%user_id, ?error, "linked-role sync failed"),
                 Ok(()) => {}
             }
         }

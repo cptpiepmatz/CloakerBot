@@ -777,7 +777,7 @@ where
             cmp::Ordering::Less => tracing::warn!(
                 score,
                 previous_score = self.prev_score,
-                "Received a higher score after a lower one; input may not be sorted"
+                "received a higher score after a lower one; input may not be sorted"
             ),
             cmp::Ordering::Greater => {
                 // strictly lower score → move to next rank

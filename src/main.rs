@@ -151,7 +151,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
 async fn main() -> miette::Result<()> {
     panic::init();
     logging::init().into_diagnostic()?;
-    tracing::info!("Starting CloakerBot");
+    tracing::info!("starting cloakerbot");
 
     rustls::crypto::ring::default_provider()
         .install_default()
@@ -208,7 +208,7 @@ async fn main() -> miette::Result<()> {
             }
         }
 
-        tracing::info!("Bot is ready");
+        tracing::info!("bot is ready");
         while let Some(event) = events.next().await {
             tokio::spawn(handle_event(event).in_current_span());
         }
@@ -276,7 +276,7 @@ async fn handle_event(event: BotEvent) {
     }
 
     if let Err(error) = run(event).await {
-        tracing::error!(?error, "Event handling failed");
+        tracing::error!(?error, "event handling failed");
     }
 }
 

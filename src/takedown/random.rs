@@ -29,7 +29,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
             config_random.max > 24.0 * 365.0
         {
             tracing::warn!(%guild_id, min = config_random.min, max = config_random.max,
-                "Invalid random interval");
+                "invalid random interval");
             continue;
         }
 
@@ -62,7 +62,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
                 crate::takedown::TakedownFail::Database(_) |
                 crate::takedown::TakedownFail::Join(_) |
                 crate::takedown::TakedownFail::Audio(_) => {
-                    tracing::warn!(%guild_id, %target_id, ?error, "Random takedown failed");
+                    tracing::warn!(%guild_id, %target_id, ?error, "random takedown failed");
                 }
                 _ => {}
             }

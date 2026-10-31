@@ -132,7 +132,7 @@ pub async fn fallback_description(guild_id: Id<GuildMarker>) -> String {
         Ok(Some(channel)) => channel.mention().to_string(),
         Ok(None) => "unavailable (logging is disabled)".into(),
         Err(error) => {
-            tracing::warn!(?error, "Could not find fallback log channel");
+            tracing::warn!(?error, "could not find fallback log channel");
             "unavailable (could not check permissions)".into()
         }
     }

@@ -103,9 +103,9 @@ pub async fn takedown(
     guild_id: Id<GuildMarker>,
     kind: TakedownType
 ) -> TakedownResult {
-    tracing::debug!("Waiting for takedown lock");
+    tracing::debug!("waiting for takedown lock");
     let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
-    tracing::debug!("Acquired takedown lock");
+    tracing::debug!("acquired takedown lock");
     if STATE.cache.guild(guild_id).is_none() {
         return Err(TakedownFail::NotFound);
     }
@@ -146,19 +146,19 @@ async fn record_outcome(
     };
     if let Some(event) = event {
         if let Err(error) = STATE.database.record_stat(guild_id, event).await {
-            tracing::error!(%guild_id, ?error, "Could not persist completed takedown");
+            tracing::error!(%guild_id, ?error, "could not persist completed takedown");
         }
     }
     if let Err(error) = result {
-        tracing::info!(%guild_id, %target_id, ?kind, ?error, "Takedown did not complete");
+        tracing::info!(%guild_id, %target_id, ?kind, ?error, "takedown did not complete");
     }
     else {
-        tracing::info!(%guild_id, %target_id, ?kind, "Takedown completed");
+        tracing::info!(%guild_id, %target_id, ?kind, "takedown completed");
     }
     if let Err(error) =
         crate::channel_logging::log_takedown(guild_id, target_id, kind, result).await
     {
-        tracing::warn!(%guild_id, ?error, "Could not log takedown to Discord");
+        tracing::warn!(%guild_id, ?error, "could not log takedown to discord");
     }
 }
 
@@ -274,7 +274,7 @@ async fn takedown_in_voice(
         let caller_roles = match fetch_member_roles(guild_id, caller_id).await {
             Ok(roles) => roles,
             Err(error) => {
-                tracing::warn!(%guild_id, %caller_id, ?error, "Could not check counter target");
+                tracing::warn!(%guild_id, %caller_id, ?error, "could not check counter target");
                 fail_sound.play_and_wait(call, None).await;
                 return fail;
             }
@@ -295,7 +295,7 @@ async fn takedown_in_voice(
             STATE.client.update_guild_member(guild_id, caller_id).channel_id(None).await
         {
             if !missing_permissions(&err) {
-                tracing::warn!(%guild_id, %caller_id, error = ?err, "Returned takedown failed");
+                tracing::warn!(%guild_id, %caller_id, error = ?err, "returned takedown failed");
             }
             fail_sound.play_and_wait(call, None).await;
             return fail;

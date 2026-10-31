@@ -58,7 +58,7 @@ pub async fn callback(
     jar: SignedCookieJar
 ) -> Result<(SignedCookieJar, Html<&'static str>), StatusCode> {
     fn err500(err: impl Error) -> StatusCode {
-        tracing::error!(error = %err, "OAuth callback failed");
+        tracing::error!(error = %err, "oauth callback failed");
         StatusCode::INTERNAL_SERVER_ERROR
     }
 
@@ -67,7 +67,7 @@ pub async fn callback(
 
     let client_state = jar.get("state").map(|c| Nonce(c.value_trimmed().to_owned()));
     if Some(&discord_state) != client_state.as_ref() {
-        tracing::warn!("OAuth state verification failed");
+        tracing::warn!("oauth state verification failed");
         return Err(StatusCode::FORBIDDEN);
     }
 
@@ -76,7 +76,7 @@ pub async fn callback(
         .remove(&discord_state)
         .is_some_and(|created| created.elapsed() < STATE_LIFETIME)
     {
-        tracing::warn!("OAuth state expired or already consumed");
+        tracing::warn!("oauth state expired or already consumed");
         return Err(StatusCode::FORBIDDEN);
     }
     let jar = jar.remove(Cookie::build("state").path(CALLBACK_PATH));
@@ -101,7 +101,7 @@ pub async fn callback(
         .map_err(err500)?;
 
     if let Err(error) = notify_connected(me_user.id).await {
-        tracing::warn!(?error, "Linked-role confirmation DM failed");
+        tracing::warn!(?error, "linked-role confirmation dm failed");
     }
 
     Ok((
