@@ -21,10 +21,13 @@ pub enum InitLoggingError {
         #[source]
         source: std::env::VarError
     },
+
     #[error("invalid tracing filter")]
     Filter(#[from] tracing_subscriber::filter::ParseError),
+
     #[error("{LOG_FORMAT_ENV} must be text or json, got {0:?}")]
     Format(String),
+
     #[error("could not initialize tracing")]
     Subscriber(#[source] Box<dyn std::error::Error + Send + Sync>)
 }

@@ -95,6 +95,7 @@ impl Debug for Sound {
 pub enum SoundFromBytesError {
     #[error("could not cache decoded sound")]
     CodecCache(#[from] CodecCacheError),
+
     #[error("could not read WAV sound")]
     Io(#[from] io::Error)
 }

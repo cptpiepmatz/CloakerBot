@@ -110,8 +110,10 @@ pub struct CommandsRegister {
 pub enum RegisterCommandsError {
     #[error("could not register commands with Discord")]
     Http(#[from] TwilightHttpError),
+
     #[error("could not decode registered commands")]
     DeserializeBody(#[from] DeserializeBodyError),
+
     #[error("Discord did not return all required command registrations: {0:?}")]
     MissingRegistries(Vec<Command>)
 }

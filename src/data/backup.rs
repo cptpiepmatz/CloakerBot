@@ -8,6 +8,7 @@ use super::Database;
 pub enum BackupError {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+
     #[error(transparent)]
     Io(#[from] std::io::Error)
 }

@@ -116,6 +116,7 @@ pub fn message_context_menu() -> Command {
 pub enum CloakerActionError {
     #[error("not in guild")]
     NotInGuild,
+
     #[error("author not found")]
     NoAuthor
 }

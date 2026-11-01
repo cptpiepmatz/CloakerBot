@@ -17,6 +17,7 @@ pub struct Database {
 pub enum InitDatabaseError {
     #[error("creating the database directory")]
     Directory(#[from] std::io::Error),
+
     #[error("initializing the database schema")]
     Schema(#[from] sqlx::migrate::MigrateError)
 }

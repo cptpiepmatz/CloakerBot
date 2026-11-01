@@ -57,6 +57,7 @@ pub fn message_context_menu() -> Command {
 pub enum CounterActionError {
     #[error("not in guild")]
     NotInGuild,
+
     #[error("no author found")]
     NoAuthor
 }

@@ -238,10 +238,13 @@ enum BotEvent {
 enum HandleEventError {
     #[error("gateway requires reconnection")]
     Fatal,
+
     #[error("Discord event failed: {0:?}")]
     Discord(HandleDiscordEventError),
+
     #[error("danger-zone check failed: {0:?}")]
     CheckDangerZones(CheckDangerZonesError),
+
     #[error("random-takedown check failed: {0:?}")]
     RandomCheck(CheckRandomError)
 }
