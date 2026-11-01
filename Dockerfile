@@ -62,4 +62,5 @@ WORKDIR /cloaker-bot
 # copy runtime files without emulation
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/CloakerBot ./CloakerBot
+EXPOSE 25625
 ENTRYPOINT ["./CloakerBot"]

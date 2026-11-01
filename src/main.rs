@@ -72,7 +72,8 @@ const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_MESSAGES)
     .union(Intents::GUILD_INTEGRATIONS);
 
-const OAUTH_PORT: u16 = macros::env!("DISCORD_OAUTH_PORT", 9000u16);
+// "cloak" on a T9 keypad, since "cloaker" exceeds the port range
+const OAUTH_PORT: u16 = macros::env!("DISCORD_OAUTH_PORT", 25625u16);
 static CLIENT_SECRET: LazyString = lazy_env!("DISCORD_CLIENT_SECRET");
 static COOKIE_SECRET: LazyString = lazy_env!("COOKIE_SECRET");
 const REDIRECT_URI: &str = macros::env!(
