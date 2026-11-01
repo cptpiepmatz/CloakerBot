@@ -21,6 +21,7 @@ use twilight_model::id::marker::{CommandMarker, GuildMarker, UserMarker};
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
+use crate::assets::graphics::user_rank::BANNER;
 use crate::emojis::EMOJIS_REGISTER;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
@@ -116,9 +117,7 @@ pub async fn action(
         .components(Some(&components))
         .attachments(&[Attachment {
             description: Some("CloakerBot rank profile banner".into()),
-            file: include_bytes!("../../../assets/graphics/user_rank/banner.webp")
-                .as_slice()
-                .into(),
+            file: BANNER.into(),
             filename: "rank_banner.webp".into(),
             id: 0
         }])
