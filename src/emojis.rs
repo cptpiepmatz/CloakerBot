@@ -66,7 +66,7 @@ async fn ensure_emoji(
         return Ok(emoji.id);
     }
 
-    let image = format!("data:image/png;base64,{}", STANDARD.encode(image));
+    let image = format!("data:image/webp;base64,{}", STANDARD.encode(image));
     let emoji =
         STATE.client.add_application_emoji(APPLICATION_ID, name, &image).await?.model().await?;
     tracing::info!(name, emoji_id = %emoji.id, "created application emoji");
