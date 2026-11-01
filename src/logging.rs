@@ -37,7 +37,7 @@ pub fn init() -> Result<(), InitLoggingError> {
     };
     let subscriber = tracing_subscriber::fmt()
         .with_env_filter(filter)
-        .with_timer(tracing_subscriber::fmt::time::ChronoLocal::rfc_3339())
+        .with_timer(tracing_subscriber::fmt::time::ChronoLocal::new("%Y-%m-%d %H:%M:%S".into()))
         .with_writer(std::io::stderr);
     match std::env::var(LOG_FORMAT_ENV).as_deref() {
         Ok("json") => subscriber.json().try_init(),
