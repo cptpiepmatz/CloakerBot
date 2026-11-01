@@ -1,26 +1,14 @@
 pub mod user_rank {
-    pub const TEMPLATE: &[u8] = include_bytes!("../../assets/graphics/user_rank/template.png");
+    pub const BANNER: &[u8] = include_bytes!("../../assets/graphics/user_rank/banner.webp");
 
     #[rustfmt::skip]
     pub mod badges {
-        pub const BLENDER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/blender.png");
-        pub const IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/immunity.png");
-        pub const NEVER_INITIATED: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/never_initiated.png");
-        pub const NEVER_TAKEN_DOWN: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/never_taken_down.png");
-        pub const RANDOM_IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/random_immunity.png");
-        pub const TOP_COUNTERER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_counterer.png");
-        pub const TOP_STRIKER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_striker.png");
-        pub const TOP_VICTIM: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_victim.png");
-
-        #[rustfmt::skip]
-        pub mod emoji {
-            pub const IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/immunity.webp");
-            pub const NEVER_INITIATED: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/never_initiated.webp");
-            pub const NEVER_TAKEN_DOWN: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/never_taken_down.webp");
-            pub const RANDOM_IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/random_immunity.webp");
-            pub const TOP_COUNTERER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/top_counterer.webp");
-            pub const TOP_STRIKER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/top_striker.webp");
-            pub const TOP_VICTIM: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/emoji/top_victim.webp");
-        }
+        pub const IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/immunity.webp");
+        pub const NEVER_INITIATED: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/never_initiated.webp");
+        pub const NEVER_TAKEN_DOWN: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/never_taken_down.webp");
+        pub const RANDOM_IMMUNITY: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/random_immunity.webp");
+        pub const TOP_COUNTERER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_counterer.webp");
+        pub const TOP_STRIKER: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_striker.webp");
+        pub const TOP_VICTIM: &[u8] = include_bytes!("../../assets/graphics/user_rank/badges/top_victim.webp");
     }
 }

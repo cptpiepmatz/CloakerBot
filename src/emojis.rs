@@ -6,7 +6,7 @@ use twilight_model::guild::Emoji;
 use twilight_model::id::Id;
 use twilight_model::id::marker::EmojiMarker;
 
-use crate::assets::graphics::user_rank::badges::emoji;
+use crate::assets::graphics::user_rank::badges::*;
 use crate::panic::ExpectReport;
 use crate::{APPLICATION_ID, STATE};
 
@@ -45,14 +45,13 @@ async fn register() -> Result<EmojisRegister, RegisterEmojisError> {
     let emojis = STATE.client.get_application_emojis(APPLICATION_ID).await?.model().await?.items;
 
     Ok(EmojisRegister {
-        immunity: ensure_emoji(&emojis, "immunity", emoji::IMMUNITY).await?,
-        never_initiated: ensure_emoji(&emojis, "never_initiated", emoji::NEVER_INITIATED).await?,
-        never_taken_down: ensure_emoji(&emojis, "never_taken_down", emoji::NEVER_TAKEN_DOWN)
-            .await?,
-        random_immunity: ensure_emoji(&emojis, "random_immunity", emoji::RANDOM_IMMUNITY).await?,
-        top_counterer: ensure_emoji(&emojis, "top_counterer", emoji::TOP_COUNTERER).await?,
-        top_striker: ensure_emoji(&emojis, "top_striker", emoji::TOP_STRIKER).await?,
-        top_victim: ensure_emoji(&emojis, "top_victim", emoji::TOP_VICTIM).await?
+        immunity: ensure_emoji(&emojis, "immunity", IMMUNITY).await?,
+        never_initiated: ensure_emoji(&emojis, "never_initiated", NEVER_INITIATED).await?,
+        never_taken_down: ensure_emoji(&emojis, "never_taken_down", NEVER_TAKEN_DOWN).await?,
+        random_immunity: ensure_emoji(&emojis, "random_immunity", RANDOM_IMMUNITY).await?,
+        top_counterer: ensure_emoji(&emojis, "top_counterer", TOP_COUNTERER).await?,
+        top_striker: ensure_emoji(&emojis, "top_striker", TOP_STRIKER).await?,
+        top_victim: ensure_emoji(&emojis, "top_victim", TOP_VICTIM).await?
     })
 }
 
