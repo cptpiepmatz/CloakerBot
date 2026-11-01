@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-use std::ops::Deref;
 use std::sync::LazyLock;
 
 use twilight_mention::fmt::{CommandMention, MentionFormat};
@@ -8,23 +6,14 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
-use twilight_model::channel::message::component::ActionRow;
-use twilight_model::channel::message::{Component, MessageFlags};
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::Id;
-use twilight_model::id::marker::{CommandMarker, GuildMarker};
-use twilight_util::builder::InteractionResponseDataBuilder;
-use twilight_util::builder::command::{BooleanBuilder, NumberBuilder, SubCommandBuilder};
+use twilight_util::builder::command::{NumberBuilder, SubCommandBuilder};
 
-use crate::assets::{self, QUOTES};
-use crate::data::config::{CompleteDefault, GuildConfigRandom};
-use crate::interaction::application_command::ApplicationCommand::Config;
+use crate::STATE;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
-    self, HandleApplicationCommandError, TryFromInteractionError
+    HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::message_component::button::config::ConfigRandomButton;
-use crate::{APPLICATION_ID, STATE};
+use crate::interaction::modal_submit;
 
 pub const NAME: &str = "random";
 pub const DESCRIPTION: &str = "Configure random takedown behavior.";
@@ -74,12 +63,18 @@ impl TryFrom<&Vec<CommandDataOption>> for RandomSubCommand {
 pub fn chat_input() -> CommandOption {
     SubCommandBuilder::new(NAME, DESCRIPTION)
         .option(
-            NumberBuilder::new("min", "Minimum time between takedowns. `-1` to set default value.")
-                .build()
+            NumberBuilder::new(
+                "min",
+                "Prefill minimum interval in hours. Submit the form to save. -1 restores default."
+            )
+            .build()
         )
         .option(
-            NumberBuilder::new("max", "Maximum time between takedowns. `-1` to set default value.")
-                .build()
+            NumberBuilder::new(
+                "max",
+                "Prefill maximum interval in hours. Submit the form to save. -1 restores default."
+            )
+            .build()
         )
         .build()
 }
@@ -88,60 +83,18 @@ pub async fn action(
     interaction: &Interaction,
     RandomSubCommand { min, max }: RandomSubCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    use ConfigRandomButton as CRB;
-
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
-    let guild_config = STATE
-        .database
-        .update_config(guild_id, |config| {
-            if min.is_some() || max.is_some() {
-                config.random.enabled = Some(true);
-            }
-            if let Some(min) = min {
-                config.random.min = (min >= 0.0).then_some(min);
-            }
-            if let Some(max) = max {
-                config.random.max = (max >= 0.0).then_some(max);
-            }
-        })
-        .await?;
+    let mut random = STATE.database.guild_config(guild_id).await?.random;
+    if min.is_some() || max.is_some() {
+        random.enabled = Some(true);
+    }
+    if let Some(min) = min {
+        random.min = (min >= 0.0).then_some(min);
+    }
+    if let Some(max) = max {
+        random.max = (max >= 0.0).then_some(max);
+    }
+    let response_data = modal_submit::config::random::modal(&random);
 
-    let complete_random = guild_config.random.complete();
-    let content = match guild_config.random.enabled {
-        None | Some(false) => {
-            assets::replies::config::random::disabled(QUOTES.config.random.enabled)
-        }
-        Some(true) => assets::replies::config::random::enabled(
-            application_command::help::MENTION.deref(),
-            complete_random.max,
-            complete_random.min,
-            QUOTES.config.random.disabled
-        )
-    };
-
-    let component = Component::ActionRow(ActionRow {
-        id: None,
-        components: vec![match complete_random.enabled {
-            // use the inverse component to toggle config
-            true => CRB::Disable.component(),
-            false => CRB::Enable.component()
-        }]
-    });
-
-    let response_data = InteractionResponseDataBuilder::new()
-        .flags(MessageFlags::EPHEMERAL)
-        .content(content)
-        .components([component])
-        .build();
-
-    STATE
-        .client
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(response_data)
-        })
-        .await?;
-
-    Ok(())
+    super::respond_with_modal(interaction, response_data).await
 }

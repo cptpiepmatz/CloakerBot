@@ -1,5 +1,11 @@
 Configure the random takedowns.
 
+The command opens a form to enable or disable random takedowns and edit both
+intervals. Changes are saved only when you submit; cancelling changes nothing.
+Optional command arguments prefill the form. Leave an interval blank or enter
+`-1` to restore its default (minimum: 1 hour, maximum: 24 hours).
+Intervals must be positive, at most 8760 hours, and the minimum cannot exceed the maximum.
+
 
 The {CloakerBot} is able to perform randomized takedowns. 
 If enabled, the bot will check for a user to take down within a specified time 

@@ -1,5 +1,8 @@
 Define what channels should be marked as danger zones.
 
+The command opens a form with the current channels selected. Submit to save,
+or clear the selection and submit to unset all danger zones. Cancelling changes nothing.
+
 
 Danger zones are channels that are observed by the {CloakerBot}, if a user joins 
 one of the danger zones, the bot will follow into channel and initiate a 

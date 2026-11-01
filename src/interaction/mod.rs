@@ -16,6 +16,7 @@ use crate::interaction::message_component::{
 mod application_command;
 mod application_command_autocomplete;
 mod message_component;
+mod modal_submit;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
@@ -38,6 +39,7 @@ pub fn owner_update() -> std::borrow::Cow<'static, str> {
 #[derive(Debug, From)]
 pub enum HandleInteractionError {
     MessageComponent(HandleMessageComponentError),
+    ModalSubmit(modal_submit::HandleModalSubmitError),
     ApplicationCommand(HandleApplicationCommandError),
     ApplicationCommandAutocomplete(HandleApplicationCommandAutocompleteError)
 }
@@ -54,7 +56,7 @@ pub async fn handle_interaction(
     tracing::debug!("handling interaction");
     match interaction.kind {
         InteractionType::MessageComponent => handle_message_component(interaction).await?,
-
+        InteractionType::ModalSubmit => modal_submit::handle_modal_submit(interaction).await?,
         InteractionType::ApplicationCommand => handle_application_command(interaction).await?,
         InteractionType::ApplicationCommandAutocomplete => {
             handle_application_command_autocomplete(interaction).await?

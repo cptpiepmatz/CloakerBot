@@ -1,37 +1,20 @@
-use std::env::var;
-use std::ops::Deref;
 use std::sync::LazyLock;
 
-use serde_json::json;
-use twilight_cache_inmemory::model::message;
-use twilight_http::request::RequestBuilder;
-use twilight_http::request::application::interaction::CreateResponse;
-use twilight_http::routing::Route;
-use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::application_command::{
     CommandDataOption, CommandOptionValue
 };
-use twilight_model::channel::message::component::{ActionRow, ComponentType};
-use twilight_model::channel::message::{Component, MessageFlags};
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::Id;
-use twilight_model::id::marker::{CommandMarker, GuildMarker};
-use twilight_model::oauth::scope::BOT;
-use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{StringBuilder, SubCommandBuilder};
 
-use crate::data::config::{GuildConfig, GuildConfigImmunity};
+use crate::STATE;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::message_component::button::config::ConfigUnsetButton;
-use crate::interaction::message_component::role_select::immunity::ImmunitySelect;
-use crate::interaction::{application_command, message_component};
-use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::interaction::modal_submit;
+use crate::interaction::modal_submit::config::immunity::ImmunityModal;
 
 pub const NAME: &str = "immunity";
 pub const DESCRIPTION: &str = "Define what roles are immune to takedowns.";
@@ -112,57 +95,15 @@ pub async fn action(
     interaction: &Interaction,
     command: ImmunitySubCommand
 ) -> Result<(), HandleApplicationCommandError> {
-    let variant = match command {
-        ImmunitySubCommand::General => ImmunitySelect::General,
-        ImmunitySubCommand::Random => ImmunitySelect::Random,
-        ImmunitySubCommand::GeneralSilent => ImmunitySelect::GeneralSilent,
-        ImmunitySubCommand::RandomSilent => ImmunitySelect::RandomSilent
-    };
-
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let config = STATE.database.guild_config(guild_id).await?;
-    let current = match variant {
-        ImmunitySelect::General => config.immunity.general.as_slice(),
-        ImmunitySelect::Random => config.immunity.random.as_slice(),
-        ImmunitySelect::GeneralSilent => config.immunity.general_silent.as_slice(),
-        ImmunitySelect::RandomSilent => config.immunity.random_silent.as_slice()
+    let variant = match command {
+        ImmunitySubCommand::General => ImmunityModal::General,
+        ImmunitySubCommand::Random => ImmunityModal::Random,
+        ImmunitySubCommand::GeneralSilent => ImmunityModal::GeneralSilent,
+        ImmunitySubCommand::RandomSilent => ImmunityModal::RandomSilent
     };
+    let response_data = modal_submit::config::immunity::modal(variant, &config.immunity);
 
-    let role_select = message_component::role_select::immunity::component(variant, current);
-    let button = match variant {
-        ImmunitySelect::General => ConfigUnsetButton::ImmunityGeneral.component(),
-        ImmunitySelect::Random => ConfigUnsetButton::ImmunityRandom.component(),
-        ImmunitySelect::GeneralSilent => ConfigUnsetButton::ImmunityGeneralSilent.component(),
-        ImmunitySelect::RandomSilent => ConfigUnsetButton::ImmunityRandomSilent.component()
-    };
-
-    use crate::assets::replies::config::immunity;
-    let bot = BOT_USER_ID.mention();
-    let cmd = application_command::help::MENTION.deref();
-    let content = match variant {
-        ImmunitySelect::General => immunity::general::select(bot, cmd),
-        ImmunitySelect::Random => immunity::random::select(bot, cmd),
-        ImmunitySelect::GeneralSilent => immunity::general::silent::select(bot, cmd),
-        ImmunitySelect::RandomSilent => immunity::random::silent::select(bot, cmd)
-    };
-
-    let response_data = InteractionResponseDataBuilder::new()
-        .flags(MessageFlags::EPHEMERAL)
-        .content(content)
-        .components([
-            Component::ActionRow(ActionRow { id: None, components: vec![role_select] }),
-            Component::ActionRow(ActionRow { id: None, components: vec![button] })
-        ])
-        .build();
-
-    STATE
-        .client
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, &interaction.token, &InteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(response_data)
-        })
-        .await?;
-
-    Ok(())
+    super::respond_with_modal(interaction, response_data).await
 }

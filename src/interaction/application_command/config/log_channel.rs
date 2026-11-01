@@ -1,33 +1,17 @@
 use std::sync::LazyLock;
 
-use serde_json::json;
-use twilight_http::request::RequestBuilder;
-use twilight_http::request::application::interaction::CreateResponse;
-use twilight_http::routing::Route;
-use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::CommandOption;
 use twilight_model::application::interaction::Interaction;
-use twilight_model::application::interaction::application_command::{
-    CommandDataOption,
-    /* CommandInteractionDataResolved, */ CommandOptionValue /* InteractionChannel */
-};
-use twilight_model::channel::ChannelType;
-use twilight_model::channel::message::component::{ActionRow, ComponentType};
-use twilight_model::channel::message::{Component, MessageFlags};
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_model::id::Id;
-use twilight_model::id::marker::{ChannelMarker, CommandMarker, GuildMarker};
-use twilight_util::builder::InteractionResponseDataBuilder;
-use twilight_util::builder::command::{ChannelBuilder, SubCommandBuilder};
+use twilight_model::application::interaction::application_command::CommandDataOption;
+use twilight_util::builder::command::SubCommandBuilder;
 
-use crate::assets::replies;
+use crate::STATE;
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
-use crate::interaction::message_component;
-use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
+use crate::interaction::modal_submit;
 
 pub const NAME: &str = "log-channel";
 pub const DESCRIPTION: &str = "Define your log channel.";
@@ -63,29 +47,7 @@ pub async fn action(
     let guild_id = interaction.guild_id.ok_or(ConfigActionError::NotInGuild)?;
     let current = STATE.database.guild_config(guild_id).await?.log_channel;
 
-    let channel_select = message_component::channel_select::log_channel::component(current);
-    let button = message_component::button::config::ConfigUnsetButton::LogChannel.component();
+    let response_data = modal_submit::config::log_channel::modal(current);
 
-    let response_data = InteractionResponseDataBuilder::new()
-        .flags(MessageFlags::EPHEMERAL)
-        .content(replies::config::log_channel::select(
-            BOT_USER_ID.mention(),
-            crate::channel_logging::fallback_description(guild_id).await
-        ))
-        .components([
-            Component::ActionRow(ActionRow { id: None, components: vec![channel_select] }),
-            Component::ActionRow(ActionRow { id: None, components: vec![button] })
-        ])
-        .build();
-
-    STATE
-        .client
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, &interaction.token, &InteractionResponse {
-            kind: InteractionResponseType::ChannelMessageWithSource,
-            data: Some(response_data)
-        })
-        .await?;
-
-    Ok(())
+    super::respond_with_modal(interaction, response_data).await
 }

@@ -1,5 +1,8 @@
 Define what channel to use for logging.
 
+The command opens a form with the current channel selected. Submit to save,
+or clear the selection and submit to restore automatic fallback. Cancelling changes nothing.
+
 
 The CloakerBot will post updates and takedown logs into the log channel.
 
