@@ -90,6 +90,7 @@ struct UserMetadata {
 pub enum UpdateMetadataError {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+
     #[error(transparent)]
     Http(#[from] twilight_http::Error)
 }
@@ -107,6 +108,7 @@ pub async fn update_metadata(
             times_countered: totals.countered.to_string()
         }
     };
+
     let request = RequestBuilder::raw(
         Method::Put,
         format!("users/@me/applications/{}/role-connection", APPLICATION_ID)
@@ -114,6 +116,7 @@ pub async fn update_metadata(
     .json(&connection)
     .build()?;
     client.request::<serde_json::Value>(request).await?;
+
     Ok(())
 }
 
@@ -121,8 +124,10 @@ pub async fn update_metadata(
 enum SyncError {
     #[error(transparent)]
     Refresh(#[from] super::oauth::RefreshError),
+
     #[error(transparent)]
     Metadata(#[from] UpdateMetadataError),
+
     #[error(transparent)]
     Database(#[from] sqlx::Error)
 }
@@ -138,7 +143,9 @@ async fn refresh_and_store(
         }
         result => result?
     };
+
     STATE.database.save_credentials(user_id, &tokens).await?;
+
     Ok(tokens)
 }
 
@@ -181,6 +188,7 @@ pub async fn maintain_connections() {
                 continue;
             }
         };
+
         for user_id in users {
             match sync_user(user_id).await {
                 Err(SyncError::Refresh(super::oauth::RefreshError::Revoked)) => {
