@@ -39,6 +39,7 @@ use crate::util::trim::trim;
 mod assets;
 mod channel_logging;
 mod data;
+mod emojis;
 mod interaction;
 mod link;
 mod logging;
@@ -173,6 +174,7 @@ async fn main() -> miette::Result<()> {
     // ensure that technically lazy elements are evaluated
     Sound::load_eagerly();
     LazyLock::force(&COMMANDS_REGISTER);
+    LazyLock::force(&emojis::EMOJIS_REGISTER);
     link::application_role_connection::register_metadata()
         .await
         .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;

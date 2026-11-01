@@ -577,6 +577,7 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
+ "base64 0.22.1",
  "bitflags 2.13.2",
  "bytes",
  "chrono",

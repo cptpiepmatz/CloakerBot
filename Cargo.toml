@@ -27,6 +27,7 @@ hound = "3.5"
 macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # data serialization
+base64 = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
