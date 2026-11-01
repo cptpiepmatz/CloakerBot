@@ -34,7 +34,8 @@ fn connected_page() -> Response {
     (
         [(header::CACHE_CONTROL, "no-cache, no-store")],
         Html(include_str!("../../assets/oauth/connected.html"))
-    ).into_response()
+    )
+        .into_response()
 }
 
 const ICON: &[u8] = include_bytes!("../../icon/v3.png");
@@ -52,14 +53,13 @@ async fn icon(headers: HeaderMap) -> Response {
             })
         })
     });
-    let cache_headers = [
-        (header::CACHE_CONTROL, "public, no-cache"),
-        (header::ETAG, ICON_ETAG.as_str())
-    ];
+    let cache_headers =
+        [(header::CACHE_CONTROL, "public, no-cache"), (header::ETAG, ICON_ETAG.as_str())];
 
     if not_modified {
         (StatusCode::NOT_MODIFIED, cache_headers).into_response()
-    } else {
+    }
+    else {
         (cache_headers, [(header::CONTENT_TYPE, "image/png")], ICON).into_response()
     }
 }
