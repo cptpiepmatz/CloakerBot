@@ -82,6 +82,7 @@ cookie = "0.18"
 url = "2.5"
 http = "1.3"
 mime = "0.3"
+sha2 = "0.11"
 
 # audio handling
 wav = "1"

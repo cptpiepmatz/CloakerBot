@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
 use axum::extract::Query;
-use axum::response::{Html, Redirect};
+use axum::response::{Redirect, Response};
 use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use http::StatusCode;
@@ -82,7 +82,7 @@ pub struct CallbackParams {
 pub async fn callback(
     Query(params): Query<CallbackParams>,
     jar: SignedCookieJar
-) -> Result<(SignedCookieJar, Html<&'static str>), StatusCode> {
+) -> Result<(SignedCookieJar, Response), StatusCode> {
     fn err500(err: impl Error) -> StatusCode {
         tracing::error!(error = %err, "oauth callback failed");
         StatusCode::INTERNAL_SERVER_ERROR
@@ -130,7 +130,7 @@ pub async fn callback(
         tracing::warn!(?error, "linked-role confirmation dm failed");
     }
 
-    Ok((jar, Html(include_str!("../../assets/oauth/connected.html"))))
+    Ok((jar, super::connected_page()))
 }
 
 async fn notify_connected(user_id: Id<UserMarker>) -> Result<(), ClientError> {
