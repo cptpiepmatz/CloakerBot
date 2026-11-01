@@ -8,7 +8,7 @@ use crate::interaction::message_component::channel_select::log_channel::LogChann
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::role_select::immunity::ImmunitySelectActionError;
 
-mod custom_id;
+pub(crate) mod custom_id;
 
 pub mod button;
 pub mod channel_select;
@@ -39,6 +39,10 @@ pub async fn handle_message_component(
     let custom_id: MessageComponentCustomId = data.custom_id.parse()?;
     use MessageComponentCustomId as MCCId;
     match custom_id {
+        MCCId::ConfigOpenDangerZones |
+        MCCId::ConfigOpenLogChannel |
+        MCCId::ConfigOpenImmunity |
+        MCCId::ConfigOpenRandom => button::config::open_modal(interaction, custom_id).await,
         MCCId::ConfigUnsetDangerZones |
         MCCId::ConfigUnsetImmunityGeneral |
         MCCId::ConfigUnsetImmunityRandom |

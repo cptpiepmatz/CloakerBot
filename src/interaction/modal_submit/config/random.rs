@@ -104,7 +104,8 @@ pub async fn action(
             return reply(
                 interaction,
                 "Nothing was saved. Intervals must be positive numbers of hours, at most 8760. \
-                 Leave blank or enter -1 for defaults. Run /config random to try again."
+                 Leave blank or enter -1 for defaults. Open Random takedowns in /config to try \
+                 again."
             )
             .await;
         }
@@ -115,7 +116,7 @@ pub async fn action(
         return reply(
             interaction,
             "Nothing was saved. The minimum interval cannot exceed the maximum interval \
-             (including defaults). Run /config random to try again."
+             (including defaults). Open Random takedowns in /config to try again."
         )
         .await;
     }

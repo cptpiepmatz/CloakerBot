@@ -11,10 +11,7 @@ use super::HandleModalSubmitError;
 pub enum ModalCustomId {
     ConfigDangerZones,
     ConfigLogChannel,
-    ConfigImmunityGeneral,
-    ConfigImmunityRandom,
-    ConfigImmunityGeneralSilent,
-    ConfigImmunityRandomSilent,
+    ConfigImmunity,
     ConfigRandom
 }
 

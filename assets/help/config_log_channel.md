@@ -1,6 +1,6 @@
 Define what channel to use for logging.
 
-The command opens a form with the current channel selected. Submit to save,
+Open `/config` and click Configure beside Log channel to edit the current channel. Submit to save,
 or clear the selection and submit to restore automatic fallback. Cancelling changes nothing.
 
 

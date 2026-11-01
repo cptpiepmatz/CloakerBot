@@ -1,7 +1,8 @@
 Configure roles to be immune to takedowns.
 
-Choose an immunity type to open a form with its current roles selected. Submit
-to save, or clear the selection and submit to unset those roles. Cancelling changes nothing.
+Open `/config` and click Configure beside Immunity to edit all four immunity types
+in one form with their current roles selected. Submit to save, or clear a selection
+and submit to unset those roles. Cancelling changes nothing.
 
 
 It is possible to configure roles that are immune to takedowns.

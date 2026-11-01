@@ -46,12 +46,7 @@ pub async fn handle_modal_submit(interaction: &Interaction) -> Result<(), Handle
     match custom_id {
         ModalCustomId::ConfigDangerZones => config::danger_zones::action(interaction, data).await,
         ModalCustomId::ConfigLogChannel => config::log_channel::action(interaction, data).await,
-        ModalCustomId::ConfigImmunityGeneral |
-        ModalCustomId::ConfigImmunityRandom |
-        ModalCustomId::ConfigImmunityGeneralSilent |
-        ModalCustomId::ConfigImmunityRandomSilent => {
-            config::immunity::action(interaction, custom_id, data).await
-        }
+        ModalCustomId::ConfigImmunity => config::immunity::action(interaction, data).await,
         ModalCustomId::ConfigRandom => config::random::action(interaction, data).await
     }
 }

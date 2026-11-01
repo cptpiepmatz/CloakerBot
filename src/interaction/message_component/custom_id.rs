@@ -13,6 +13,11 @@ use crate::interaction::message_component::HandleMessageComponentError;
     parse_err_fn = ParseMessageComponentCustomIdError::from_str,
 )]
 pub enum MessageComponentCustomId {
+    ConfigOpenDangerZones,
+    ConfigOpenLogChannel,
+    ConfigOpenImmunity,
+    ConfigOpenRandom,
+
     ConfigUnsetDangerZones,
     ConfigUnsetImmunityGeneral,
     ConfigUnsetImmunityRandom,

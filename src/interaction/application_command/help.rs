@@ -33,10 +33,11 @@ pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Shows a help page.";
 pub static CHOICES: &[&str] = &[
     cloaker::NAME,
-    formatcp!("{} {}", config::NAME, config::danger_zones::NAME),
-    formatcp!("{} {}", config::NAME, config::immunity::NAME),
-    formatcp!("{} {}", config::NAME, config::log_channel::NAME),
-    formatcp!("{} {}", config::NAME, config::random::NAME),
+    config::NAME,
+    "config danger-zones",
+    "config immunity",
+    "config log-channel",
+    "config random",
     counter::NAME,
     ranks::NAME
 ];
@@ -52,6 +53,7 @@ pub enum HelpCommand {
 }
 
 pub enum ConfigHelpCommand {
+    Overview,
     DangerZones,
     Immunity,
     LogChannel,
@@ -80,19 +82,20 @@ impl TryFrom<&CommandData> for HelpCommand {
             cloaker::NAME => Ok(HelpCommand::Cloaker),
             counter::NAME => Ok(HelpCommand::Counter),
             ranks::NAME => Ok(HelpCommand::Ranks),
+            config::NAME => Ok(HelpCommand::Config(ConfigHelpCommand::Overview)),
             name => {
                 let mut split = name.split(' ');
                 match (split.next(), split.next()) {
-                    (Some(config::NAME), Some(config::danger_zones::NAME)) => {
+                    (Some(config::NAME), Some("danger-zones")) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::DangerZones))
                     }
-                    (Some(config::NAME), Some(config::immunity::NAME)) => {
+                    (Some(config::NAME), Some("immunity")) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::Immunity))
                     }
-                    (Some(config::NAME), Some(config::log_channel::NAME)) => {
+                    (Some(config::NAME), Some("log-channel")) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::LogChannel))
                     }
-                    (Some(config::NAME), Some(config::random::NAME)) => {
+                    (Some(config::NAME), Some("random")) => {
                         Ok(HelpCommand::Config(ConfigHelpCommand::Random))
                     }
                     _ => Err(TryFromInteractionError::IncorrectFieldValue {
@@ -132,16 +135,8 @@ pub async fn action(
                 writeln!(content, "{}", cloaker::MENTION.deref());
                 writeln!(content, "{}", cloaker::DESCRIPTION);
                 content.write_char('\n');
-                writeln!(content, "`/{}`", config::NAME);
+                writeln!(content, "{}", config::MENTION.deref());
                 writeln!(content, "{}", config::DESCRIPTION);
-                writeln!(content, "    {}", config::danger_zones::MENTION.deref());
-                writeln!(content, "    {}", config::danger_zones::DESCRIPTION);
-                writeln!(content, "    {}", config::immunity::MENTION.deref());
-                writeln!(content, "    {}", config::immunity::DESCRIPTION);
-                writeln!(content, "    {}", config::log_channel::MENTION.deref());
-                writeln!(content, "    {}", config::log_channel::DESCRIPTION);
-                writeln!(content, "    {}", config::random::MENTION.deref());
-                writeln!(content, "    {}", config::random::DESCRIPTION);
                 content.write_char('\n');
                 writeln!(content, "{}", counter::MENTION.deref());
                 writeln!(content, "{}", counter::DESCRIPTION);
@@ -159,23 +154,32 @@ pub async fn action(
                     counter::MENTION.deref()
                 ));
             }
+            HelpCommand::Config(ConfigHelpCommand::Overview) => {
+                writeln!(content, "{}{}", help_title, config::MENTION.deref());
+                content.write_str(
+                    "Opens a private configuration panel. Use a section's Configure button to \
+                     edit danger zones, the log channel, immunity roles, or random takedowns. \
+                     Forms are prefilled with current settings; submit to save or cancel to leave \
+                     them unchanged. Requires Manage Server permission."
+                );
+            }
             HelpCommand::Config(ConfigHelpCommand::DangerZones) => {
-                writeln!(content, "{}{}", help_title, config::danger_zones::MENTION.deref());
+                writeln!(content, "{}{} — Danger zones", help_title, config::MENTION.deref());
                 content.write_str(&assets::help_texts::config_danger_zones(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Config(ConfigHelpCommand::Immunity) => {
-                writeln!(content, "{}{}", help_title, config::immunity::MENTION.deref());
+                writeln!(content, "{}{} — Immunity", help_title, config::MENTION.deref());
                 content.write_str(&assets::help_texts::config_immunity(BOT_USER_ID.mention()));
             }
             HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
-                writeln!(content, "{}{}", help_title, config::log_channel::MENTION.deref());
+                writeln!(content, "{}{} — Log channel", help_title, config::MENTION.deref());
                 content.write_str(&assets::help_texts::config_log_channel());
             }
             HelpCommand::Config(ConfigHelpCommand::Random) => {
-                writeln!(content, "{}{}", help_title, config::random::MENTION.deref());
+                writeln!(content, "{}{} — Random takedowns", help_title, config::MENTION.deref());
                 content.write_str(&assets::help_texts::config_random(BOT_USER_ID.mention()));
             }
             HelpCommand::Counter => {

@@ -28,9 +28,9 @@ pub fn owner_update() -> std::borrow::Cow<'static, str> {
 
     crate::assets::owner_notifications::msg01_v3_update(
         crate::BOT_USER_ID.mention(),
-        config::danger_zones::MENTION.deref(),
-        config::immunity::MENTION.deref(),
-        config::log_channel::MENTION.deref(),
+        config::MENTION.deref(),
+        config::MENTION.deref(),
+        config::MENTION.deref(),
         counter::MENTION.deref(),
         help::MENTION.deref()
     )

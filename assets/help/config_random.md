@@ -1,8 +1,8 @@
 Configure the random takedowns.
 
-The command opens a form to enable or disable random takedowns and edit both
+Open `/config` and click Configure beside Random takedowns to enable or disable them and edit both
 intervals. Changes are saved only when you submit; cancelling changes nothing.
-Optional command arguments prefill the form. Leave an interval blank or enter
+The form is prefilled with current settings. Leave an interval blank or enter
 `-1` to restore its default (minimum: 1 hour, maximum: 24 hours).
 Intervals must be positive, at most 8760 hours, and the minimum cannot exceed the maximum.
 

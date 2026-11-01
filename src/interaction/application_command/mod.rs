@@ -22,7 +22,7 @@ use twilight_validate::message::MessageValidationError;
 
 use crate::interaction::HandleInteractionError;
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
-use crate::interaction::application_command::config::{ConfigActionError, ConfigCommand};
+use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
@@ -37,7 +37,7 @@ pub(super) mod ranks;
 
 enum ApplicationCommand {
     Cloaker(CloakerCommand),
-    Config(ConfigCommand),
+    Config,
     Counter(CounterCommand),
     Help(HelpCommand),
     Ranks(RanksCommand)
@@ -54,7 +54,7 @@ impl TryFrom<&Interaction> for ApplicationCommand {
 
         match data.name.as_str() {
             cloaker::NAME => Ok(Self::Cloaker(CloakerCommand::try_from(data.as_ref())?)),
-            config::NAME => Ok(Self::Config(ConfigCommand::try_from(data.as_ref())?)),
+            config::NAME => Ok(Self::Config),
             counter::NAME => Ok(Self::Counter(CounterCommand::try_from(data.as_ref())?)),
             help::NAME => Ok(Self::Help(HelpCommand::try_from(data.as_ref())?)),
             ranks::NAME => Ok(Self::Ranks(RanksCommand::try_from(data.as_ref())?)),
@@ -232,7 +232,7 @@ pub async fn handle_application_command(
 ) -> Result<(), HandleApplicationCommandError> {
     match ApplicationCommand::try_from(interaction)? {
         ApplicationCommand::Cloaker(command) => cloaker::action(interaction, command).await,
-        ApplicationCommand::Config(command) => config::action(interaction, command).await,
+        ApplicationCommand::Config => config::action(interaction).await,
         ApplicationCommand::Counter(command) => counter::action(interaction, command).await,
         ApplicationCommand::Help(command) => help::action(interaction, command).await,
         ApplicationCommand::Ranks(command) => ranks::action(interaction, command).await
