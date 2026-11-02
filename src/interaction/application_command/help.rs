@@ -89,7 +89,9 @@ impl TryFrom<&CommandData> for HelpCommand {
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .contexts([InteractionContextType::Guild])
-        .option(StringBuilder::new("topic", "The topic you want help with.").autocomplete(true))
+        .option(StringBuilder::new("topic", "The topic you want help with.").choices(
+            CHOICES.iter().map(|topic| ((*topic).to_owned(), (*topic).to_owned()))
+        ))
         .build()
 }
 
