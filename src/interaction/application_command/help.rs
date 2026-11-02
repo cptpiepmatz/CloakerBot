@@ -25,7 +25,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE, assets};
 
 pub const NAME: &str = "help";
 pub const DESCRIPTION: &str = "Explains CloakerBot features and configuration by topic.";
-pub static CHOICES: &[&str] = &[
+pub static TOPICS: &[&str] = &[
     "takedowns",
     "config",
     "danger zones",
@@ -91,7 +91,7 @@ pub fn chat_input() -> Command {
         .contexts([InteractionContextType::Guild])
         .option(
             StringBuilder::new("topic", "The topic you want help with.")
-                .choices(CHOICES.iter().map(|topic| ((*topic).to_owned(), (*topic).to_owned())))
+                .choices(TOPICS.iter().map(|topic| ((*topic).to_owned(), (*topic).to_owned())))
         )
         .build()
 }
