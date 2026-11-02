@@ -1,11 +1,7 @@
-use std::fmt::{Display, Write};
+use std::fmt::Write;
 use std::ops::Deref;
 use std::sync::LazyLock;
 
-use const_format::{concatcp, formatcp, str_replace};
-use itertools::Itertools;
-use twilight_http::request::RequestBuilder;
-use twilight_http::routing::Route;
 use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
@@ -19,45 +15,39 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
-use twilight_util::builder::embed::{EmbedBuilder, EmbedFieldBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::assets::{COLORS, replies};
 use crate::interaction::application_command::{
-    HandleApplicationCommandError, TryFromInteractionError, cloaker, config, counter, defer, ranks,
-    update_defer_embeds
+    HandleApplicationCommandError, TryFromInteractionError, cloaker, config, counter, ranks
 };
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE, assets};
 
 pub const NAME: &str = "help";
-pub const DESCRIPTION: &str = "Shows a help page.";
+pub const DESCRIPTION: &str = "Explains CloakerBot features and configuration by topic.";
 pub static CHOICES: &[&str] = &[
-    cloaker::NAME,
-    config::NAME,
-    "config danger-zones",
-    "config immunity",
-    "config log-channel",
-    "config random",
-    counter::NAME,
-    ranks::NAME
+    "takedowns",
+    "config",
+    "danger zones",
+    "immunity",
+    "log channel",
+    "random takedowns",
+    "countering",
+    "ranks"
 ];
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.help);
 pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
 
 pub enum HelpCommand {
     All,
-    Cloaker,
-    Config(ConfigHelpCommand),
-    Counter,
-    Ranks
-}
-
-pub enum ConfigHelpCommand {
-    Overview,
+    Takedowns,
+    Config,
     DangerZones,
     Immunity,
     LogChannel,
-    Random
+    RandomTakedowns,
+    Countering,
+    Ranks
 }
 
 impl TryFrom<&CommandData> for HelpCommand {
@@ -73,38 +63,25 @@ impl TryFrom<&CommandData> for HelpCommand {
         else {
             return Err(TryFromInteractionError::IncorrectFieldType {
                 command: NAME.to_owned(),
-                field: String::from("command"),
+                field: String::from("topic"),
                 value: data.value.clone()
             });
         };
 
         match selected.as_str() {
-            cloaker::NAME => Ok(HelpCommand::Cloaker),
-            counter::NAME => Ok(HelpCommand::Counter),
-            ranks::NAME => Ok(HelpCommand::Ranks),
-            config::NAME => Ok(HelpCommand::Config(ConfigHelpCommand::Overview)),
-            name => {
-                let mut split = name.split(' ');
-                match (split.next(), split.next()) {
-                    (Some(config::NAME), Some("danger-zones")) => {
-                        Ok(HelpCommand::Config(ConfigHelpCommand::DangerZones))
-                    }
-                    (Some(config::NAME), Some("immunity")) => {
-                        Ok(HelpCommand::Config(ConfigHelpCommand::Immunity))
-                    }
-                    (Some(config::NAME), Some("log-channel")) => {
-                        Ok(HelpCommand::Config(ConfigHelpCommand::LogChannel))
-                    }
-                    (Some(config::NAME), Some("random")) => {
-                        Ok(HelpCommand::Config(ConfigHelpCommand::Random))
-                    }
-                    _ => Err(TryFromInteractionError::IncorrectFieldValue {
-                        command: NAME.to_owned(),
-                        field: String::from("command"),
-                        value: data.value.clone()
-                    })
-                }
-            }
+            "takedowns" => Ok(Self::Takedowns),
+            "config" => Ok(Self::Config),
+            "danger zones" => Ok(Self::DangerZones),
+            "immunity" => Ok(Self::Immunity),
+            "log channel" => Ok(Self::LogChannel),
+            "random takedowns" => Ok(Self::RandomTakedowns),
+            "countering" => Ok(Self::Countering),
+            "ranks" => Ok(Self::Ranks),
+            _ => Err(TryFromInteractionError::IncorrectFieldValue {
+                command: NAME.to_owned(),
+                field: String::from("topic"),
+                value: data.value.clone()
+            })
         }
     }
 }
@@ -112,7 +89,7 @@ impl TryFrom<&CommandData> for HelpCommand {
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .contexts([InteractionContextType::Guild])
-        .option(StringBuilder::new("command", "Shows help for a command.").autocomplete(true))
+        .option(StringBuilder::new("topic", "The topic you want help with.").autocomplete(true))
         .build()
 }
 
@@ -147,51 +124,50 @@ pub async fn action(
                 writeln!(content, "{}", ranks::MENTION.deref());
                 writeln!(content, "{}", ranks::DESCRIPTION);
             }
-            HelpCommand::Cloaker => {
-                writeln!(content, "{}{}", help_title, cloaker::MENTION.deref());
+            HelpCommand::Takedowns => {
+                writeln!(content, "{}Takedowns", help_title);
                 content.write_str(&assets::help_texts::cloaker(
                     BOT_USER_ID.mention(),
+                    cloaker::MENTION.deref(),
                     counter::MENTION.deref()
                 ));
             }
-            HelpCommand::Config(ConfigHelpCommand::Overview) => {
-                writeln!(content, "{}{}", help_title, config::MENTION.deref());
-                content.write_str(
-                    "Opens a private configuration panel. Use a section's Configure button to \
-                     edit danger zones, the log channel, immunity roles, or random takedowns. \
-                     Forms are prefilled with current settings; submit to save or cancel to leave \
-                     them unchanged. Requires Manage Server permission."
-                );
+            HelpCommand::Config => {
+                writeln!(content, "{}Config", help_title);
+                content.write_str(&assets::help_texts::config(config::MENTION.deref()));
             }
-            HelpCommand::Config(ConfigHelpCommand::DangerZones) => {
-                writeln!(content, "{}{} — Danger zones", help_title, config::MENTION.deref());
+            HelpCommand::DangerZones => {
+                writeln!(content, "{}Danger zones", help_title);
                 content.write_str(&assets::help_texts::config_danger_zones(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
-            HelpCommand::Config(ConfigHelpCommand::Immunity) => {
-                writeln!(content, "{}{} — Immunity", help_title, config::MENTION.deref());
+            HelpCommand::Immunity => {
+                writeln!(content, "{}Immunity", help_title);
                 content.write_str(&assets::help_texts::config_immunity(BOT_USER_ID.mention()));
             }
-            HelpCommand::Config(ConfigHelpCommand::LogChannel) => {
-                writeln!(content, "{}{} — Log channel", help_title, config::MENTION.deref());
+            HelpCommand::LogChannel => {
+                writeln!(content, "{}Log channel", help_title);
                 content.write_str(&assets::help_texts::config_log_channel());
             }
-            HelpCommand::Config(ConfigHelpCommand::Random) => {
-                writeln!(content, "{}{} — Random takedowns", help_title, config::MENTION.deref());
+            HelpCommand::RandomTakedowns => {
+                writeln!(content, "{}Random takedowns", help_title);
                 content.write_str(&assets::help_texts::config_random(BOT_USER_ID.mention()));
             }
-            HelpCommand::Counter => {
-                writeln!(content, "{}{}", help_title, counter::MENTION.deref());
+            HelpCommand::Countering => {
+                writeln!(content, "{}Countering", help_title);
                 content.write_str(&assets::help_texts::counter(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Ranks => {
-                writeln!(content, "{}{}", help_title, ranks::MENTION.deref());
-                content.write_str(&assets::help_texts::ranks(BOT_USER_ID.mention()));
+                writeln!(content, "{}Ranks", help_title);
+                content.write_str(&assets::help_texts::ranks(
+                    BOT_USER_ID.mention(),
+                    ranks::MENTION.deref()
+                ));
             }
         }
 

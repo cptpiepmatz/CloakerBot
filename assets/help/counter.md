@@ -7,3 +7,5 @@ summoned the bot.
 
 If the bot initiates an attack on its own through a random takedown, the 
 counter command will simply remove the bot from the channel.
+
+Danger-zone takedowns cannot be countered. Leave the channel to escape instead.

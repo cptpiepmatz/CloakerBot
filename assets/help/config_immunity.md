@@ -5,16 +5,12 @@ in one form with their current roles selected. Submit to save, or clear a select
 and submit to unset those roles. Cancelling changes nothing.
 
 
-It is possible to configure roles that are immune to takedowns.
-The `general` option is for configuring roles that will be protected by any kind 
-of takedowns executed by the {CloakerBot}.
-The bot will still try to take that down user but will fail.
+The {CloakerBot} supports four types of role-based immunity:
 
-The `random` option is for configuring roles that will only be protected from 
-random takedowns.
-When the random selection lands on user with such a role, the random takedown 
-will fail.
-
-The `*-silent` options allow roles to not only be immune but to never be a 
-target for a takedown.
-Calls on these users will instantly be rejected.
+- **General** protects against all takedowns. The bot can still start a takedown,
+  but it will fail instead of disconnecting the target.
+- **Random** protects against random takedowns only. If a protected user is
+  selected, the takedown will fail.
+- **General silent** prevents takedowns from starting against protected users.
+- **Random silent** prevents random takedowns from starting against protected users,
+  but does not protect against other kinds of takedowns.

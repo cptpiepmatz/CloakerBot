@@ -9,7 +9,7 @@ Choose a section below to edit its settings. Changes are saved only when you sub
 select = """
 ## 🛠️ Configure Danger Zones
 Select danger zones to be observed by {CloakerBot}.
-For more info use {/help command:config danger-zones}.
+For more info use {/help topic:danger zones}.
 """
 
 set = """
@@ -31,7 +31,7 @@ No danger zones are set now.
 select = """
 ## 🛠️ Configure General Immunity Roles
 Select what roles should be immune to **all** kind of takedowns by {CloakerBot}.
-For more info use {/help command:config immunity}.
+For more info use {/help topic:immunity}.
 """
 
 set = """
@@ -54,7 +54,7 @@ select = """
 ## 🛠️ Configure General Silent Immunity Roles
 Select what roles should be immune to **all** kind of takedowns by {CloakerBot}.
 Takedowns targeting these roles won't even initialize.
-For more info use {/help command:config immunity}.
+For more info use {/help topic:immunity}.
 """
 
 set = """
@@ -78,7 +78,7 @@ No **silent general** immunity roles are set now.
 select = """
 ## 🛠️ Configure Random Immunity Roles
 Select what roles should be immune to **random** takedowns by {CloakerBot}.
-For more info use {/help command:config immunity}.
+For more info use {/help topic:immunity}.
 """
 
 set = """
@@ -101,7 +101,7 @@ select = """
 ## 🛠️ Configure Random Silent Immunity Roles
 Select what roles should be immune to **random** takedowns by {CloakerBot}.
 Takedowns targeting these roles won't even initialize.
-For more info use {/help command: config immunity}.
+For more info use {/help topic:immunity}.
 """
 
 set = """
@@ -160,7 +160,7 @@ Takedowns are checked in an interval between **{#min}** hours and **{#max}** \
 hours.
 
 Open `/config` and configure Random takedowns to modify the time interval. \
-For more info use {/help command:config random}.
+For more info use {/help topic:random takedowns}.
 
 -# > {quote}
 """
@@ -184,7 +184,10 @@ This also applies to random takedowns.
 [help]
 overview = """
 ## 🔎 Help Overview
-For more info and help on a command, use `/help command:<command name>`.
+Choose a topic with `/help topic:<topic>` to learn about a feature or setting.
+Topics: takedowns, config, danger zones, immunity, log channel, random takedowns, countering, and ranks.
+
+Available commands:
 """
 
 support = """

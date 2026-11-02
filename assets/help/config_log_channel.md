@@ -10,7 +10,7 @@ If no log channel is defined a fallback will be searched for it.
 The first possible fallback is the system channel, the one where Discord 
 automatically posts a message when someone joins or leaves the server.
 
-The second is fallback is the public updates channel, it's the channel that 
+The second fallback is the public updates channel, the channel that
 Discord uses to push updates and notifications to server admins and moderators.
 
 The third fallback channel is the #general channel.

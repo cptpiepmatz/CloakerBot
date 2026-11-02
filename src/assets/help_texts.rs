@@ -1,4 +1,5 @@
 macros::template_md!("assets/help/cloaker.md");
+macros::template_md!("assets/help/config.md");
 macros::template_md!("assets/help/config_danger_zones.md");
 macros::template_md!("assets/help/config_immunity.md");
 macros::template_md!("assets/help/config_log_channel.md");

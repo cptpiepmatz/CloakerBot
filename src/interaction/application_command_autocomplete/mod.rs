@@ -21,7 +21,7 @@ pub async fn handle_application_command_autocomplete(
             .options
             .iter()
             .find_map(|option| match (&*option.name, &option.value) {
-                ("command", CommandOptionValue::Focused(query, _)) => Some(query.to_lowercase()),
+                ("topic", CommandOptionValue::Focused(query, _)) => Some(query.to_lowercase()),
                 _ => None
             })
             .map(|query| {

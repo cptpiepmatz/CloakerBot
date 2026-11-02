@@ -1,3 +1,5 @@
+Use {/ranks} to view a rank profile.
+
 Show off your takedown stats in a rank profile.
 
 
