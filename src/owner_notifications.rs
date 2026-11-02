@@ -1,3 +1,5 @@
+use std::collections::hash_map::Entry;
+
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
 use twilight_model::channel::Message;
@@ -28,8 +30,14 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
         return Ok(());
     }
 
-    let _lock = STATE.owner_notification_locks.lock(owner_id).await;
-    let notified = STATE.database.owner_notification(guild_id, owner_id).await?;
+    let mut notifications = STATE.owner_notifications.lock().await;
+    let notified = match notifications.entry(owner_id) {
+        Entry::Occupied(entry) => entry.into_mut(),
+        Entry::Vacant(entry) => {
+            let notified = STATE.database.owner_notification(guild_id, owner_id).await?;
+            entry.insert(notified)
+        }
+    };
     if notified.allow_dms == Some(false) || notified.latest_msg_index >= 1 {
         return Ok(());
     }
@@ -37,13 +45,9 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
     let content = crate::interaction::owner_update().to_string();
     match send_update(owner_id, &content).await {
         Ok(()) => {
-            STATE
-                .database
-                .save_owner_notification(owner_id, &OwnerNotified {
-                    allow_dms: Some(true),
-                    latest_msg_index: 1
-                })
-                .await?;
+            let notified = OwnerNotified { allow_dms: Some(true), latest_msg_index: 1 };
+            STATE.database.save_owner_notification(owner_id, &notified).await?;
+            notifications.insert(owner_id, notified);
         }
         Err(ClientError::Http(error))
             if matches!(error.kind(), ErrorType::Response {
@@ -51,13 +55,12 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
                 ..
             }) =>
         {
-            STATE
-                .database
-                .save_owner_notification(owner_id, &OwnerNotified {
-                    allow_dms: Some(false),
-                    ..notified
-                })
-                .await?;
+            let notified = OwnerNotified {
+                allow_dms: Some(false),
+                latest_msg_index: notified.latest_msg_index
+            };
+            STATE.database.save_owner_notification(owner_id, &notified).await?;
+            notifications.insert(owner_id, notified);
         }
         Err(error) => return Err(error.into())
     }

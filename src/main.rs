@@ -15,6 +15,7 @@ use songbird::shards::TwilightMap;
 use sync::Eject;
 use takedown::sounds::Sound;
 use thiserror::Error;
+use tokio::sync::Mutex;
 use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
 use tracing::Instrument;
@@ -101,7 +102,7 @@ struct State {
     cache: ObservableCache,
     cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
-    owner_notification_locks: KeyLock<Id<UserMarker>>,
+    owner_notifications: Mutex<HashMap<Id<UserMarker>, data::owner_notifications::OwnerNotified>>,
     linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
@@ -144,7 +145,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         cache,
         cache_rx,
         songbird,
-        owner_notification_locks: Default::default(),
+        owner_notifications: Default::default(),
         linked_role_locks: Default::default()
     }
 });
@@ -302,6 +303,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         DiscordEvent::GuildDelete(deleted) if deleted.unavailable != Some(true) => {
             let _lock = STATE.takedown_locks.lock(deleted.id).await;
             STATE.database.remove_guild(deleted.id).await?;
+            STATE.owner_notifications.lock().await.clear();
         }
 
         // handle interactions
