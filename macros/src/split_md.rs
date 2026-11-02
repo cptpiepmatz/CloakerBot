@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::PathBuf;
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -16,8 +15,7 @@ struct Section {
 
 pub fn macro_impl(input: TokenStream) -> syn::Result<TokenStream> {
     let file_path: LitStr = syn::parse2(input)?;
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("set in macro");
-    let path = PathBuf::from(manifest_dir).join(file_path.value());
+    let path = crate::resolve_path(&file_path)?;
     let content =
         fs::read_to_string(&path).map_err(|error| syn::Error::new(file_path.span(), error))?;
     let sections = split(&content);

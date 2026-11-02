@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::PathBuf;
 
 use heck::ToSnakeCase;
 use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
@@ -9,10 +8,7 @@ use syn::LitStr;
 pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
     let file_path: LitStr = syn::parse2(input)?;
     let span = file_path.span();
-    let file_path = file_path.value();
-
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("set by cargo");
-    let file_path = PathBuf::new().join(manifest_dir).join(file_path);
+    let file_path = crate::resolve_path(&file_path)?;
 
     let content = fs::read_to_string(&file_path).map_err(|err| syn::Error::new(span, err))?;
     let table: toml::Table = toml::from_str(&content).map_err(|err| syn::Error::new(span, err))?;
@@ -24,7 +20,7 @@ pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
     let file_path = file_path.to_string_lossy();
 
     Ok(quote! {
-        const _: &str = include_str!(#file_path);
+        const _: &str = std::include_str!(#file_path);
 
         #tokens
     })

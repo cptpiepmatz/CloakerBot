@@ -17,10 +17,7 @@ impl Parse for Args {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let file_path: LitStr = input.parse()?;
         let span = file_path.span();
-        let file_path = file_path.value();
-
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("set in macro");
-        let file_path = PathBuf::new().join(manifest_dir).join(file_path);
+        let file_path = crate::resolve_path(&file_path)?;
 
         let fn_name = if input.peek(Token![,]) {
             input.parse::<Token![,]>()?;

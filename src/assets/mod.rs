@@ -13,7 +13,7 @@ pub mod oauth;
 pub mod owner_notifications;
 pub mod sounds;
 
-macros::template_toml!("assets/replies.toml");
+macros::template_toml!("../../assets/replies.toml");
 
 static_toml! {
     pub static QUOTES = include_toml!("assets/quotes.toml");

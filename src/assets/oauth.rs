@@ -1,1 +1,1 @@
-macros::template_md!("assets/oauth/connected.md");
+macros::template_md!("../../assets/oauth/connected.md");
