@@ -129,6 +129,22 @@ impl Database {
         Ok(())
     }
 
+    pub async fn set_owner_notification_allowance(
+        &self,
+        user_id: Id<UserMarker>,
+        allow_dms: bool
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            "INSERT INTO owner_notifications (user_id, allow_dms) VALUES (?, ?) ON CONFLICT \
+             (user_id) DO UPDATE SET allow_dms = excluded.allow_dms"
+        )
+        .bind(user_id.to_string())
+        .bind(allow_dms)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn remove_guild(&self, guild_id: Id<GuildMarker>) -> Result<(), sqlx::Error> {
         let guild = guild_id.to_string();
         let mut transaction = self.pool.begin_with("BEGIN IMMEDIATE").await?;

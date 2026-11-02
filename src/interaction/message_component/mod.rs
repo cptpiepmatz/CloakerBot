@@ -18,6 +18,7 @@ pub mod role_select;
 pub enum HandleMessageComponentError {
     Database(sqlx::Error),
     NoMessageComponent,
+    NoAuthor,
     UnknownCustomId(String),
 
     ConfigButtonAction(ConfigButtonActionError),
@@ -39,6 +40,7 @@ pub async fn handle_message_component(
     let custom_id: MessageComponentCustomId = data.custom_id.parse()?;
     use MessageComponentCustomId as MCCId;
     match custom_id {
+        MCCId::OwnerNotificationsDisable => button::owner_notifications::disable(interaction).await,
         MCCId::ConfigOpenDangerZones |
         MCCId::ConfigOpenLogChannel |
         MCCId::ConfigOpenImmunity |

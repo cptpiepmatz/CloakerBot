@@ -15,25 +15,39 @@ use crate::interaction::message_component::{
 
 mod application_command;
 mod application_command_autocomplete;
-mod message_component;
+pub(crate) mod message_component;
 mod modal_submit;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
-pub fn owner_update() -> impl std::fmt::Display {
-    use std::ops::Deref;
-
+pub fn owner_update() -> impl Iterator<Item = String> {
     use application_command::{config, counter, help};
     use twilight_mention::Mention;
 
-    crate::assets::owner_notifications::msg01_v3_update(
-        crate::BOT_USER_ID.mention(),
-        config::MENTION.deref(),
-        config::MENTION.deref(),
-        config::MENTION.deref(),
-        counter::MENTION.deref(),
-        help::MENTION.deref()
-    )
+    let replacements = [
+        ("{CloakerBot}", crate::BOT_USER_ID.mention().to_string()),
+        ("{/config log-channel}", config::MENTION.to_string()),
+        ("{/config danger-zones}", config::MENTION.to_string()),
+        ("{/config immunity}", config::MENTION.to_string()),
+        ("{/counter}", counter::MENTION.to_string()),
+        ("{/help}", help::MENTION.to_string())
+    ];
+    crate::assets::owner_notifications::MSG01_V3_UPDATE_SECTIONS.iter().map(move |section| {
+        let content = if section.heading_level == 0 {
+            section.content.to_owned()
+        }
+        else {
+            format!(
+                "{} {}\n\n{}",
+                "#".repeat(section.heading_level.into()),
+                section.title,
+                section.content
+            )
+        };
+        replacements.iter().fold(content, |content, (placeholder, replacement)| {
+            content.replace(placeholder, replacement)
+        })
+    })
 }
 
 #[derive(Debug, From)]

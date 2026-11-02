@@ -3,15 +3,24 @@ use std::collections::hash_map::Entry;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
 use twilight_model::channel::Message;
+use twilight_model::channel::message::MessageFlags;
+use twilight_model::channel::message::component::{
+    ActionRow, Button, ButtonStyle, Component, TextDisplay
+};
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
+use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
+
+const MAX_MESSAGE_TEXT_LENGTH: usize = 4000;
+const MAX_MESSAGE_COMPONENTS: usize = 40;
 
 #[derive(Debug, derive_more::From)]
 pub enum OwnerNotificationError {
     Client(ClientError),
-    Database(sqlx::Error)
+    Database(sqlx::Error),
+    SectionTooLong(usize)
 }
 
 pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError> {
@@ -42,8 +51,8 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
         return Ok(());
     }
 
-    let content = crate::interaction::owner_update().to_string();
-    match send_update(owner_id, &content).await {
+    let messages = update_messages(crate::interaction::owner_update())?;
+    match send_update(owner_id, &messages).await {
         Ok(()) => {
             let notified = OwnerNotified { allow_dms: Some(true), latest_msg_index: 1 };
             STATE.database.save_owner_notification(owner_id, &notified).await?;
@@ -67,24 +76,64 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
     Ok(())
 }
 
-async fn send_update(
-    owner_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>,
-    content: &str
-) -> Result<(), ClientError> {
-    let channel = STATE.client.create_private_channel(owner_id).await?.model().await?;
-    let mut chunk = String::new();
+fn update_messages(
+    sections: impl IntoIterator<Item = String>
+) -> Result<Vec<Vec<Component>>, OwnerNotificationError> {
+    let mut messages = Vec::new();
+    let mut components = Vec::new();
     let mut length = 0;
-    for character in content.chars() {
-        if length + character.len_utf16() > 1900 {
-            STATE.client.create_message(channel.id).content(&chunk).await?;
-            chunk.clear();
+    for section in sections {
+        let section = section.trim();
+        let section_length = section.encode_utf16().count();
+        if section_length > MAX_MESSAGE_TEXT_LENGTH {
+            return Err(OwnerNotificationError::SectionTooLong(section_length));
+        }
+        if length + section_length > MAX_MESSAGE_TEXT_LENGTH ||
+            components.len() + 3 > MAX_MESSAGE_COMPONENTS
+        {
+            components.push(opt_out_button());
+            messages.push(std::mem::take(&mut components));
             length = 0;
         }
-        chunk.push(character);
-        length += character.len_utf16();
+        components
+            .push(Component::TextDisplay(TextDisplay { id: None, content: section.to_owned() }));
+        length += section_length;
     }
-    if !chunk.is_empty() {
-        STATE.client.create_message(channel.id).content(&chunk).await?;
+    if !components.is_empty() {
+        components.push(opt_out_button());
+        messages.push(components);
+    }
+    Ok(messages)
+}
+
+fn opt_out_button() -> Component {
+    Component::ActionRow(ActionRow {
+        id: None,
+        components: vec![Component::Button(Button {
+            id: None,
+            custom_id: Some(MessageComponentCustomId::OwnerNotificationsDisable.to_string()),
+            disabled: false,
+            emoji: None,
+            label: Some("Don't send me owner notifications".into()),
+            style: ButtonStyle::Secondary,
+            url: None,
+            sku_id: None
+        })]
+    })
+}
+
+async fn send_update(
+    owner_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>,
+    messages: &[Vec<Component>]
+) -> Result<(), ClientError> {
+    let channel = STATE.client.create_private_channel(owner_id).await?.model().await?;
+    for components in messages {
+        STATE
+            .client
+            .create_message(channel.id)
+            .flags(MessageFlags::IS_COMPONENTS_V2)
+            .components(components)
+            .await?;
     }
     Ok(())
 }
