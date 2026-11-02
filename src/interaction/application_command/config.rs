@@ -4,7 +4,9 @@ use thiserror::Error;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::{Interaction, InteractionContextType};
-use twilight_model::channel::message::component::{Button, ButtonStyle, Section, TextDisplay};
+use twilight_model::channel::message::component::{
+    Button, ButtonStyle, Section, Separator, SeparatorSpacingSize, TextDisplay
+};
 use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
@@ -65,22 +67,42 @@ pub async fn action(interaction: &Interaction) -> Result<(), HandleApplicationCo
                 id: None,
                 content: crate::assets::replies::config::menu().into()
             }),
+            Component::Separator(Separator {
+                id: None,
+                divider: Some(true),
+                spacing: Some(SeparatorSpacingSize::Large)
+            }),
             section(
                 "🪤 Danger Zones",
                 "Choose voice channels that trigger a takedown when joined.",
                 Id::ConfigOpenDangerZones
             ),
+            Component::Separator(Separator {
+                id: None,
+                divider: Some(true),
+                spacing: Some(SeparatorSpacingSize::Large)
+            }),
             section(
                 "📝 Log Channel",
                 "Choose where takedown logs and updates are posted.",
                 Id::ConfigOpenLogChannel
             ),
+            Component::Separator(Separator {
+                id: None,
+                divider: Some(true),
+                spacing: Some(SeparatorSpacingSize::Large)
+            }),
             section(
                 "🛡️ Immunity",
                 "Choose roles protected from general and random takedowns, including silent \
                  immunity.",
                 Id::ConfigOpenImmunity
             ),
+            Component::Separator(Separator {
+                id: None,
+                divider: Some(true),
+                spacing: Some(SeparatorSpacingSize::Large)
+            }),
             section(
                 "💫 Random Takedowns",
                 "Enable or disable random takedowns and set their timing.",
