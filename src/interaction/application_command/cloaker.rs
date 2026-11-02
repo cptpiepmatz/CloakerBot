@@ -17,7 +17,7 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_model::id::Id;
 use twilight_model::id::marker::{CommandMarker, UserMarker};
 use twilight_util::builder::InteractionResponseDataBuilder;
-use twilight_util::builder::command::{CommandBuilder, UserBuilder};
+use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::assets::replies::cloaker;
@@ -47,6 +47,15 @@ impl TryFrom<&CommandData> for CloakerCommand {
             let CommandDataOption { name, value } = option;
             match name.as_str() {
                 "target" => match value {
+                    CommandOptionValue::String(id) => {
+                        target = Some(id.parse().map_err(|_| {
+                            TryFromInteractionError::IncorrectFieldValue {
+                                command: NAME.into(),
+                                field: name.clone(),
+                                value: value.clone()
+                            }
+                        })?);
+                    }
                     CommandOptionValue::User(u) => target = Some(*u),
                     _v => {
                         return Err(TryFromInteractionError::IncorrectFieldType {
@@ -90,7 +99,10 @@ const fn permissions() -> Permissions {
 }
 
 pub fn chat_input() -> Command {
-    let option = UserBuilder::new("target", "User to take down.").required(true).build();
+    let option = StringBuilder::new("target", "User to take down.")
+        .required(true)
+        .autocomplete(true)
+        .build();
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
         .default_member_permissions(permissions())
         .contexts([InteractionContextType::Guild])
