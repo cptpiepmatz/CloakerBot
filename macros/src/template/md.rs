@@ -72,7 +72,7 @@ pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
     })
 }
 
-fn format(input: &str) -> String {
+pub(crate) fn format(input: &str) -> String {
     let s = input.trim().lines().map(|line| line.trim()).join("\n");
     let s = s.trim();
 

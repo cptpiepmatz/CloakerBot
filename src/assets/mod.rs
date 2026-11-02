@@ -1,5 +1,12 @@
 use static_toml::static_toml;
 
+#[derive(Debug, Clone, Copy)]
+pub struct MarkdownSection {
+    pub title: &'static str,
+    pub heading_level: u8,
+    pub content: &'static str
+}
+
 pub mod graphics;
 pub mod help_texts;
 pub mod oauth;
