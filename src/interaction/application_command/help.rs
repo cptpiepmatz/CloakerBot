@@ -126,7 +126,7 @@ pub async fn action(
             }
             HelpCommand::Takedowns => {
                 writeln!(content, "{}Takedowns", help_title);
-                content.write_str(&assets::help_texts::cloaker(
+                content.write_str(&assets::help_texts::takedowns(
                     BOT_USER_ID.mention(),
                     cloaker::MENTION.deref(),
                     counter::MENTION.deref()
@@ -138,26 +138,26 @@ pub async fn action(
             }
             HelpCommand::DangerZones => {
                 writeln!(content, "{}Danger zones", help_title);
-                content.write_str(&assets::help_texts::config_danger_zones(
+                content.write_str(&assets::help_texts::danger_zones(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
             }
             HelpCommand::Immunity => {
                 writeln!(content, "{}Immunity", help_title);
-                content.write_str(&assets::help_texts::config_immunity(BOT_USER_ID.mention()));
+                content.write_str(&assets::help_texts::immunity(BOT_USER_ID.mention()));
             }
             HelpCommand::LogChannel => {
                 writeln!(content, "{}Log channel", help_title);
-                content.write_str(&assets::help_texts::config_log_channel());
+                content.write_str(&assets::help_texts::log_channel());
             }
             HelpCommand::RandomTakedowns => {
                 writeln!(content, "{}Random takedowns", help_title);
-                content.write_str(&assets::help_texts::config_random(BOT_USER_ID.mention()));
+                content.write_str(&assets::help_texts::random_takedowns(BOT_USER_ID.mention()));
             }
             HelpCommand::Countering => {
                 writeln!(content, "{}Countering", help_title);
-                content.write_str(&assets::help_texts::counter(
+                content.write_str(&assets::help_texts::countering(
                     BOT_USER_ID.mention(),
                     counter::MENTION.deref()
                 ));
