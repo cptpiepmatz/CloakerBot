@@ -128,9 +128,10 @@ pub async fn action(
             complete.min,
             QUOTES.config.random.enabled
         )
+        .to_string()
     }
     else {
-        replies::config::random::disabled(QUOTES.config.random.disabled)
+        replies::config::random::disabled(QUOTES.config.random.disabled).to_string()
     };
     reply(interaction, content).await
 }

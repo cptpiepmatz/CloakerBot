@@ -107,7 +107,7 @@ pub async fn action(
     {
         match command {
             HelpCommand::All => {
-                content.write_str(&replies::help::overview());
+                write!(content, "{}", replies::help::overview());
                 content.write_char('\n');
                 writeln!(content, "{}", cloaker::MENTION.deref());
                 writeln!(content, "{}", cloaker::DESCRIPTION);
@@ -126,54 +126,64 @@ pub async fn action(
             }
             HelpCommand::Takedowns => {
                 writeln!(content, "{}Takedowns", help_title);
-                content.write_str(&assets::help_texts::takedowns(
-                    BOT_USER_ID.mention(),
-                    cloaker::MENTION.deref(),
-                    counter::MENTION.deref()
-                ));
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::takedowns(
+                        BOT_USER_ID.mention(),
+                        cloaker::MENTION.deref(),
+                        counter::MENTION.deref()
+                    )
+                );
             }
             HelpCommand::Config => {
                 writeln!(content, "{}Config", help_title);
-                content.write_str(&assets::help_texts::config(config::MENTION.deref()));
+                write!(content, "{}", assets::help_texts::config(config::MENTION.deref()));
             }
             HelpCommand::DangerZones => {
                 writeln!(content, "{}Danger zones", help_title);
-                content.write_str(&assets::help_texts::danger_zones(
-                    BOT_USER_ID.mention(),
-                    counter::MENTION.deref()
-                ));
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::danger_zones(
+                        BOT_USER_ID.mention(),
+                        counter::MENTION.deref()
+                    )
+                );
             }
             HelpCommand::Immunity => {
                 writeln!(content, "{}Immunity", help_title);
-                content.write_str(&assets::help_texts::immunity(BOT_USER_ID.mention()));
+                write!(content, "{}", assets::help_texts::immunity(BOT_USER_ID.mention()));
             }
             HelpCommand::LogChannel => {
                 writeln!(content, "{}Log channel", help_title);
-                content.write_str(&assets::help_texts::log_channel());
+                write!(content, "{}", assets::help_texts::log_channel());
             }
             HelpCommand::RandomTakedowns => {
                 writeln!(content, "{}Random takedowns", help_title);
-                content.write_str(&assets::help_texts::random_takedowns(BOT_USER_ID.mention()));
+                write!(content, "{}", assets::help_texts::random_takedowns(BOT_USER_ID.mention()));
             }
             HelpCommand::Countering => {
                 writeln!(content, "{}Countering", help_title);
-                content.write_str(&assets::help_texts::countering(
-                    BOT_USER_ID.mention(),
-                    counter::MENTION.deref()
-                ));
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::countering(BOT_USER_ID.mention(), counter::MENTION.deref())
+                );
             }
             HelpCommand::Ranks => {
                 writeln!(content, "{}Ranks", help_title);
-                content.write_str(&assets::help_texts::ranks(
-                    BOT_USER_ID.mention(),
-                    ranks::MENTION.deref()
-                ));
+                write!(
+                    content,
+                    "{}",
+                    assets::help_texts::ranks(BOT_USER_ID.mention(), ranks::MENTION.deref())
+                );
             }
         }
 
         content.write_char('\n');
         content.write_char('\n');
-        content.write_str(&replies::help::support());
+        write!(content, "{}", replies::help::support());
     }
 
     let response = InteractionResponse {

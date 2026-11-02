@@ -139,37 +139,43 @@ pub async fn action(
     use assets::replies::config;
     let content = match (roles.is_empty(), variant) {
         (true, ImmunitySelect::General) => {
-            config::immunity::general::unset(QUOTES.config.immunity.general.no_roles)
+            config::immunity::general::unset(QUOTES.config.immunity.general.no_roles).to_string()
         }
         (true, ImmunitySelect::Random) => {
-            config::immunity::random::unset(QUOTES.config.immunity.random.no_roles)
+            config::immunity::random::unset(QUOTES.config.immunity.random.no_roles).to_string()
         }
         (true, ImmunitySelect::GeneralSilent) => {
             config::immunity::general::silent::unset(QUOTES.config.immunity.general.no_roles)
+                .to_string()
         }
         (true, ImmunitySelect::RandomSilent) => {
             config::immunity::random::silent::unset(QUOTES.config.immunity.random.no_roles)
+                .to_string()
         }
         (false, ImmunitySelect::General) => config::immunity::general::set(
             BOT_USER_ID.mention(),
             QUOTES.config.immunity.general.roles,
             roles_insert
-        ),
+        )
+        .to_string(),
         (false, ImmunitySelect::Random) => config::immunity::random::set(
             BOT_USER_ID.mention(),
             QUOTES.config.immunity.random.roles,
             roles_insert
-        ),
+        )
+        .to_string(),
         (false, ImmunitySelect::GeneralSilent) => config::immunity::general::silent::set(
             BOT_USER_ID.mention(),
             QUOTES.config.immunity.general.roles,
             roles_insert
-        ),
+        )
+        .to_string(),
         (false, ImmunitySelect::RandomSilent) => config::immunity::random::silent::set(
             BOT_USER_ID.mention(),
             QUOTES.config.immunity.random.roles,
             roles_insert
         )
+        .to_string()
     };
 
     let data = InteractionResponseDataBuilder::new()

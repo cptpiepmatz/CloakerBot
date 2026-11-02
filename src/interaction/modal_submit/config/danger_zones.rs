@@ -49,13 +49,14 @@ pub async fn action(
         .update_config(guild_id, |config| config.danger_zones = select.values.clone())
         .await?;
     let content = if select.values.is_empty() {
-        replies::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels)
+        replies::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels).to_string()
     }
     else {
         replies::config::danger_zones::set(
             select.values.iter().map(|id| format!("- {}", id.mention())).join("\n"),
             QUOTES.config.danger_zones.channels
         )
+        .to_string()
     };
     reply(interaction, content).await
 }

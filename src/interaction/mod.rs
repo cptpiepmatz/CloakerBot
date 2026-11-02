@@ -20,7 +20,7 @@ mod modal_submit;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
-pub fn owner_update() -> std::borrow::Cow<'static, str> {
+pub fn owner_update() -> impl std::fmt::Display {
     use std::ops::Deref;
 
     use application_command::{config, counter, help};

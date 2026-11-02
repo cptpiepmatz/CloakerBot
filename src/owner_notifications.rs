@@ -34,7 +34,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
         return Ok(());
     }
 
-    let content = crate::interaction::owner_update();
+    let content = crate::interaction::owner_update().to_string();
     match send_update(owner_id, &content).await {
         Ok(()) => {
             STATE

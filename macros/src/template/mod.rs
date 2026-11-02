@@ -53,7 +53,7 @@ fn codegen_fn(
     }
 
     let imports = quote! {
-        use std::borrow::{Borrow, Cow};
+        use std::borrow::Borrow;
         use twilight_mention::fmt::{MentionFormat, CommandMention};
         use twilight_model::id::{Id, marker::UserMarker};
         use std::fmt::Display;
@@ -130,10 +130,12 @@ fn codegen_fn(
     let ops = mappings.iter().map(|Mapping { op, .. }| op);
 
     let body = match args.len() {
-        0 => quote!(Cow::Borrowed(#lit)),
+        0 => quote!(#lit),
         _ => quote! {
-            #(#ops)*
-            Cow::Owned(std::format!(#lit))
+            std::fmt::from_fn(move |f| {
+                #(#ops)*
+                std::write!(f, #lit)
+            })
         }
     };
 
@@ -145,7 +147,7 @@ fn codegen_fn(
         mod #fn_name {
             #imports
 
-            pub fn #fn_name<#(#generics),*>(#(#args),*) -> Cow<'static, str>
+            pub fn #fn_name<#(#generics),*>(#(#args),*) -> impl Display
                 where #(#constraints),*
             {
                 #body

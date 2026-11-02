@@ -74,12 +74,14 @@ pub async fn action(
             BOT_USER_ID.mention(),
             ch_id.mention(),
             QUOTES.config.log_channel.channel
-        ),
+        )
+        .to_string(),
         None => assets::replies::config::log_channel::unset(
             BOT_USER_ID.mention(),
             crate::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
+        .to_string()
     };
 
     let data = InteractionResponseDataBuilder::new()

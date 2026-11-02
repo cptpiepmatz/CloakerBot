@@ -136,22 +136,31 @@ pub async fn action(
     {
         Ok(TakedownSuccess { .. }) => {
             cloaker::success(command.target_id.mention(), crate::assets::QUOTES.cloaker.success)
+                .to_string()
         }
         Err(TakedownFail::Countered { by_id, .. }) => {
-            cloaker::countered(by_id.mention(), crate::assets::QUOTES.cloaker.countered)
+            cloaker::countered(by_id.mention(), crate::assets::QUOTES.cloaker.countered).to_string()
         }
-        Err(fail) => cloaker::fail::template(crate::assets::QUOTES.cloaker.fail, match fail {
-            TakedownFail::Countered { .. } => unreachable!(),
-            TakedownFail::Join(_) => cloaker::fail::join(),
-            TakedownFail::MissingPermissions => cloaker::fail::missing_perms(),
-            TakedownFail::NotFound => cloaker::fail::not_found(),
-            TakedownFail::Fled => cloaker::fail::fled(),
-            TakedownFail::Immune => cloaker::fail::immune(),
-            TakedownFail::Rejected => cloaker::fail::rejected(BOT_USER_ID.mention()),
-            TakedownFail::Client(err) => cloaker::fail::other(err),
-            TakedownFail::Audio(err) => cloaker::fail::other(err),
-            TakedownFail::Database(_) => cloaker::fail::other("could not load guild configuration")
-        })
+        Err(fail) => cloaker::fail::template(
+            std::fmt::from_fn(|f| match &fail {
+                TakedownFail::Countered { .. } => unreachable!(),
+                TakedownFail::Join(_) => write!(f, "{}", cloaker::fail::join()),
+                TakedownFail::MissingPermissions => write!(f, "{}", cloaker::fail::missing_perms()),
+                TakedownFail::NotFound => write!(f, "{}", cloaker::fail::not_found()),
+                TakedownFail::Fled => write!(f, "{}", cloaker::fail::fled()),
+                TakedownFail::Immune => write!(f, "{}", cloaker::fail::immune()),
+                TakedownFail::Rejected => {
+                    write!(f, "{}", cloaker::fail::rejected(BOT_USER_ID.mention()))
+                }
+                TakedownFail::Client(err) => write!(f, "{}", cloaker::fail::other(err)),
+                TakedownFail::Audio(err) => write!(f, "{}", cloaker::fail::other(err)),
+                TakedownFail::Database(_) => {
+                    write!(f, "{}", cloaker::fail::other("could not load guild configuration"))
+                }
+            }),
+            crate::assets::QUOTES.cloaker.fail
+        )
+        .to_string()
     };
 
     update_defer_msg(interaction, &content).await?;

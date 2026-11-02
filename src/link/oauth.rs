@@ -138,7 +138,7 @@ async fn notify_connected(user_id: Id<UserMarker>) -> Result<(), ClientError> {
     STATE
         .client
         .create_message(private_channel.id)
-        .content(&crate::assets::oauth::connected())
+        .content(&crate::assets::oauth::connected().to_string())
         .await?;
 
     Ok(())

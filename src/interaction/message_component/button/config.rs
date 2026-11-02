@@ -275,27 +275,32 @@ async fn handle_unset(
 
     // pull out when the other variant is fully deprecated
     let reply = match variant {
-        CUB::DangerZones => config::danger_zones::unset(QUOTES.config.danger_zones.no_channels),
+        CUB::DangerZones => {
+            config::danger_zones::unset(QUOTES.config.danger_zones.no_channels).to_string()
+        }
         CUB::ImmunityGeneral => {
-            config::immunity::general::unset(QUOTES.config.immunity.general.no_roles)
+            config::immunity::general::unset(QUOTES.config.immunity.general.no_roles).to_string()
         }
         CUB::ImmunityRandom => {
-            config::immunity::random::unset(QUOTES.config.immunity.random.no_roles)
+            config::immunity::random::unset(QUOTES.config.immunity.random.no_roles).to_string()
         }
         CUB::ImmunityGeneralSilent => {
             config::immunity::general::silent::unset(QUOTES.config.immunity.general.no_roles)
+                .to_string()
         }
         CUB::ImmunityRandomSilent => {
             config::immunity::random::silent::unset(QUOTES.config.immunity.random.no_roles)
+                .to_string()
         }
         CUB::LogChannel => config::log_channel::unset(
             BOT_USER_ID.mention(),
             crate::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
+        .to_string()
     };
 
-    Ok((reply.into(), None))
+    Ok((reply, None))
 }
 
 async fn handle_random(
@@ -316,8 +321,9 @@ async fn handle_random(
             random_config.max,
             random_config.min,
             quote
-        ),
-        false => config::random::disabled(quote)
+        )
+        .to_string(),
+        false => config::random::disabled(quote).to_string()
     };
 
     let component = Component::ActionRow(ActionRow {
@@ -329,5 +335,5 @@ async fn handle_random(
         }]
     });
 
-    Ok((reply.into(), component.into()))
+    Ok((reply, component.into()))
 }
