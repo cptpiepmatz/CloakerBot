@@ -418,7 +418,6 @@ dependencies = [
  "cloaker-bot-macros",
  "const_format",
  "cookie",
- "dashmap",
  "derive_more 2.1.1",
  "futures",
  "heapless",

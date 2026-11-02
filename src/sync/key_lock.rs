@@ -95,7 +95,6 @@ mod tests {
     use std::sync::{Arc, LazyLock};
     use std::time::Duration;
 
-    use dashmap::DashSet;
     use itertools::Itertools;
     use tokio::task::JoinSet;
     use tokio::time::Timeout;
@@ -121,40 +120,40 @@ mod tests {
 
         let key_lock = leak(KeyLock::new());
         let barrier = leak(Notify::new());
-        let bucket0 = leak(DashSet::with_capacity(N));
-        let bucket1 = leak(DashSet::with_capacity(N));
-        let bucket2 = leak(DashSet::with_capacity(N));
+        let bucket0 = leak(Mutex::new(HashSet::with_capacity(N)));
+        let bucket1 = leak(Mutex::new(HashSet::with_capacity(N)));
+        let bucket2 = leak(Mutex::new(HashSet::with_capacity(N)));
 
         let mut tasks = JoinSet::new();
         for idx in 1..=N {
             tasks.spawn(async move {
-                bucket0.insert(idx);
+                bucket0.lock().insert(idx);
                 barrier.notified().await;
 
                 let guard = key_lock.lock(0).await;
-                bucket1.insert(idx);
+                bucket1.lock().insert(idx);
                 barrier.notified().await;
                 drop(guard);
 
                 let guard = key_lock.lock(idx).await;
-                bucket2.insert(idx);
+                bucket2.lock().insert(idx);
                 barrier.notified().await;
                 drop(guard);
             });
         }
 
         sleep().await;
-        assert_eq!(bucket0.len(), N);
+        assert_eq!(bucket0.lock().len(), N);
         barrier.notify_waiters();
 
         for count in 1..=N {
             sleep().await;
-            assert_eq!(bucket1.len(), count);
+            assert_eq!(bucket1.lock().len(), count);
             barrier.notify_waiters();
         }
 
         sleep().await;
-        assert_eq!(bucket2.len(), N);
+        assert_eq!(bucket2.lock().len(), N);
         barrier.notify_waiters();
 
         assert!(timeout(tasks.join_all()).await.is_ok());
