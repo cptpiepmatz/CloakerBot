@@ -1,8 +1,9 @@
 [config]
 menu = """
 ## 🛠️ Configure CloakerBot
-Make this server feel like home — or a danger zone.
-Choose a section below to edit its settings. Changes are saved only when you submit the form.
+Configure the {CloakerBot} to be as chaotic as you want.
+Choose a section below to edit its settings. \
+Changes are saved only when you submit the form.
 """
 
 [config.danger_zones]

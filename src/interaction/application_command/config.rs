@@ -1,6 +1,7 @@
 use std::sync::LazyLock;
 
 use thiserror::Error;
+use twilight_mention::Mention;
 use twilight_mention::fmt::{CommandMention, MentionFormat};
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::{Interaction, InteractionContextType};
@@ -17,7 +18,7 @@ use twilight_util::builder::command::CommandBuilder;
 
 use super::{COMMANDS_REGISTER, HandleApplicationCommandError};
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
-use crate::{APPLICATION_ID, STATE};
+use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub const NAME: &str = "config";
 pub const DESCRIPTION: &str = "Configure the CloakerBot.";
@@ -65,7 +66,7 @@ pub async fn action(interaction: &Interaction) -> Result<(), HandleApplicationCo
         .components([
             Component::TextDisplay(TextDisplay {
                 id: None,
-                content: crate::assets::replies::config::menu().to_string()
+                content: crate::assets::replies::config::menu(BOT_USER_ID.mention()).to_string()
             }),
             Component::Separator(Separator {
                 id: None,
