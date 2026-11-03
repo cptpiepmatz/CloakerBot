@@ -7,7 +7,7 @@ const LOG_FILTER_ENV: &str = "RUST_LOG";
 const LOG_FORMAT_ENV: &str = "LOG_FORMAT";
 
 #[cfg(debug_assertions)]
-const DEFAULT_FILTER: &'static str = "warn,CloakerBot=debug";
+const DEFAULT_FILTER: &'static str = "warn,CloakerBot=debug,songbird=debug";
 #[cfg(not(debug_assertions))]
 const DEFAULT_FILTER: &'static str = "warn,CloakerBot=info";
 

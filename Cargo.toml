@@ -18,6 +18,9 @@ members = ["macros"]
 package.version = "3.0.0"
 package.edition = "2024"
 
+[profile.dev.package.serenity-voice-model]
+debug-assertions = false
+
 [workspace.dependencies]
 itertools = "0.15"
 hound = "3.5"
