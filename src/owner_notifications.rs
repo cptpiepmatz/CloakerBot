@@ -57,6 +57,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
             let notified = OwnerNotified { allow_dms: Some(true), latest_msg_index: 1 };
             STATE.database.save_owner_notification(owner_id, &notified).await?;
             notifications.insert(owner_id, notified);
+            tracing::info!(%guild_id, %owner_id, "owner notification delivered");
         }
         Err(ClientError::Http(error))
             if matches!(error.kind(), ErrorType::Response {
@@ -64,6 +65,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
                 ..
             }) =>
         {
+            tracing::debug!(%guild_id, %owner_id, "owner notification rejected: direct messages unavailable");
             let notified = OwnerNotified {
                 allow_dms: Some(false),
                 latest_msg_index: notified.latest_msg_index

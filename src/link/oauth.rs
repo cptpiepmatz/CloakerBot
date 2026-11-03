@@ -125,6 +125,7 @@ pub async fn callback(
     super::application_role_connection::update_metadata(&client, me_user.id)
         .await
         .map_err(err500)?;
+    tracing::info!("linked-role connection established");
 
     if let Err(error) = notify_connected(me_user.id).await {
         tracing::warn!(?error, "linked-role confirmation dm failed");

@@ -159,12 +159,14 @@ async fn sync_user(
         return Ok(());
     };
     if tokens.expires_at <= chrono::Utc::now() + chrono::Duration::seconds(60) {
+        tracing::debug!("refreshing linked-role credentials: near expiry");
         tokens = refresh_and_store(user_id, &tokens).await?;
     }
     let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
     match update_metadata(&client, user_id).await {
         Err(UpdateMetadataError::Http(error)) if matches!(error.kind(), twilight_http::error::ErrorType::Response { status, .. } if status.get() == 401) =>
         {
+            tracing::debug!("refreshing linked-role credentials: metadata request returned 401");
             tokens = refresh_and_store(user_id, &tokens).await?;
             let client = Client::new(format!("Bearer {}", tokens.access_token.expose()));
             update_metadata(&client, user_id).await?;

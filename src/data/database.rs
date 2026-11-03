@@ -25,6 +25,7 @@ pub enum InitDatabaseError {
 impl Database {
     pub async fn init(path: impl AsRef<Path>) -> Result<Self, InitDatabaseError> {
         let path = path.as_ref().to_owned();
+        tracing::info!(path = %path.display(), "initializing database");
         let options = SqliteConnectOptions::new()
             .filename(&path)
             .create_if_missing(true)
@@ -37,7 +38,9 @@ impl Database {
         if let Some(parent) = path.parent().filter(|path| !path.as_os_str().is_empty()) {
             tokio::fs::create_dir_all(parent).await?;
         }
+        tracing::debug!("applying database migrations");
         sqlx::migrate!().run(&pool).await?;
+        tracing::info!("database initialized; migrations complete");
         Ok(Self { pool, path, backup_lock: Default::default() })
     }
 }

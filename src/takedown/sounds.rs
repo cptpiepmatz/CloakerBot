@@ -47,8 +47,13 @@ impl Sound {
         call: &mut MutexGuard<'_, Call>,
         extra_wait_time: impl Into<Option<Duration>>
     ) {
+        tracing::debug!(
+            duration_seconds = self.duration.as_secs_f64(),
+            "playing takedown outcome sound"
+        );
         call.play_only_input(self.input.new_handle().into());
         tokio::time::sleep(self.duration + extra_wait_time.into().unwrap_or_default()).await;
+        tracing::debug!("takedown outcome sound wait finished");
     }
 
     pub fn load_eagerly() {

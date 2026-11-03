@@ -174,12 +174,18 @@ async fn main() -> miette::Result<()> {
     let cache_rx = state.cache_rx.eject().expect_report("cache_rx went missing");
 
     // ensure that technically lazy elements are evaluated
+    tracing::debug!("loading bundled sounds");
     Sound::load_eagerly();
+    tracing::info!("bundled sounds loaded");
+    tracing::debug!("registering application commands");
     LazyLock::force(&COMMANDS_REGISTER);
+    tracing::info!("application commands registered");
     LazyLock::force(&emojis::EMOJIS_REGISTER);
+    tracing::debug!("registering linked-role metadata");
     link::application_role_connection::register_metadata()
         .await
         .map_err(|error| miette::miette!("registering linked-role metadata failed: {error:?}"))?;
+    tracing::info!("linked-role metadata registered");
 
     // spawn server for account linking
     let http_server = tokio::spawn(link::serve().instrument(tracing::info_span!("http_server")));
@@ -283,7 +289,9 @@ async fn handle_event(event: BotEvent) {
     }
 
     if let Err(error) = run(event).await {
-        tracing::error!(?error, "event handling failed");
+        if !matches!(error, HandleEventError::Discord(HandleDiscordEventError::Interaction(_))) {
+            tracing::error!(?error, "event handling failed");
+        }
     }
 }
 
@@ -303,6 +311,7 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
         DiscordEvent::GuildDelete(deleted) if deleted.unavailable != Some(true) => {
             let _lock = STATE.takedown_locks.lock(deleted.id).await;
             STATE.database.remove_guild(deleted.id).await?;
+            tracing::info!(guild_id = %deleted.id, "removed persistent data for departed guild");
             STATE.owner_notifications.lock().await.clear();
         }
 

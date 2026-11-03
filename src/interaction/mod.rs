@@ -1,5 +1,5 @@
 use derive_more::From;
-use twilight_model::application::interaction::{Interaction, InteractionType};
+use twilight_model::application::interaction::{Interaction, InteractionData, InteractionType};
 use twilight_model::gateway::payload::incoming::InteractionCreate;
 
 use crate::HandleDiscordEventError;
@@ -61,12 +61,29 @@ pub enum HandleInteractionError {
 #[tracing::instrument(skip_all, fields(
     interaction_id = %interaction_create.id,
     guild_id = interaction_create.guild_id.map(|id| id.get()),
-    interaction_kind = ?interaction_create.kind
+    user_id = interaction_create.author_id().map(|id| id.get()),
+    interaction_kind = ?interaction_create.kind,
+    command_name,
+    component_id,
+    modal_id
 ), err(Debug))]
 pub async fn handle_interaction(
     interaction_create: &InteractionCreate
 ) -> Result<(), HandleInteractionError> {
     let interaction: &Interaction = interaction_create;
+    let span = tracing::Span::current();
+    match interaction.data.as_ref() {
+        Some(InteractionData::ApplicationCommand(data)) => {
+            span.record("command_name", data.name.as_str());
+        }
+        Some(InteractionData::MessageComponent(data)) => {
+            span.record("component_id", data.custom_id.as_str());
+        }
+        Some(InteractionData::ModalSubmit(data)) => {
+            span.record("modal_id", data.custom_id.as_str());
+        }
+        _ => {}
+    }
     tracing::debug!("handling interaction");
     match interaction.kind {
         InteractionType::MessageComponent => handle_message_component(interaction).await?,

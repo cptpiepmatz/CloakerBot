@@ -76,13 +76,17 @@ pub async fn log_takedown(
                     .channel(channel_id)
                     .is_some_and(|channel| channel.guild_id == Some(guild_id))
             {
+                tracing::debug!(%guild_id, %channel_id, "skipping discord log: configured channel is inaccessible or belongs to another guild");
                 return Ok(());
             }
             channel_id
         }
         None => match fallback_channel(guild_id).await? {
             Some(channel_id) => channel_id,
-            None => return Ok(())
+            None => {
+                tracing::debug!(%guild_id, "skipping discord log: no fallback channel available");
+                return Ok(());
+            }
         }
     };
     let source = match kind {

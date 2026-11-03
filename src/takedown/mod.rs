@@ -107,9 +107,13 @@ pub async fn takedown(
     let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
     tracing::debug!("acquired takedown lock");
     if STATE.cache.guild(guild_id).is_none() {
+        tracing::info!("takedown did not complete: guild not found");
         return Err(TakedownFail::NotFound);
     }
-    let config = STATE.database.guild_config(guild_id).await?;
+    let config = STATE.database.guild_config(guild_id).await.map_err(|error| {
+        tracing::error!(?error, "could not load takedown configuration");
+        TakedownFail::Database(error)
+    })?;
     let result = execute_takedown(target_id, guild_id, kind, &config).await;
     record_outcome(target_id, guild_id, kind, &result).await;
     result
@@ -181,8 +185,11 @@ async fn execute_takedown(
     let (_planned_takedown_guard, counter_rx) =
         upsert_takedown_plan(target_id, guild_id, !matches!(kind, TakedownType::DangerZone { .. }));
 
+    tracing::debug!(%channel_id, "joining voice channel");
     let call = get_call(guild_id, channel_id).await?;
+    tracing::debug!(%channel_id, "joined voice channel; waiting for call lock");
     let mut call = call.lock().await;
+    tracing::debug!(%channel_id, "acquired voice call lock");
 
     let takedown_res = takedown_in_voice(
         &mut call,
@@ -199,7 +206,10 @@ async fn execute_takedown(
 
     // leave the channel after everything that happened
     // nothing we can do if leaving fails
-    let _ = call.leave().await;
+    tracing::debug!(%channel_id, "leaving voice channel");
+    if let Err(error) = call.leave().await {
+        tracing::warn!(%channel_id, ?error, "could not leave voice channel");
+    }
     takedown_res
 }
 
@@ -216,6 +226,7 @@ async fn takedown_in_voice(
     counter_rx: Option<oneshot::Receiver<Id<UserMarker>>>
 ) -> Result<TakedownSuccess, TakedownFail> {
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
+    tracing::debug!(%channel_id, "playing takedown notification");
 
     let notification_track_handle =
         call.play_only_input(notification_sound.0.input.new_handle().into());
@@ -235,6 +246,7 @@ async fn takedown_in_voice(
     };
 
     notification_track_handle.stop().map_err(TakedownFail::Audio)?;
+    tracing::debug!(%channel_id, countered_by_id = countered_by_id.map(|id| id.get()), "takedown notification finished");
 
     let bot_channel =
         STATE.cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());

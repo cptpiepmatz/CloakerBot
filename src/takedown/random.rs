@@ -41,17 +41,18 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
         if !STATE.database.claim_random(guild_id, &config, now, next).await? {
             continue;
         }
+        tracing::debug!(%guild_id, "claimed random takedown schedule");
 
-        let Some(guild_voice_states) = (match STATE.cache.guild_voice_states(guild_id) {
-            None => None,
-            Some(gvs) if gvs.len() < 3 => None,
-            Some(gvs) => Some(gvs)
-        })
+        let guild_voice_states = STATE.cache.guild_voice_states(guild_id);
+        let voice_user_count = guild_voice_states.as_ref().map_or(0, |states| states.len());
+        let Some(guild_voice_states) = guild_voice_states.filter(|states| states.len() >= 3)
         else {
+            tracing::debug!(%guild_id, voice_user_count, "skipping random takedown: insufficient voice users");
             continue;
         };
 
         let target_id = guild_voice_states.iter().choose(&mut rng).expect("at least 3");
+        tracing::debug!(%guild_id, %target_id, voice_user_count, "selected random takedown target");
         due.push((*target_id, guild_id));
     }
 

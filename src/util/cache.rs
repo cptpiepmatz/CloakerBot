@@ -49,6 +49,13 @@ impl ObservableCache {
         };
         self.inner.update(event);
         if let Some(update) = update {
+            tracing::trace!(
+                guild_id = %update.guild_id,
+                user_id = %update.user_id,
+                old_channel_id = update.old.map(|id| id.get()),
+                new_channel_id = update.new.map(|id| id.get()),
+                "observed voice channel transition"
+            );
             let _ = self.emitter.send(CacheUpdateEvent::VoiceChannelUpdate(update)).await;
         }
     }
