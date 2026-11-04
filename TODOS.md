@@ -1,0 +1,12 @@
+- [ ] simplify `macros` via some actual markdown crate
+- [ ] restore `/config target-bots` behavior 
+- [ ] separate http server into own module
+- [ ] serve icon not as part of oauth
+- [ ] add `/invite` route to serve invitation link for the bot to a guild 
+- [ ] add `/github` route to serve github source link
+- [ ] add `/discord` route to server discord server invitation link
+- [ ] add `/version` route to serve app version
+- [ ] write README.md
+- [ ] check typos
+- [ ] add ci
+- [ ] update `toolkit.nu` to also build via podman
