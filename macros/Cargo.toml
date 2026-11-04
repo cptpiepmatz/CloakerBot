@@ -7,12 +7,13 @@ edition.workspace = true
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1"
-quote = "1"
-syn = "3"
-itertools.workspace = true
 heck = "0.5.0"
+proc-macro2 = "1"
+pulldown-cmark = { version = "0.13", default-features = false }
+pulldown-cmark-to-cmark = "22"
+quote = "1"
 regex = "1.11"
+syn = "3"
 toml = "1.1"
 
 [dev-dependencies]

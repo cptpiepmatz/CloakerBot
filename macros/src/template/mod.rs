@@ -6,7 +6,6 @@ use quote::{format_ident, quote};
 use regex::Regex;
 
 mod md;
-pub(crate) use md::format as format_markdown;
 pub use md::macro_impl as md;
 
 mod toml;

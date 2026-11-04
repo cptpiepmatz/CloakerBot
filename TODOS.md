@@ -1,4 +1,4 @@
-- [ ] simplify `macros` via some actual markdown crate
+- [x] simplify `macros` via some actual markdown crate
 - [ ] restore `/config target-bots` behavior 
 - [ ] separate http server into own module
 - [ ] serve icon not as part of oauth

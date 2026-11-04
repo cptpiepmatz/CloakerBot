@@ -1,10 +1,11 @@
 use std::fs;
 
 use proc_macro2::TokenStream;
+use pulldown_cmark::{Event, Tag, TagEnd};
 use quote::quote;
 use syn::LitStr;
 
-use crate::template;
+use crate::markdown;
 
 #[derive(Debug, PartialEq, Eq, Default)]
 struct Section {
@@ -36,102 +37,39 @@ pub fn macro_impl(input: TokenStream) -> syn::Result<TokenStream> {
     }})
 }
 
-fn fence(line: &str) -> Option<(char, usize)> {
-    let line = line.trim_start();
-    let marker = line.chars().next()?;
-    if marker != '`' && marker != '~' {
-        return None;
-    }
-    let count = line.chars().take_while(|character| *character == marker).count();
-    (count >= 3).then_some((marker, count))
-}
-
-fn normalize(input: &str) -> String {
-    let mut output = Vec::new();
-    let mut prose = String::new();
-    let mut code = None;
-    for line in input.lines() {
-        let boundary = fence(line);
-        if code.is_some() || boundary.is_some() {
-            if !prose.is_empty() {
-                output.push(template::format_markdown(&prose));
-                prose.clear();
-            }
-            output.push(line.to_owned());
-            if let Some((marker, length)) = code {
-                if boundary.is_some_and(|(end, count)| end == marker && count >= length) &&
-                    line.trim().chars().all(|character| character == marker)
-                {
-                    code = None;
-                }
-            }
-            else {
-                code = boundary;
-            }
-        }
-        else if line.ends_with("  ") || line.ends_with('\\') {
-            prose.push_str(line.trim_end());
-            output.push(template::format_markdown(&prose));
-            prose.clear();
-        }
-        else {
-            prose.push_str(line);
-            prose.push('\n');
-        }
-    }
-    if !prose.is_empty() {
-        output.push(template::format_markdown(&prose));
-    }
-    output.join("\n").trim().to_owned()
-}
-
 fn split(input: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current = Section::default();
-    let mut code = None;
-    for line in input.lines() {
-        if let Some((marker, length)) = code {
-            if fence(line).is_some_and(|(end, count)| end == marker && count >= length) &&
-                line.trim().chars().all(|character| character == marker)
-            {
-                code = None;
-            }
-        }
-        else if let Some(boundary) = fence(line) {
-            code = Some(boundary);
-        }
-        else {
-            let trimmed = line.trim_start_matches(' ');
-            let level = trimmed.chars().take_while(|character| *character == '#').count();
-            if line.len() - trimmed.len() <= 3 &&
-                (1..=6).contains(&level) &&
-                (trimmed.len() == level || trimmed.as_bytes()[level].is_ascii_whitespace())
-            {
-                if current.heading_level != 0 || !current.content.trim().is_empty() {
-                    current.content = normalize(&current.content);
+    let mut content = Vec::new();
+    let mut depth = 0;
+    let mut events = markdown::parse(input);
+    while let Some(event) = events.next() {
+        match event {
+            Event::Start(Tag::Heading { level, .. }) if depth == 0 => {
+                current.content = markdown::render(content.drain(..));
+                if current.heading_level != 0 || !current.content.is_empty() {
                     sections.push(current);
                 }
-                let title = trimmed[level..].trim();
-                let without_closing = title.trim_end_matches('#');
-                let title = if without_closing.ends_with(char::is_whitespace) {
-                    without_closing.trim_end()
-                }
-                else {
-                    title
-                };
-                current = Section {
-                    title: title.to_owned(),
-                    heading_level: level as u8,
-                    content: String::new()
-                };
-                continue;
+                let title = markdown::render(
+                    events
+                        .by_ref()
+                        .take_while(|event| !matches!(event, Event::End(TagEnd::Heading(_))))
+                );
+                current = Section { title, heading_level: level as u8, content: String::new() };
             }
+            Event::Start(_) => {
+                depth += 1;
+                content.push(event);
+            }
+            Event::End(_) => {
+                depth -= 1;
+                content.push(event);
+            }
+            _ => content.push(event)
         }
-        current.content.push_str(line);
-        current.content.push('\n');
     }
-    if current.heading_level != 0 || !current.content.trim().is_empty() {
-        current.content = normalize(&current.content);
+    current.content = markdown::render(content);
+    if current.heading_level != 0 || !current.content.is_empty() {
         sections.push(current);
     }
     sections
@@ -191,7 +129,7 @@ mod tests {
                     # Not a heading
                       preserved indentation
                     ```
-                    A hard break
+                    A hard break\x20\x20
                     continues here.
                 "}
                 .trim_end()

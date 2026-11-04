@@ -2,7 +2,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use heck::ToSnakeCase;
-use itertools::Itertools;
 use proc_macro2::{Ident as Ident2, Span as Span2, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
@@ -44,7 +43,7 @@ pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 
     let content = fs::read_to_string(&file_path).map_err(|err| syn::Error::new(span, err))?;
 
-    let formatted = format(&content);
+    let formatted = crate::markdown::format(&content);
     super::valid(&formatted, span)?;
 
     let placeholders = super::find_placeholders(&formatted);
@@ -67,15 +66,4 @@ pub fn macro_impl(input: TokenStream2) -> syn::Result<TokenStream2> {
 
         #tokens
     })
-}
-
-pub(crate) fn format(input: &str) -> String {
-    let s = input.trim().lines().map(|line| line.trim()).join("\n");
-    let s = s.trim();
-
-    s.replace("\n\n\n", "<br><br>")
-        .replace("\n\n", "<br>")
-        .replace("\n", " ")
-        .replace("  ", " ")
-        .replace("<br>", "\n")
 }
