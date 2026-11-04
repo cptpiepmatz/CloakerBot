@@ -20,34 +20,11 @@ mod modal_submit;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
-pub fn owner_update() -> impl Iterator<Item = String> {
-    use application_command::{config, counter, help};
-    use twilight_mention::Mention;
-
-    let replacements = [
-        ("{CloakerBot}", crate::BOT_USER_ID.mention().to_string()),
-        ("{/config log-channel}", config::MENTION.to_string()),
-        ("{/config danger-zones}", config::MENTION.to_string()),
-        ("{/config immunity}", config::MENTION.to_string()),
-        ("{/counter}", counter::MENTION.to_string()),
-        ("{/help}", help::MENTION.to_string())
-    ];
-    crate::assets::owner_notifications::MSG01_V3_UPDATE_SECTIONS.iter().map(move |section| {
-        let content = if section.heading_level == 0 {
-            section.content.to_owned()
-        }
-        else {
-            format!(
-                "{} {}\n\n{}",
-                "#".repeat(section.heading_level.into()),
-                section.title,
-                section.content
-            )
-        };
-        replacements.iter().fold(content, |content, (placeholder, replacement)| {
-            content.replace(placeholder, replacement)
-        })
-    })
+pub mod command_mentions {
+    pub use super::application_command::{
+        cloaker::MENTION as CLOAKER, config::MENTION as CONFIG, counter::MENTION as COUNTER,
+        help::MENTION as HELP, ranks::MENTION as RANKS
+    };
 }
 
 #[derive(Debug, From)]

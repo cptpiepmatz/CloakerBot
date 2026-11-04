@@ -1,43 +1,15 @@
-use std::fs;
-
-use proc_macro2::TokenStream;
 use pulldown_cmark::{Event, Tag, TagEnd};
-use quote::quote;
-use syn::LitStr;
 
 use crate::markdown;
 
 #[derive(Debug, PartialEq, Eq, Default)]
-struct Section {
-    title: String,
-    heading_level: u8,
-    content: String
+pub(super) struct Section {
+    pub title: String,
+    pub heading_level: u8,
+    pub content: String
 }
 
-pub fn macro_impl(input: TokenStream) -> syn::Result<TokenStream> {
-    let file_path: LitStr = syn::parse2(input)?;
-    let path = crate::resolve_path(&file_path)?;
-    let content =
-        fs::read_to_string(&path).map_err(|error| syn::Error::new(file_path.span(), error))?;
-    let sections = split(&content);
-    let records = sections.iter().map(|Section { title, heading_level, content }| {
-        quote! {
-            crate::assets::MarkdownSection {
-                title: #title,
-                heading_level: #heading_level,
-                content: #content
-            }
-        }
-    });
-
-    Ok(quote! {{
-        const _: &str = std::include_str!(#file_path);
-        const SECTIONS: &[crate::assets::MarkdownSection] = &[#(#records),*];
-        SECTIONS
-    }})
-}
-
-fn split(input: &str) -> Vec<Section> {
+pub(super) fn split(input: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current = Section::default();
     let mut content = Vec::new();

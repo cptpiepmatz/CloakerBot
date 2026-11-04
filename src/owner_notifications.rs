@@ -1,7 +1,9 @@
 use std::collections::hash_map::Entry;
+use std::ops::Deref;
 
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
+use twilight_mention::Mention;
 use twilight_model::channel::Message;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::channel::message::component::{
@@ -10,6 +12,7 @@ use twilight_model::channel::message::component::{
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
+use crate::interaction::command_mentions;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
 
@@ -51,7 +54,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
         return Ok(());
     }
 
-    let messages = update_messages(crate::interaction::owner_update())?;
+    let messages = update_messages(owner_update())?;
     match send_update(owner_id, &messages).await {
         Ok(()) => {
             let notified = OwnerNotified { allow_dms: Some(true), latest_msg_index: 1 };
@@ -78,13 +81,25 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
     Ok(())
 }
 
+fn owner_update() -> impl Iterator<Item = impl std::fmt::Display> {
+    crate::assets::owner_notifications::v3_update(
+        crate::BOT_USER_ID.mention(),
+        command_mentions::CONFIG.deref(),
+        command_mentions::CONFIG.deref(),
+        command_mentions::CONFIG.deref(),
+        command_mentions::COUNTER.deref(),
+        command_mentions::HELP.deref()
+    )
+}
+
 fn update_messages(
-    sections: impl IntoIterator<Item = String>
+    sections: impl IntoIterator<Item = impl std::fmt::Display>
 ) -> Result<Vec<Vec<Component>>, OwnerNotificationError> {
     let mut messages = Vec::new();
     let mut components = Vec::new();
     let mut length = 0;
     for section in sections {
+        let section = section.to_string();
         let section = section.trim();
         let section_length = section.encode_utf16().count();
         if section_length > MAX_MESSAGE_TEXT_LENGTH {

@@ -5,7 +5,6 @@ use proc_macro2::TokenStream as TokenStream2;
 
 mod env;
 mod markdown;
-mod split_md;
 mod template;
 
 fn resolve_path(file_path: &syn::LitStr) -> syn::Result<PathBuf> {
@@ -41,11 +40,9 @@ macro_rules! defer_macros {
 }
 
 defer_macros! {
+    /// Generates a display template, or an iterator of display sections with
+    /// `split_sections = true`.
     template_md: template::md,
     template_toml: template::toml,
     env: env::env,
-
-    /// Splits a Markdown file into a static slice of
-    /// `crate::assets::MarkdownSection`.
-    split_md: split_md::macro_impl,
 }

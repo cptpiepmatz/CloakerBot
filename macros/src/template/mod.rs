@@ -8,6 +8,8 @@ use regex::Regex;
 mod md;
 pub use md::macro_impl as md;
 
+mod sections;
+
 mod toml;
 pub use toml::macro_impl as toml;
 
@@ -47,10 +49,34 @@ fn codegen_fn(
     fn_name: &Ident2,
     placeholders: &HashMap<String, String>
 ) -> TokenStream2 {
-    let mut lit = input.to_owned();
-    for (from, to) in placeholders.iter() {
-        lit = lit.replace(&format!("{{{from}}}"), &format!("{{{to}}}"));
-    }
+    codegen(&[input], fn_name, placeholders, false)
+}
+
+fn codegen_sections(
+    input: &[String],
+    fn_name: &Ident2,
+    placeholders: &HashMap<String, String>
+) -> TokenStream2 {
+    let input: Vec<_> = input.iter().map(String::as_str).collect();
+    codegen(&input, fn_name, placeholders, true)
+}
+
+fn codegen(
+    input: &[&str],
+    fn_name: &Ident2,
+    placeholders: &HashMap<String, String>,
+    split_sections: bool
+) -> TokenStream2 {
+    let literals: Vec<_> = input
+        .iter()
+        .map(|input| {
+            let mut lit = (*input).to_owned();
+            for (from, to) in placeholders {
+                lit = lit.replace(&format!("{{{from}}}"), &format!("{{{to}}}"));
+            }
+            lit
+        })
+        .collect();
 
     let imports = quote! {
         use std::borrow::Borrow;
@@ -129,14 +155,48 @@ fn codegen_fn(
 
     let ops = mappings.iter().map(|Mapping { op, .. }| op);
 
-    let body = match args.len() {
-        0 => quote!(#lit),
-        _ => quote! {
-            std::fmt::from_fn(move |f| {
-                #(#ops)*
-                std::write!(f, #lit)
-            })
+    let (return_type, body) = if split_sections {
+        let count = literals.len();
+        let body = if mappings.is_empty() {
+            quote! {
+                let sections: [&'static str; #count] = [#(#literals),*];
+                sections.into_iter()
+            }
         }
+        else {
+            let indices = 0..literals.len();
+            quote! {
+                let render = std::sync::Arc::new(
+                    move |index: usize, f: &mut std::fmt::Formatter<'_>| {
+                        #(#ops)*
+                        match index {
+                            #(#indices => std::write!(f, #literals),)*
+                            _ => unreachable!()
+                        }
+                    }
+                );
+                (0..#count).map(move |index| {
+                    let render = std::sync::Arc::clone(&render);
+                    std::fmt::from_fn(move |f| render(index, f))
+                })
+            }
+        };
+        (quote!(impl ExactSizeIterator<Item = impl Display>), body)
+    }
+    else {
+        let lit = &literals[0];
+        let body = if mappings.is_empty() {
+            quote!(#lit)
+        }
+        else {
+            quote! {
+                std::fmt::from_fn(move |f| {
+                    #(#ops)*
+                    std::write!(f, #lit)
+                })
+            }
+        };
+        (quote!(impl Display), body)
     };
 
     let generics = mappings.iter().filter_map(|Mapping { generic, .. }| generic.as_ref());
@@ -147,7 +207,7 @@ fn codegen_fn(
         mod #fn_name {
             #imports
 
-            pub fn #fn_name<#(#generics),*>(#(#args),*) -> impl Display
+            pub fn #fn_name<#(#generics),*>(#(#args),*) -> #return_type
                 where #(#constraints),*
             {
                 #body
