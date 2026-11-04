@@ -2,8 +2,8 @@
 
 Original code and other original contributions by Tim "Piepmatz" Hesse are
 licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
-The third-party materials below are excluded from that license. No ownership
-of these materials is claimed by the project author.
+The third-party materials below are excluded from that license. 
+No ownership of these materials is claimed by the project author.
 
 ## PAYDAY audio and quotations
 
@@ -21,11 +21,14 @@ their respective rights holders.
 ["Cloaker Takedown" by sthellen](https://www.deviantart.com/sthellen/art/Cloaker-Takedown-446933017)
 on DeviantArt.
 
-Credit for the original artwork belongs to sthellen. Rights to the artwork and
-depicted game content remain with their respective rights holders.
+Credit for the original artwork belongs to
+[sthellen](https://www.deviantart.com/sthellen).
+Rights to the artwork and depicted game content remain with their respective
+rights holders.
 
 ## Third-party rights
 
-The project's license grants no rights to these third-party materials. Their
-reuse must be independently permitted by the applicable rights holders or by
-law. Attribution does not imply endorsement of this project.
+The project's license grants no rights to these third-party materials.
+Their reuse must be independently permitted by the applicable rights holders or
+by law.
+Attribution does not imply endorsement of this project.
