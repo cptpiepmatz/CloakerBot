@@ -201,7 +201,7 @@ title = "## 🔎 Help on "
 [cloaker]
 success = """
 ## 🎯 Takedown Successful
-You succesfully took down {target}.
+You successfully took down {target}.
 
 -# > {quote}
 """
@@ -227,7 +227,7 @@ not-found = "Could not find the target in a voice channel."
 fled = "Target fled from the channel."
 immune = "Target is immune to takedowns."
 rejected = "{CloakerBot} got moved from voice channel."
-other = "An error occured: \n> {error}"
+other = "An error occurred: \n> {error}"
 
 [counter]
 success = """
