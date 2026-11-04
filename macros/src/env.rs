@@ -110,7 +110,7 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
                 GuessedType::Usize => &value.parse::<usize>().map_err(map_err(env.span()))?
             };
 
-            return Ok(quote! {{
+            return Ok(quote! { const {
                 let _ = std::env!(#env);
                 #value
             }});
@@ -121,7 +121,7 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
     let prod = prod.map(|value| quote!(#[cfg(feature = "prod")] let value = #value;));
     let fallback = fallback.map(|value| quote!(let value = #value;));
 
-    Ok(quote! {{
+    Ok(quote! { const {
         std::option_env!(#env);
 
         #fallback

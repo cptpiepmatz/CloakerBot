@@ -6,7 +6,7 @@ use syn::LitStr;
 
 use crate::template;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 struct Section {
     title: String,
     heading_level: u8,
@@ -28,7 +28,7 @@ pub fn macro_impl(input: TokenStream) -> syn::Result<TokenStream> {
             }
         }
     });
-    let file_path = path.to_string_lossy();
+
     Ok(quote! {{
         const _: &str = std::include_str!(#file_path);
         const SECTIONS: &[crate::assets::MarkdownSection] = &[#(#records),*];
@@ -87,7 +87,7 @@ fn normalize(input: &str) -> String {
 
 fn split(input: &str) -> Vec<Section> {
     let mut sections = Vec::new();
-    let mut current = Section { title: String::new(), heading_level: 0, content: String::new() };
+    let mut current = Section::default();
     let mut code = None;
     for line in input.lines() {
         if let Some((marker, length)) = code {
