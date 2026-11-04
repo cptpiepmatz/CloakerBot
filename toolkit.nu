@@ -1,3 +1,8 @@
+def builder [] {
+  # errors if none is available
+  which podman docker | get 0.command
+}
+
 def tag [platform: string] {
   let cargo_toml = open Cargo.toml
   let short_sha = ^git rev-parse --short HEAD
@@ -8,10 +13,10 @@ def tag [platform: string] {
 
 export def "docker" [] {
   let tag = tag "amd64"
-  ^docker build --tag $tag --platform linux/amd64 .
+  ^(builder) build --tag $tag --platform linux/amd64 .
 }
 
 export def "docker arm64" [] {
   let tag = tag "arm64"
-  ^docker build --tag $tag --platform linux/arm64 .
+  ^(builder) build --tag $tag --platform linux/arm64 .
 }
