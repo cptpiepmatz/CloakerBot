@@ -5,7 +5,7 @@ use twilight_http::error::ErrorType;
 use twilight_model::channel::Message;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::channel::message::component::{
-    ActionRow, Button, ButtonStyle, Component, TextDisplay
+    ActionRow, Button, ButtonStyle, Component, Separator, SeparatorSpacingSize, TextDisplay
 };
 
 use crate::STATE;
@@ -91,14 +91,18 @@ fn update_messages(
             return Err(OwnerNotificationError::SectionTooLong(section_length));
         }
         if length + section_length > MAX_MESSAGE_TEXT_LENGTH ||
-            components.len() + 3 > MAX_MESSAGE_COMPONENTS
+            components.len() + 4 > MAX_MESSAGE_COMPONENTS
         {
-            components.push(opt_out_button());
             messages.push(std::mem::take(&mut components));
             length = 0;
         }
         components
             .push(Component::TextDisplay(TextDisplay { id: None, content: section.to_owned() }));
+        components.push(Component::Separator(Separator {
+            id: None,
+            divider: Some(false),
+            spacing: Some(SeparatorSpacingSize::Large)
+        }));
         length += section_length;
     }
     if !components.is_empty() {
