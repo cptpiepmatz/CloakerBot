@@ -1,5 +1,4 @@
 use std::collections::hash_map::Entry;
-use std::ops::Deref;
 
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
@@ -12,7 +11,6 @@ use twilight_model::channel::message::component::{
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
-use crate::interaction::command_mentions;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
 
@@ -82,14 +80,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
 }
 
 fn owner_update() -> impl Iterator<Item = impl std::fmt::Display> {
-    crate::assets::owner_notifications::v3_update(
-        crate::BOT_USER_ID.mention(),
-        command_mentions::CONFIG.deref(),
-        command_mentions::CONFIG.deref(),
-        command_mentions::CONFIG.deref(),
-        command_mentions::COUNTER.deref(),
-        command_mentions::HELP.deref()
-    )
+    crate::assets::owner_notifications::v3_update(crate::BOT_USER_ID.mention())
 }
 
 fn update_messages(

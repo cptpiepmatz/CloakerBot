@@ -6,7 +6,7 @@ It took quite some time, but now we finally have some long awaited features.
 
 ## 🏸 Countering
 
-The biggest addition is the new command {/counter}.
+The biggest addition is the new command `/counter`.
 It allows users to counter an incoming takedown.
 If invoked while the {CloakerBot} is in your channel the target will be 
 redirected to the user that called the bot.
@@ -24,7 +24,7 @@ even was a random takedown.
 This caused some wild dispute and sometimes to the kick of the bot from a server 
 which is quite unfortunate.
 
-Via {/config log-channel} it is possible to define such a channel.
+Via `/config` it is possible to define such a channel.
 Everything that the bot wants to log will be posted there, so make sure that the 
 bot is able to send messages in that channel.
 
@@ -40,7 +40,7 @@ new danger zone channel and then delete that channel.
 That is a stupid and hacky workaround and shouldn't be necessary.
 
 Now in v3 it is finally possible to remove danger zones via the 
-{/config danger-zones} command.
+`/config` command.
 It is now also possible to define up to 10 channels as danger zones if you 
 prefer a whole category to be unusable for voice chatting or as symbol of power 
 how you are immune and the other plebs aren't. 
@@ -56,7 +56,7 @@ They get annoyed and demand that the bot gets removed, which is a real bummer.
 
 To give these people an option for their distress with the bot, it is now 
 possible to define ~~pussy~~ immunity roles.
-Using {/config immunity} it is possible to define four roles:
+Using `/config` it is possible to define four roles:
 
 - general immunity
 
@@ -112,7 +112,7 @@ While working on v3 Discord added a lot of nice features for bot developers.
 Many of these features (e.g. Buttons, Select Dropdowns, rich Markdown) are now 
 incorporated in the config commands.
 
-If you have any trouble configuring the bot still, the {/help} command can help 
+If you have any trouble configuring the bot still, the `/help` command can help
 you out.
 Or join the CloakerBot Fort.
 
