@@ -7,6 +7,6 @@
 - [x] add `/discord` route to server discord server invitation link
 - [x] add `/version` route to serve app version
 - [ ] write README.md
-- [ ] check typos
-- [ ] add ci
+- [x] check typos
+- [x] add ci
 - [ ] update `toolkit.nu` to also build via podman

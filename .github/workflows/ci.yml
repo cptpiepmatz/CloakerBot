@@ -1,0 +1,44 @@
+name: Continuous Integration
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Rust (${{ matrix.feature }})
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [dev, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends build-essential cmake pkg-config
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.feature }}
+      - name: Run tests
+        run: cargo test --locked --workspace --no-default-features --features ${{ matrix.feature }}
+      - name: Build
+        run: cargo build --locked --workspace --no-default-features --features ${{ matrix.feature }}
+      - name: Run Clippy
+        run: cargo clippy --locked --workspace --all-targets --no-default-features --features ${{ matrix.feature }}
+
+  typos:
+    name: Typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@v1
