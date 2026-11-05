@@ -193,6 +193,7 @@ pub async fn open_modal(
         Id::ConfigOpenLogChannel => modals::log_channel::modal(config.log_channel),
         Id::ConfigOpenImmunity => modals::immunity::modal(&config.immunity),
         Id::ConfigOpenRandom => modals::random::modal(&config.random),
+        Id::ConfigOpenTargetBots => modals::target_bots::modal(config.target_bots),
         id => return Err(ConfigButtonActionError::UnexpectedCustomId(id).into())
     };
     let mut response = serde_json::to_value(InteractionResponse {

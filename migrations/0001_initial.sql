@@ -1,6 +1,7 @@
 CREATE TABLE guilds (
     guild_id TEXT PRIMARY KEY NOT NULL CHECK (guild_id != ''),
     log_channel_id TEXT CHECK (log_channel_id != ''),
+    target_bots INTEGER NOT NULL DEFAULT 1 CHECK (target_bots IN (0, 1)),
     random_enabled INTEGER CHECK (random_enabled IN (0, 1)),
     random_min_hours REAL CHECK (random_min_hours > 0 AND random_min_hours <= 8760),
     random_max_hours REAL CHECK (random_max_hours > 0 AND random_max_hours <= 8760),

@@ -11,6 +11,13 @@ async fn read_config(
     guild: &str
 ) -> Result<GuildConfig, sqlx::Error> {
     let mut config = GuildConfig::default();
+    config.target_bots = sqlx::query_scalar::<_, bool>(
+        "SELECT target_bots FROM guilds WHERE guild_id = ?"
+    )
+    .bind(guild)
+    .fetch_optional(&mut *connection)
+    .await?
+    .unwrap_or(true);
     if let Some(row) = sqlx::query!(
         "SELECT log_channel_id, random_enabled, random_min_hours, random_max_hours FROM guilds \
          WHERE guild_id = ?",
@@ -98,6 +105,11 @@ impl Database {
         )
         .execute(&mut *transaction)
         .await?;
+        sqlx::query("UPDATE guilds SET target_bots = ? WHERE guild_id = ?")
+            .bind(config.target_bots)
+            .bind(&guild)
+            .execute(&mut *transaction)
+            .await?;
         if config.random != previous {
             let enabled = config.random.enabled.map(i64::from);
             sqlx::query!(

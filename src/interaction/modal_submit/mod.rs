@@ -47,7 +47,8 @@ pub async fn handle_modal_submit(interaction: &Interaction) -> Result<(), Handle
         ModalCustomId::ConfigDangerZones => config::danger_zones::action(interaction, data).await,
         ModalCustomId::ConfigLogChannel => config::log_channel::action(interaction, data).await,
         ModalCustomId::ConfigImmunity => config::immunity::action(interaction, data).await,
-        ModalCustomId::ConfigRandom => config::random::action(interaction, data).await
+        ModalCustomId::ConfigRandom => config::random::action(interaction, data).await,
+        ModalCustomId::ConfigTargetBots => config::target_bots::action(interaction, data).await
     }
 }
 

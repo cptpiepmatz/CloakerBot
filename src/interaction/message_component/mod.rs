@@ -44,7 +44,8 @@ pub async fn handle_message_component(
         MCCId::ConfigOpenDangerZones |
         MCCId::ConfigOpenLogChannel |
         MCCId::ConfigOpenImmunity |
-        MCCId::ConfigOpenRandom => button::config::open_modal(interaction, custom_id).await,
+        MCCId::ConfigOpenRandom |
+        MCCId::ConfigOpenTargetBots => button::config::open_modal(interaction, custom_id).await,
         MCCId::ConfigUnsetDangerZones |
         MCCId::ConfigUnsetImmunityGeneral |
         MCCId::ConfigUnsetImmunityRandom |

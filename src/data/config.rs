@@ -2,12 +2,14 @@ use smart_default::SmartDefault;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, RoleMarker};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, SmartDefault, Clone)]
 pub struct GuildConfig {
     pub danger_zones: Vec<Id<ChannelMarker>>,
     pub immunity: GuildConfigImmunity,
     pub log_channel: Option<Id<ChannelMarker>>,
-    pub random: GuildConfigRandom
+    pub random: GuildConfigRandom,
+    #[default = true]
+    pub target_bots: bool
 }
 
 #[derive(Debug, Default, Clone)]

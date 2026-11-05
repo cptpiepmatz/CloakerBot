@@ -1,5 +1,5 @@
 - [x] simplify `macros` via some actual markdown crate
-- [ ] restore `/config target-bots` behavior 
+- [x] restore `/config target-bots` behavior
 - [ ] separate http server into own module
 - [ ] serve icon not as part of oauth
 - [ ] add `/invite` route to serve invitation link for the bot to a guild 

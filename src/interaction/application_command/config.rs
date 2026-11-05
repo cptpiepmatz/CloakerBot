@@ -108,6 +108,16 @@ pub async fn action(interaction: &Interaction) -> Result<(), HandleApplicationCo
                 "💫 Random Takedowns",
                 "Enable or disable random takedowns and set their timing.",
                 Id::ConfigOpenRandom
+            ),
+            Component::Separator(Separator {
+                id: None,
+                divider: Some(true),
+                spacing: Some(SeparatorSpacingSize::Large)
+            }),
+            section(
+                "🤖 Target Bots",
+                "Choose whether bots can be targeted by takedowns, including random takedowns.",
+                Id::ConfigOpenTargetBots
             )
         ])
         .build();

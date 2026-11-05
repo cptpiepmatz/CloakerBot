@@ -173,6 +173,19 @@ async fn execute_takedown(
     config: &GuildConfig
 ) -> TakedownResult {
     let rng = &mut rand::rngs::StdRng::from_rng(&mut rand::rng());
+    if !config.target_bots {
+        let is_bot = util::cache_or_fetch(
+            STATE.cache.user(target_id),
+            |user| user.bot,
+            STATE.client.user(target_id),
+            |user| user.bot
+        )
+        .await
+        .map_err(TakedownFail::Client)?;
+        if is_bot {
+            return Err(TakedownFail::Immune);
+        }
+    }
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;

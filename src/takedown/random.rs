@@ -51,7 +51,17 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
             continue;
         };
 
-        let target_id = guild_voice_states.iter().choose(&mut rng).expect("at least 3");
+        let target_bots = STATE.database.guild_config(guild_id).await?.target_bots;
+        let Some(target_id) = guild_voice_states
+            .iter()
+            .filter(|user_id| {
+                target_bots || STATE.cache.user(**user_id).is_some_and(|user| !user.bot)
+            })
+            .choose(&mut rng)
+        else {
+            tracing::debug!(%guild_id, "skipping random takedown: no eligible voice users");
+            continue;
+        };
         tracing::debug!(%guild_id, %target_id, voice_user_count, "selected random takedown target");
         due.push((*target_id, guild_id));
     }

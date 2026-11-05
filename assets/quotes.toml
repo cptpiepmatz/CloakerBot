@@ -18,6 +18,10 @@ no_channel = "So you don't want reports? That's fine for me!"
 enabled = "You can run, but you can't hide."
 disabled = "I'll wait until you call me."
 
+[config.target_bots]
+enabled = "Now MEE6 is no more safe than you."
+disabled = "So I've got to play nice with the tin cans, huh?"
+
 [cloaker]
 success = "Now go to the forums and cry like the little bitch you are!"
 countered = "Not so tough now, huh?"

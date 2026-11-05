@@ -2,6 +2,7 @@ pub mod danger_zones;
 pub mod immunity;
 pub mod log_channel;
 pub mod random;
+pub mod target_bots;
 
 use twilight_model::channel::message::Component;
 use twilight_model::channel::message::component::{

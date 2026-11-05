@@ -12,7 +12,8 @@ pub enum ModalCustomId {
     ConfigDangerZones,
     ConfigLogChannel,
     ConfigImmunity,
-    ConfigRandom
+    ConfigRandom,
+    ConfigTargetBots
 }
 
 impl ToString for ModalCustomId {

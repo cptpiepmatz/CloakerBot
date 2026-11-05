@@ -18,6 +18,7 @@ pub enum MessageComponentCustomId {
     ConfigOpenLogChannel,
     ConfigOpenImmunity,
     ConfigOpenRandom,
+    ConfigOpenTargetBots,
 
     ConfigUnsetDangerZones,
     ConfigUnsetImmunityGeneral,
