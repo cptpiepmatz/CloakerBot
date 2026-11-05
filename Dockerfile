@@ -44,6 +44,7 @@ COPY .sqlx ./.sqlx
 COPY migrations ./migrations
 COPY macros ./macros
 COPY assets ./assets
+COPY icon ./icon
 COPY src ./src
 ARG BOT_ENV=dev
 RUN <<EOF
