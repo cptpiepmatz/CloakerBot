@@ -9,4 +9,4 @@
 - [ ] write README.md
 - [x] check typos
 - [x] add ci
-- [ ] update `toolkit.nu` to also build via podman
+- [x] rename `toolkit.nu` to `images.nu` and use engine-neutral commands for podman and docker
