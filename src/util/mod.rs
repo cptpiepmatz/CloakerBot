@@ -9,6 +9,7 @@ use twilight_http::Response;
 use twilight_http::response::DeserializeBodyError;
 
 pub mod cache;
+pub mod component_template;
 pub mod iterator_ext;
 pub mod ref_access_map;
 pub mod template_format;

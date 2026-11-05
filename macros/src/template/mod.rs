@@ -8,7 +8,7 @@ use regex::Regex;
 mod md;
 pub use md::macro_impl as md;
 
-mod sections;
+mod components;
 
 mod toml;
 pub use toml::macro_impl as toml;
@@ -49,23 +49,32 @@ fn codegen_fn(
     fn_name: &Ident2,
     placeholders: &HashMap<String, String>
 ) -> TokenStream2 {
-    codegen(&[input], fn_name, placeholders, false)
+    codegen(&[input], fn_name, placeholders, None)
 }
 
-fn codegen_sections(
-    input: &[String],
+fn codegen_components(
+    components: &[components::Node],
     fn_name: &Ident2,
-    placeholders: &HashMap<String, String>
-) -> TokenStream2 {
-    let input: Vec<_> = input.iter().map(String::as_str).collect();
-    codegen(&input, fn_name, placeholders, true)
+    span: Span2
+) -> syn::Result<TokenStream2> {
+    let mut templates = Vec::new();
+    let components: Vec<_> =
+        components.iter().map(|component| component.codegen(&mut templates)).collect();
+    let mut placeholders = HashSet::new();
+    for template in &templates {
+        valid(template, span)?;
+        placeholders.extend(find_placeholders(template));
+    }
+    let placeholders = normalize_placeholders(&placeholders);
+    let templates: Vec<_> = templates.iter().map(String::as_str).collect();
+    Ok(codegen(&templates, fn_name, &placeholders, Some(&components)))
 }
 
 fn codegen(
     input: &[&str],
     fn_name: &Ident2,
     placeholders: &HashMap<String, String>,
-    split_sections: bool
+    components: Option<&[TokenStream2]>
 ) -> TokenStream2 {
     let literals: Vec<_> = input
         .iter()
@@ -155,16 +164,25 @@ fn codegen(
 
     let ops = mappings.iter().map(|Mapping { op, .. }| op);
 
-    let (return_type, body) = if split_sections {
-        let count = literals.len();
-        let body = if mappings.is_empty() {
+    let (return_type, body) = if let Some(components) = components {
+        let indices = 0..literals.len();
+        let component_type = if mappings.is_empty() {
+            quote!(Component<&'static str>)
+        }
+        else {
+            quote!(Component<_>)
+        };
+        let text = if mappings.is_empty() {
             quote! {
-                let sections: [&'static str; #count] = [#(#literals),*];
-                sections.into_iter()
+                let text = |index: usize| -> &'static str {
+                    match index {
+                        #(#indices => #literals,)*
+                        _ => unreachable!()
+                    }
+                };
             }
         }
         else {
-            let indices = 0..literals.len();
             quote! {
                 let render = std::sync::Arc::new(
                     move |index: usize, f: &mut std::fmt::Formatter<'_>| {
@@ -175,13 +193,28 @@ fn codegen(
                         }
                     }
                 );
-                (0..#count).map(move |index| {
+                let text = move |index| {
                     let render = std::sync::Arc::clone(&render);
                     std::fmt::from_fn(move |f| render(index, f))
-                })
+                };
             }
         };
-        (quote!(impl ExactSizeIterator<Item = impl Display>), body)
+        let body = quote! {
+            use crate::util::component_template::TemplateComponent as Component;
+            use twilight_model::channel::message::component::{ButtonStyle, SeparatorSpacingSize};
+            #text
+            let _ = &text;
+            let components: Vec<#component_type> = vec![#(#components),*];
+            components.into_iter()
+        };
+        (
+            quote!(
+                impl ExactSizeIterator<
+                    Item = crate::util::component_template::TemplateComponent<impl Display>
+                >
+            ),
+            body
+        )
     }
     else {
         let lit = &literals[0];

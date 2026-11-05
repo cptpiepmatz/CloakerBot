@@ -5,9 +5,7 @@ use twilight_http::error::ErrorType;
 use twilight_mention::Mention;
 use twilight_model::channel::Message;
 use twilight_model::channel::message::MessageFlags;
-use twilight_model::channel::message::component::{
-    ActionRow, Button, ButtonStyle, Component, Separator, SeparatorSpacingSize, TextDisplay
-};
+use twilight_model::channel::message::component::Component;
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
@@ -21,7 +19,9 @@ const MAX_MESSAGE_COMPONENTS: usize = 40;
 pub enum OwnerNotificationError {
     Client(ClientError),
     Database(sqlx::Error),
-    SectionTooLong(usize)
+    ComponentTooLong(usize),
+    #[from(skip)]
+    TooManyComponents(usize)
 }
 
 pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError> {
@@ -79,59 +79,59 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
     Ok(())
 }
 
-fn owner_update() -> impl Iterator<Item = impl std::fmt::Display> {
-    crate::assets::owner_notifications::v3_update(crate::BOT_USER_ID.mention())
+fn owner_update() -> impl Iterator<Item = impl Into<Component>> {
+    crate::assets::owner_notifications::v3_update(
+        crate::BOT_USER_ID.mention(),
+        MessageComponentCustomId::OwnerNotificationsDisable.to_string()
+    )
 }
 
 fn update_messages(
-    sections: impl IntoIterator<Item = impl std::fmt::Display>
+    templates: impl IntoIterator<Item = impl Into<Component>>
 ) -> Result<Vec<Vec<Component>>, OwnerNotificationError> {
     let mut messages = Vec::new();
     let mut components = Vec::new();
+    let mut component_count = 0;
     let mut length = 0;
-    for section in sections {
-        let section = section.to_string();
-        let section = section.trim();
-        let section_length = section.encode_utf16().count();
-        if section_length > MAX_MESSAGE_TEXT_LENGTH {
-            return Err(OwnerNotificationError::SectionTooLong(section_length));
+    for template in templates {
+        let component = template.into();
+        let (count, text_length) = component_metrics(&component);
+        if text_length > MAX_MESSAGE_TEXT_LENGTH {
+            return Err(OwnerNotificationError::ComponentTooLong(text_length));
         }
-        if length + section_length > MAX_MESSAGE_TEXT_LENGTH ||
-            components.len() + 4 > MAX_MESSAGE_COMPONENTS
+        if count > MAX_MESSAGE_COMPONENTS {
+            return Err(OwnerNotificationError::TooManyComponents(count));
+        }
+        if length + text_length > MAX_MESSAGE_TEXT_LENGTH ||
+            component_count + count > MAX_MESSAGE_COMPONENTS
         {
             messages.push(std::mem::take(&mut components));
             length = 0;
+            component_count = 0;
         }
-        components
-            .push(Component::TextDisplay(TextDisplay { id: None, content: section.to_owned() }));
-        components.push(Component::Separator(Separator {
-            id: None,
-            divider: Some(false),
-            spacing: Some(SeparatorSpacingSize::Large)
-        }));
-        length += section_length;
+        components.push(component);
+        length += text_length;
+        component_count += count;
     }
     if !components.is_empty() {
-        components.push(opt_out_button());
         messages.push(components);
     }
     Ok(messages)
 }
 
-fn opt_out_button() -> Component {
-    Component::ActionRow(ActionRow {
-        id: None,
-        components: vec![Component::Button(Button {
-            id: None,
-            custom_id: Some(MessageComponentCustomId::OwnerNotificationsDisable.to_string()),
-            disabled: false,
-            emoji: None,
-            label: Some("Don't send me owner notifications".into()),
-            style: ButtonStyle::Secondary,
-            url: None,
-            sku_id: None
-        })]
-    })
+fn component_metrics(component: &Component) -> (usize, usize) {
+    let children = match component {
+        Component::TextDisplay(text) => return (1, text.content.encode_utf16().count()),
+        Component::Container(container) => &container.components,
+        Component::ActionRow(row) => &row.components,
+        _ => return (1, 0)
+    };
+    children
+        .iter()
+        .map(component_metrics)
+        .fold((1, 0), |(count, length), (child_count, child_length)| {
+            (count + child_count, length + child_length)
+        })
 }
 
 async fn send_update(

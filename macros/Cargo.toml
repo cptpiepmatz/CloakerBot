@@ -13,6 +13,7 @@ pulldown-cmark = { version = "0.13", default-features = false }
 pulldown-cmark-to-cmark = "22"
 quote = "1"
 regex = "1.11"
+scraper = { version = "0.24", default-features = false }
 syn = "3"
 toml = "1.1"
 

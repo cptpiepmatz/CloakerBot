@@ -40,8 +40,8 @@ macro_rules! defer_macros {
 }
 
 defer_macros! {
-    /// Generates a display template, or an iterator of display sections with
-    /// `split_sections = true`.
+    /// Generates a display template, or lazy component templates with
+    /// `components = true`.
     template_md: template::md,
     template_toml: template::toml,
     env: env::env,

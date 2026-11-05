@@ -3,6 +3,7 @@
 {CloakerBot} Update v3 is live!
 It took quite some time, but now we finally have some long awaited features.
 
+<hr size="large" divider="false">
 
 ## 🏸 Countering
 
@@ -13,8 +14,13 @@ redirected to the user that called the bot.
 If the bot itself decided to strike you via a random takedown the command will 
 simply deflect that takedown.
 
-> ⚠️ Takedowns from a Danger Zone cannot get deflected. ⚠️
+<container color="#ffcc4d">
 
+⚠️ Takedowns from a Danger Zone cannot get deflected.
+
+</container>
+
+<hr size="large" divider="false">
 
 ## 📝 Log Channel
 
@@ -31,6 +37,7 @@ bot is able to send messages in that channel.
 Replies to commands are still send as ephemeral messages and won't spam any 
 channels.
 
+<hr size="large" divider="false">
 
 ## 🗳️ Danger Zones Select
 
@@ -46,6 +53,7 @@ prefer a whole category to be unusable for voice chatting or as symbol of power
 how you are immune and the other plebs aren't. 
 It is up to you.
 
+<hr size="large" divider="false">
 
 ## 🛡️ Immunity Roles
 
@@ -59,11 +67,8 @@ possible to define ~~pussy~~ immunity roles.
 Using `/config` it is possible to define four roles:
 
 - general immunity
-
 - random immunity
-
 - general-silent immunity
-
 - random-silent immunity
 
 The general immunity provides immunity against any kind of takedowns, while the 
@@ -74,6 +79,7 @@ try to execute a takedown.
 
 Hopefully this allows all to have fun with this bot.
 
+<hr size="large" divider="false">
 
 ## 🏅 Updated Ranks
 
@@ -82,6 +88,7 @@ The recorded ranks will therefore get removed, and we all start from zero.
 Takedown stats are now recorded more precisely allowing to check who is your 
 rival, who got taken down the most and who is practically a ghost.
 
+<hr size="large" divider="false">
 
 ## 🔗 Linked Roles
 
@@ -96,14 +103,13 @@ Users can link their Discord account to the bot to qualify for roles based on th
 The metadata that the bot will provide are:
 
 - how many successful takedowns you initiated globally (`times_smacked`)
-
 - how many times you were taken down globally, including returned counters (`times_called`)
-
 - how many successful counters and parries you performed globally (`times_countered`)
 
 Discord connections are user-scoped, so server-local criteria are not available.
 Stats update automatically about once a minute while the bot is running.
 
+<hr size="large" divider="false">
 
 ## 🪛 Nicer Configuration
 
@@ -116,6 +122,7 @@ If you have any trouble configuring the bot still, the `/help` command can help
 you out.
 Or join the CloakerBot Fort.
 
+<hr size="large" divider="false">
 
 ## ✨ Stability & Availability
 
@@ -123,3 +130,11 @@ The bot is fully rewritten in a new language with many improvements wisely
 planned.
 This should cause the bot to be even more stable and available.
 If the bot should still get stuck, simply ping me in the CloakerBot Fort.
+
+<hr size="large" divider="false">
+
+<action-row>
+  <button style="secondary" custom-id="{disable_notifications}">
+    Don't send me owner notifications
+  </button>
+</action-row>
