@@ -1,5 +1,9 @@
 [package]
 name = "cloaker-bot-macros"
+publish = false
+description = "Internal procedural macros for CloakerBot."
+license-file.workspace = true
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 

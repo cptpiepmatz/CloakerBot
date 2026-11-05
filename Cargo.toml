@@ -1,5 +1,9 @@
 [package]
 name = "cloaker-bot"
+publish = false
+description = "A Discord bot that takes down users in voice channels with Cloaker sounds."
+license-file.workspace = true
+rust-version.workspace = true
 repository = "https://github.com/cptpiepmatz/CloakerBot"
 version.workspace = true
 edition.workspace = true
@@ -21,6 +25,8 @@ dev = []
 members = ["macros"]
 package.version = "3.0.0"
 package.edition = "2024"
+package.rust-version = "1.95.0"
+package.license-file = "LICENSE"
 
 [profile.dev.package.serenity-voice-model]
 debug-assertions = false
