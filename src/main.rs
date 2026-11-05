@@ -26,6 +26,7 @@ use twilight_model::gateway::event::Event as DiscordEvent;
 use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
+use twilight_model::oauth::scope;
 
 use crate::data::Database;
 use crate::interaction::{HandleInteractionError, handle_interaction};
@@ -41,6 +42,7 @@ mod assets;
 mod channel_logging;
 mod data;
 mod emojis;
+mod http_server;
 mod interaction;
 mod link;
 mod logging;
@@ -66,6 +68,7 @@ const CLIENT_ID: u64 = macros::env!(
 
 const APPLICATION_ID: Id<ApplicationMarker> = Id::new(CLIENT_ID);
 const BOT_USER_ID: Id<UserMarker> = Id::new(CLIENT_ID);
+const INVITE_SCOPES: &[&str] = &[scope::BOT, scope::APPLICATIONS_COMMANDS];
 
 static TOKEN: LazyString = lazy_env!("DISCORD_TOKEN");
 const INTENTS: Intents = Intents::GUILDS
@@ -74,7 +77,8 @@ const INTENTS: Intents = Intents::GUILDS
     .union(Intents::GUILD_INTEGRATIONS);
 
 // "cloak" on a T9 keypad, since "cloaker" exceeds the port range
-const OAUTH_PORT: u16 = macros::env!("DISCORD_OAUTH_PORT", 25625u16);
+const HTTP_PORT: u16 = macros::env!("HTTP_PORT", 25625u16);
+const HTTP_HOST: &str = macros::env!("HTTP_HOST", "0.0.0.0");
 static CLIENT_SECRET: LazyString = lazy_env!("DISCORD_CLIENT_SECRET");
 static COOKIE_SECRET: LazyString = lazy_env!("COOKIE_SECRET");
 const REDIRECT_URI: &str = macros::env!(
@@ -188,7 +192,7 @@ async fn main() -> miette::Result<()> {
     tracing::info!("linked-role metadata registered");
 
     // spawn server for account linking
-    let http_server = tokio::spawn(link::serve().instrument(tracing::info_span!("http_server")));
+    let http_server = tokio::spawn(http_server::serve().instrument(tracing::info_span!("http_server")));
     let linked_roles = tokio::spawn(
         link::application_role_connection::maintain_connections()
             .instrument(tracing::info_span!("linked_role_maintenance"))

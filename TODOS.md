@@ -1,11 +1,11 @@
 - [x] simplify `macros` via some actual markdown crate
 - [x] restore `/config target-bots` behavior
-- [ ] separate http server into own module
-- [ ] serve icon not as part of oauth
-- [ ] add `/invite` route to serve invitation link for the bot to a guild 
-- [ ] add `/github` route to serve github source link
-- [ ] add `/discord` route to server discord server invitation link
-- [ ] add `/version` route to serve app version
+- [x] separate http server into own module
+- [x] serve icon not as part of oauth
+- [x] add `/invite` route to serve invitation link for the bot to a guild
+- [x] add `/github` route to serve github source link
+- [x] add `/discord` route to server discord server invitation link
+- [x] add `/version` route to serve app version
 - [ ] write README.md
 - [ ] check typos
 - [ ] add ci

@@ -1,8 +1,12 @@
 [package]
 name = "cloaker-bot"
+repository = "https://github.com/cptpiepmatz/CloakerBot"
 version.workspace = true
 edition.workspace = true
 default-run = "CloakerBot"
+
+[package.metadata]
+discord_invite = "https://discord.gg/XMsdwM5NXf"
 
 [[bin]]
 name = "CloakerBot"

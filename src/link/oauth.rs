@@ -3,11 +3,14 @@ use std::error::Error;
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
+use axum::Router;
 use axum::extract::Query;
-use axum::response::{Redirect, Response};
+use axum::response::{Html, IntoResponse, Redirect, Response};
+use axum::routing::get;
 use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
-use http::StatusCode;
+use cookie::Key;
+use http::{StatusCode, header};
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;
 use twilight_http::Client as TwilightClient;
@@ -17,10 +20,22 @@ use url::Url;
 
 use crate::data::linked_roles::{SecretToken, StoredTokens};
 use crate::util::{ClientError, map};
-use crate::{CLIENT_SECRET, LazyString, REDIRECT_URI, STATE};
+use crate::{CLIENT_SECRET, COOKIE_SECRET, LazyString, REDIRECT_URI, STATE};
 
 pub const LINKED_ROLE_PATH: &str = "/linked-role";
 pub const CALLBACK_PATH: &str = "/callback";
+
+pub fn routes() -> Router {
+    let router = Router::new()
+        .route(LINKED_ROLE_PATH, get(linked_role))
+        .route(CALLBACK_PATH, get(callback))
+        .with_state(Key::from(COOKIE_SECRET.as_bytes()));
+
+    #[cfg(debug_assertions)]
+    let router = router.route("/debug/connected", get(async || connected_page()));
+
+    router
+}
 
 const STATE_LIFETIME: Duration = Duration::from_secs(300);
 
@@ -131,7 +146,15 @@ pub async fn callback(
         tracing::warn!(?error, "linked-role confirmation dm failed");
     }
 
-    Ok((jar, super::connected_page()))
+    Ok((jar, connected_page()))
+}
+
+fn connected_page() -> Response {
+    (
+        [(header::CACHE_CONTROL, "no-cache, no-store")],
+        Html(include_str!("../../assets/oauth/connected.html"))
+    )
+        .into_response()
 }
 
 async fn notify_connected(user_id: Id<UserMarker>) -> Result<(), ClientError> {
