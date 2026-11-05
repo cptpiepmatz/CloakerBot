@@ -10,14 +10,14 @@ async fn read_config(
     connection: &mut SqliteConnection,
     guild: &str
 ) -> Result<GuildConfig, sqlx::Error> {
-    let mut config = GuildConfig::default();
-    config.target_bots = sqlx::query_scalar::<_, bool>(
+    let target_bots = sqlx::query_scalar::<_, bool>(
         "SELECT target_bots FROM guilds WHERE guild_id = ?"
     )
     .bind(guild)
     .fetch_optional(&mut *connection)
     .await?
     .unwrap_or(true);
+    let mut config = GuildConfig { target_bots, ..GuildConfig::default() };
     if let Some(row) = sqlx::query!(
         "SELECT log_channel_id, random_enabled, random_min_hours, random_max_hours FROM guilds \
          WHERE guild_id = ?",

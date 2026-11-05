@@ -158,7 +158,7 @@ impl GuildTakedowns {
     /// - The score (number of times the user was taken down)
     pub fn victim_ranks(&self) -> impl Iterator<Item = (u32, (Id<UserMarker>, u32))> {
         let mut takedown_counts = HashMap::<Id<UserMarker>, u32>::with_capacity(self.0.len());
-        for (_, member_takedowns) in self.0.iter() {
+        for member_takedowns in self.0.values() {
             for (&victim_id, &value) in member_takedowns.takedowns.iter() {
                 let count = takedown_counts.entry(victim_id).or_default();
                 *count += value;
@@ -248,7 +248,7 @@ impl AppTakedowns {
     /// - The score (number of successful takedowns initiated)
     pub fn punisher_ranks(&self) -> impl Iterator<Item = (u32, (Id<UserMarker>, u32))> {
         let mut takedown_counts: HashMap<Id<UserMarker>, u32> = HashMap::new();
-        for (_, guild_takedowns) in self.0.iter() {
+        for guild_takedowns in self.0.values() {
             for (&uid, member_takedowns) in guild_takedowns.0.iter() {
                 let entry = takedown_counts.entry(uid).or_default();
                 *entry += member_takedowns.takedowns.values().copied().sum::<u32>();
@@ -282,8 +282,8 @@ impl AppTakedowns {
     /// - The score (number of times the user was taken down)
     pub fn victim_ranks(&self) -> impl Iterator<Item = (u32, (Id<UserMarker>, u32))> {
         let mut takedown_counts: HashMap<Id<UserMarker>, u32> = HashMap::new();
-        for (_, guild_takedowns) in self.0.iter() {
-            for (_, member_takedowns) in guild_takedowns.0.iter() {
+        for guild_takedowns in self.0.values() {
+            for member_takedowns in guild_takedowns.0.values() {
                 for (&uid, &count) in member_takedowns.takedowns.iter() {
                     let entry = takedown_counts.entry(uid).or_default();
                     *entry += count;
@@ -322,7 +322,7 @@ impl AppTakedowns {
     /// - The score (number of successful counters and parries)
     pub fn counter_ranks(&self) -> impl Iterator<Item = (u32, (Id<UserMarker>, u32))> {
         let mut counter_counts: HashMap<Id<UserMarker>, u32> = HashMap::new();
-        for (_, guild_takedowns) in self.0.iter() {
+        for guild_takedowns in self.0.values() {
             for (&uid, member_takedowns) in guild_takedowns.0.iter() {
                 let entry = counter_counts.entry(uid).or_default();
                 *entry += member_takedowns.counters.values().copied().sum::<u32>();

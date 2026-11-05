@@ -100,10 +100,10 @@ where
 
     /// Removes a reference and drops its value if no other reference uses it.
     pub fn remove_ref(&mut self, ref_key: &R) {
-        if let Some(accessor) = self.reference_map.remove(ref_key) {
-            if !self.reference_map.values().any(|value| value == &accessor) {
-                self.accessor_map.remove(&accessor);
-            }
+        if let Some(accessor) = self.reference_map.remove(ref_key) &&
+            !self.reference_map.values().any(|value| value == &accessor)
+        {
+            self.accessor_map.remove(&accessor);
         }
     }
 }
@@ -170,8 +170,7 @@ where
         let reference_map = value
             .0
             .iter_mut()
-            .map(|(a, entry)| mem::take(&mut entry.refs).into_iter().map(|r| (r, a.clone())))
-            .flatten()
+            .flat_map(|(a, entry)| mem::take(&mut entry.refs).into_iter().map(|r| (r, a.clone())))
             .collect();
 
         let accessor_map = value.0.into_iter().map(|(a, entry)| (a, entry.value)).collect();

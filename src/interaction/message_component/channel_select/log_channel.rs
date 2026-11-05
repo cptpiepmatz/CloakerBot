@@ -27,7 +27,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub fn component(current: Option<Id<ChannelMarker>>) -> Component {
     let default_values: Vec<_> =
-        current.into_iter().map(|channel_id| SelectDefaultValue::Channel(channel_id)).collect();
+        current.into_iter().map(SelectDefaultValue::Channel).collect();
 
     Component::SelectMenu(SelectMenu {
         id: None,
@@ -57,7 +57,7 @@ pub async fn action(
     let guild_id = interaction.guild_id.ok_or(LogChannelSelectActionError::NotInGuild)?;
 
     type ChId = Id<ChannelMarker>;
-    let channel: Option<ChId> = if let Some(raw_id) = data.values.iter().next() {
+    let channel: Option<ChId> = if let Some(raw_id) = data.values.first() {
         match raw_id.parse::<ChId>() {
             Ok(id) => Some(id),
             Err(e) => return Err(LogChannelSelectActionError::InvalidValue(e.to_string()).into())

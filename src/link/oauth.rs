@@ -77,7 +77,7 @@ fn oauth_url() -> (Url, Nonce) {
 
     let mut url = Url::parse("https://discord.com/api/oauth2/authorize").expect("valid url");
     url.query_pairs_mut()
-        .append_pair("client_id", &*CLIENT_ID)
+        .append_pair("client_id", &CLIENT_ID)
         .append_pair("redirect_uri", REDIRECT_URI)
         .append_pair("response_type", "code")
         .append_pair("state", &state)

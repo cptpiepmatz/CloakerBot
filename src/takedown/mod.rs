@@ -90,6 +90,20 @@ pub struct PlannedTakedown {
     counter_tx: Option<oneshot::Sender<Id<UserMarker>>>
 }
 
+type TakedownPlan = (
+    VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown>,
+    Option<oneshot::Receiver<Id<UserMarker>>>
+);
+
+struct VoiceTakedown<'a> {
+    target_id: Id<UserMarker>,
+    target_roles: &'a [Id<RoleMarker>],
+    guild_id: Id<GuildMarker>,
+    channel_id: Id<ChannelMarker>,
+    kind: TakedownType,
+    config: &'a GuildConfig
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum TakedownType {
     Called { caller_id: Id<UserMarker> },
@@ -148,10 +162,10 @@ async fn record_outcome(
         },
         Err(_) => None
     };
-    if let Some(event) = event {
-        if let Err(error) = STATE.database.record_stat(guild_id, event).await {
-            tracing::error!(%guild_id, ?error, "could not persist completed takedown");
-        }
+    if let Some(event) = event &&
+        let Err(error) = STATE.database.record_stat(guild_id, event).await
+    {
+        tracing::error!(%guild_id, ?error, "could not persist completed takedown");
     }
     if let Err(error) = result {
         tracing::info!(%guild_id, %target_id, ?kind, ?error, "takedown did not complete");
@@ -189,10 +203,8 @@ async fn execute_takedown(
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
-    if let TakedownType::DangerZone { channel_id: expected } = kind {
-        if channel_id != expected {
-            return Err(TakedownFail::Fled);
-        }
+    if let TakedownType::DangerZone { channel_id: expected } = kind && channel_id != expected {
+        return Err(TakedownFail::Fled);
     }
 
     let (_planned_takedown_guard, counter_rx) =
@@ -206,12 +218,7 @@ async fn execute_takedown(
 
     let takedown_res = takedown_in_voice(
         &mut call,
-        target_id,
-        &target_roles,
-        guild_id,
-        channel_id,
-        kind,
-        config,
+        VoiceTakedown { target_id, target_roles: &target_roles, guild_id, channel_id, kind, config },
         rng,
         counter_rx
     )
@@ -228,16 +235,12 @@ async fn execute_takedown(
 
 #[inline]
 async fn takedown_in_voice(
-    mut call: &mut MutexGuard<'_, Call>,
-    target_id: Id<UserMarker>,
-    target_roles: &[Id<RoleMarker>],
-    guild_id: Id<GuildMarker>,
-    channel_id: Id<ChannelMarker>,
-    kind: TakedownType,
-    config: &GuildConfig,
+    call: &mut MutexGuard<'_, Call>,
+    takedown: VoiceTakedown<'_>,
     rng: &mut impl Rng,
     counter_rx: Option<oneshot::Receiver<Id<UserMarker>>>
 ) -> Result<TakedownSuccess, TakedownFail> {
+    let VoiceTakedown { target_id, target_roles, guild_id, channel_id, kind, config } = takedown;
     let (notification_sound, takedown_sound, fail_sound) = choose_sounds(rng);
     tracing::debug!(%channel_id, "playing takedown notification");
 
@@ -312,7 +315,7 @@ async fn takedown_in_voice(
             .any(|role| caller_roles.contains(role));
 
         if caller_is_immune {
-            fail_sound.play_and_wait(&mut call, None).await;
+            fail_sound.play_and_wait(call, None).await;
             return fail;
         }
 
@@ -343,20 +346,20 @@ async fn takedown_in_voice(
     // no counter so continue with takedown
     let has_immune_role = target_roles.iter().any(|role| config.immunity.general.contains(role));
     if has_immune_role {
-        fail_sound.play_and_wait(&mut call, None).await;
+        fail_sound.play_and_wait(call, None).await;
         return Err(TakedownFail::Immune);
     }
 
     if let Err(err) = STATE.client.update_guild_member(guild_id, target_id).channel_id(None).await {
         if missing_permissions(&err) {
-            fail_sound.play_and_wait(&mut call, None).await;
+            fail_sound.play_and_wait(call, None).await;
             return Err(TakedownFail::MissingPermissions);
         }
 
         return Err(TakedownFail::Client(err.into()));
     }
 
-    takedown_sound.play_and_wait(&mut call, WAIT_AFTER_QUOTE).await;
+    takedown_sound.play_and_wait(call, WAIT_AFTER_QUOTE).await;
     Ok(TakedownSuccess)
 }
 
@@ -384,10 +387,10 @@ fn preliminary_checks(
     config: &GuildConfig,
     member_roles: &[Id<RoleMarker>]
 ) -> Result<(), TakedownFail> {
-    if let TakedownType::Random = kind {
-        if member_roles.iter().any(|role| config.immunity.random_silent.contains(role)) {
-            return Err(TakedownFail::Immune);
-        }
+    if let TakedownType::Random = kind &&
+        member_roles.iter().any(|role| config.immunity.random_silent.contains(role))
+    {
+        return Err(TakedownFail::Immune);
     }
 
     if member_roles.iter().any(|role| config.immunity.general_silent.contains(role)) {
@@ -414,10 +417,7 @@ fn upsert_takedown_plan(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     allow_counter: bool
-) -> (
-    VolatileMapGuard<'static, Id<GuildMarker>, PlannedTakedown>,
-    Option<oneshot::Receiver<Id<UserMarker>>>
-) {
+) -> TakedownPlan {
     let (tx, rx) = match (allow_counter, oneshot::channel()) {
         (true, (tx, rx)) => (Some(tx), Some(rx)),
         (false, _) => (None, None)
@@ -437,7 +437,7 @@ async fn get_call(
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>
 ) -> Result<Arc<Mutex<Call>>, TakedownFail> {
-    Ok(STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)?)
+    STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)
 }
 
 #[inline]

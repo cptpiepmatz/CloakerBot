@@ -135,7 +135,7 @@ pub(crate) async fn has_immunity(
     let guild_config = STATE.database.guild_config(guild_id).await?;
 
     let contains_any = |immunity_roles: &[Id<RoleMarker>]| {
-        user_roles.into_iter().any(|user_role| immunity_roles.contains(user_role))
+        user_roles.iter().any(|user_role| immunity_roles.contains(user_role))
     };
 
     let immunity = &guild_config.immunity;

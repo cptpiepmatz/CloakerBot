@@ -65,9 +65,9 @@ impl From<ImmunitySelect> for &'static str {
     }
 }
 
-impl ToString for ImmunitySelect {
-    fn to_string(&self) -> String {
-        self.as_str().to_string()
+impl std::fmt::Display for ImmunitySelect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 

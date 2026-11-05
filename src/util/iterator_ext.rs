@@ -29,7 +29,7 @@ where
         let mut found = None;
         let mut last = None;
 
-        while let Some(next) = self.next() {
+        for next in self.by_ref() {
             match predicate(&next) {
                 false => last = Some(next),
                 true => {

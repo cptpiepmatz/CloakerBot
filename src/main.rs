@@ -199,7 +199,8 @@ async fn main() -> miette::Result<()> {
     );
 
     let discord_events = stream::unfold(shard, |mut shard| async {
-        shard.next_event(EventTypeFlags::all()).await.map(|event| (BotEvent::Discord(event), shard))
+        shard.next_event(EventTypeFlags::all()).await
+            .map(|event| (BotEvent::Discord(event.map(Box::new)), shard))
     });
 
     let random_check_interval = IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
@@ -216,7 +217,7 @@ async fn main() -> miette::Result<()> {
         loop {
             match events.next().await {
                 None => return, // event stream ended
-                Some(BotEvent::Discord(Ok(DiscordEvent::Ready(_)))) => break,
+                Some(BotEvent::Discord(Ok(event))) if matches!(*event, DiscordEvent::Ready(_)) => break,
                 Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
                 _ => continue
             }
@@ -240,7 +241,7 @@ async fn main() -> miette::Result<()> {
 
 #[derive(Debug)]
 enum BotEvent {
-    Discord(Result<DiscordEvent, ReceiveMessageError>),
+    Discord(Result<Box<DiscordEvent>, ReceiveMessageError>),
     RandomCheck,
     CacheUpdate(CacheUpdateEvent)
 }
@@ -280,7 +281,7 @@ async fn handle_event(event: BotEvent) {
     async fn run(event: BotEvent) -> Result<(), HandleEventError> {
         match event {
             BotEvent::Discord(event) => match event {
-                Ok(event) => handle_discord_event(event).await?,
+                Ok(event) => handle_discord_event(*event).await?,
                 Err(source) => HandleEventError::check_fatal(source)?
             },
             BotEvent::RandomCheck => handle_random_check().await?,
@@ -292,10 +293,10 @@ async fn handle_event(event: BotEvent) {
         Ok(())
     }
 
-    if let Err(error) = run(event).await {
-        if !matches!(error, HandleEventError::Discord(HandleDiscordEventError::Interaction(_))) {
-            tracing::error!(?error, "event handling failed");
-        }
+    if let Err(error) = run(event).await &&
+        !matches!(error, HandleEventError::Discord(HandleDiscordEventError::Interaction(_)))
+    {
+        tracing::error!(?error, "event handling failed");
     }
 }
 

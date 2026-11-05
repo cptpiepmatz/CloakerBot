@@ -228,9 +228,8 @@ fn badge_labels(badges: Badges) -> String {
     ];
     let labels: Vec<_> = labels
         .into_iter()
-        .filter_map(|(badge, emoji, label)| {
-            badges.contains(badge).then(|| format!("- {} {label}", emoji.mention()))
-        })
+        .filter(|(badge, _, _)| badges.contains(*badge))
+        .map(|(_, emoji, label)| format!("- {} {label}", emoji.mention()))
         .collect();
     if labels.is_empty() { "-# No badges yet.".into() } else { labels.join("\n") }
 }

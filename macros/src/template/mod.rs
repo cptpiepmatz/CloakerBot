@@ -234,7 +234,7 @@ fn codegen(
 
     let generics = mappings.iter().filter_map(|Mapping { generic, .. }| generic.as_ref());
 
-    let constraints = mappings.iter().map(|Mapping { constraints, .. }| constraints).flatten();
+    let constraints = mappings.iter().flat_map(|Mapping { constraints, .. }| constraints);
 
     quote! {
         mod #fn_name {

@@ -48,7 +48,7 @@ where
             Entry::Occupied(_) => None,
             Entry::Vacant(entry) => {
                 entry.insert(value);
-                Some(VolatileMapGuard { key, map_ref: &self })
+                Some(VolatileMapGuard { key, map_ref: self })
             }
         }
     }

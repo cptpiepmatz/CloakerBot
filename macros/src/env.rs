@@ -82,10 +82,10 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
         }
     }
 
-    let lits = [dev.as_ref(), prod.as_ref(), fallback.as_ref()].into_iter().filter_map(|x| x);
+    let lits = [dev.as_ref(), prod.as_ref(), fallback.as_ref()].into_iter().flatten();
     let guessed_type = GuessedType::try_from_iter(lits)?;
 
-    match std::env::var(&env.value()) {
+    match std::env::var(env.value()) {
         Err(VarError::NotPresent) => {}
         Err(err @ VarError::NotUnicode(_)) => return Err(syn::Error::new(env.span(), err)),
         Ok(value) => {
