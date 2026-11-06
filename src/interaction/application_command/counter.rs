@@ -68,9 +68,10 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CounterActionError::NotInGuild)?;
     let author_id = interaction.author_id().ok_or(CounterActionError::NoAuthor)?;
+    let result = takedown::counter::counter(guild_id, author_id);
     application_command::defer(interaction).await?;
 
-    let content = match takedown::counter::counter(guild_id, author_id) {
+    let content = match result {
         Ok(target_id) => {
             replies::counter::success(target_id.mention(), crate::assets::QUOTES.counter.success)
                 .to_string()
