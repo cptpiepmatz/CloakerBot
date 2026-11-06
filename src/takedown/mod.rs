@@ -128,8 +128,9 @@ pub async fn takedown(
         tracing::error!(?error, "could not load takedown configuration");
         TakedownFail::Database(error)
     })?;
-    let result = execute_takedown(target_id, guild_id, kind, &config).await;
-    record_outcome(target_id, guild_id, kind, &result).await;
+    let mut channel_id = None;
+    let result = execute_takedown(target_id, guild_id, kind, &config, &mut channel_id).await;
+    record_outcome(target_id, guild_id, channel_id, kind, &result).await;
     result
 }
 
@@ -142,6 +143,7 @@ pub enum CounterOutcome {
 async fn record_outcome(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
+    channel_id: Option<Id<ChannelMarker>>,
     kind: TakedownType,
     result: &TakedownResult
 ) {
@@ -174,7 +176,7 @@ async fn record_outcome(
         tracing::info!(%guild_id, %target_id, ?kind, "takedown completed");
     }
     if let Err(error) =
-        crate::channel_logging::log_takedown(guild_id, target_id, kind, result).await
+        crate::channel_logging::log_takedown(guild_id, target_id, channel_id, kind, result).await
     {
         tracing::warn!(%guild_id, ?error, "could not log takedown to discord");
     }
@@ -184,7 +186,8 @@ async fn execute_takedown(
     target_id: Id<UserMarker>,
     guild_id: Id<GuildMarker>,
     kind: TakedownType,
-    config: &GuildConfig
+    config: &GuildConfig,
+    target_channel: &mut Option<Id<ChannelMarker>>
 ) -> TakedownResult {
     let rng = &mut rand::rngs::StdRng::from_rng(&mut rand::rng());
     if !config.target_bots {
@@ -203,6 +206,7 @@ async fn execute_takedown(
     let target_roles = fetch_member_roles(guild_id, target_id).await?;
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
+    *target_channel = Some(channel_id);
     if let TakedownType::DangerZone { channel_id: expected } = kind && channel_id != expected {
         return Err(TakedownFail::Fled);
     }

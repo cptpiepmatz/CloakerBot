@@ -6,6 +6,7 @@ use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 
+use crate::assets::replies::channel_logging;
 use crate::util::ClientError;
 use crate::{BOT_USER_ID, STATE};
 
@@ -58,6 +59,7 @@ pub enum LogError {
 pub async fn log_takedown(
     guild_id: Id<GuildMarker>,
     target_id: Id<twilight_model::id::marker::UserMarker>,
+    target_channel_id: Option<Id<ChannelMarker>>,
     kind: crate::takedown::TakedownType,
     result: &crate::takedown::TakedownResult
 ) -> Result<(), LogError> {
@@ -90,30 +92,41 @@ pub async fn log_takedown(
         }
     };
     let source = match kind {
-        TakedownType::Called { caller_id } => format!("Called by {}", caller_id.mention()),
-        TakedownType::Random => "Random takedown".into(),
-        TakedownType::DangerZone { channel_id } => format!("Danger zone {}", channel_id.mention())
+        TakedownType::Called { caller_id } => {
+            channel_logging::source::called(caller_id.mention()).to_string()
+        }
+        TakedownType::Random => channel_logging::source::random().to_string(),
+        TakedownType::DangerZone { channel_id } => {
+            channel_logging::source::danger_zone(channel_id.mention()).to_string()
+        }
     };
     let outcome = match result {
-        Ok(_) => "Target removed from voice".into(),
+        Ok(_) => channel_logging::outcome::success().to_string(),
         Err(TakedownFail::Countered { by_id, outcome }) => match outcome {
-            CounterOutcome::Parried => format!("Parried by {}", by_id.mention()),
-            CounterOutcome::Removed { user_id } => format!(
-                "Countered by {}; {} removed from voice",
-                by_id.mention(),
-                user_id.mention()
-            )
+            CounterOutcome::Parried => {
+                channel_logging::outcome::parried(by_id.mention()).to_string()
+            }
+            CounterOutcome::Removed { user_id } => {
+                channel_logging::outcome::countered(by_id.mention(), user_id.mention()).to_string()
+            }
         },
-        Err(TakedownFail::Fled) => "Target left before the takedown".into(),
-        Err(TakedownFail::Rejected) => "Bot was moved or disconnected".into(),
-        Err(TakedownFail::MissingPermissions) => "Missing permissions to remove the target".into(),
-        Err(TakedownFail::Join(_)) => "Could not join voice".into(),
-        Err(TakedownFail::Audio(_)) => "Audio playback failed".into(),
-        Err(TakedownFail::Client(_)) => "Discord request failed".into(),
-        Err(TakedownFail::Database(_)) => "Could not load guild configuration".into(),
+        Err(TakedownFail::Fled) => channel_logging::outcome::fled().to_string(),
+        Err(TakedownFail::Rejected) => channel_logging::outcome::rejected().to_string(),
+        Err(TakedownFail::MissingPermissions) => {
+            channel_logging::outcome::missing_permissions().to_string()
+        }
+        Err(TakedownFail::Join(_)) => channel_logging::outcome::join().to_string(),
+        Err(TakedownFail::Audio(_)) => channel_logging::outcome::audio().to_string(),
+        Err(TakedownFail::Client(_)) => channel_logging::outcome::client().to_string(),
+        Err(TakedownFail::Database(_)) => channel_logging::outcome::database().to_string(),
         Err(TakedownFail::Immune | TakedownFail::NotFound) => unreachable!()
     };
-    let content = format!("## 📝 Takedown\n{source}\nTarget: {}\n{outcome}", target_id.mention());
+    let target_channel = match target_channel_id {
+        Some(channel_id) => channel_id.mention().to_string(),
+        None => channel_logging::unknown_channel().to_string()
+    };
+    let content =
+        channel_logging::takedown(target_channel, outcome, source, target_id.mention()).to_string();
     STATE.client.create_message(channel_id).content(&content).await?;
     Ok(())
 }

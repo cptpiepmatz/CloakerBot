@@ -1,3 +1,29 @@
+[channel_logging]
+takedown = """
+## 📝 Takedown
+{source}
+Target: {target} in {channel}
+{outcome}
+"""
+unknown_channel = "unknown channel"
+
+[channel_logging.source]
+called = "Called by {caller}"
+random = "Random takedown"
+danger_zone = "Danger zone {channel}"
+
+[channel_logging.outcome]
+success = "Target removed from voice"
+parried = "Parried by {counterer}"
+countered = "Countered by {counterer}; {target} removed from voice"
+fled = "Target left before the takedown"
+rejected = "Bot was moved or disconnected"
+missing_permissions = "Missing permissions to remove the target"
+join = "Could not join voice"
+audio = "Audio playback failed"
+client = "Discord request failed"
+database = "Could not load guild configuration"
+
 [owner_notifications]
 enabled = "Owner notifications are now enabled. You'll receive future updates."
 disabled = "Owner notifications are now disabled. You won't receive future updates."
