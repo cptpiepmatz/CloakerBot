@@ -73,26 +73,13 @@ impl Database {
 
     pub async fn owner_notification(
         &self,
-        guild_id: Id<GuildMarker>,
         user_id: Id<UserMarker>
     ) -> Result<OwnerNotified, sqlx::Error> {
-        let guild = guild_id.to_string();
         let user = user_id.to_string();
         let mut transaction = self.pool.begin_with("BEGIN IMMEDIATE").await?;
-        sqlx::query!("INSERT OR IGNORE INTO guilds (guild_id) VALUES (?)", guild)
-            .execute(&mut *transaction)
-            .await?;
         sqlx::query!("INSERT OR IGNORE INTO owner_notifications (user_id) VALUES (?)", user)
             .execute(&mut *transaction)
             .await?;
-        sqlx::query!(
-            "INSERT INTO guild_owners (guild_id, user_id) VALUES (?, ?) ON CONFLICT (guild_id) DO \
-             UPDATE SET user_id = excluded.user_id",
-            guild,
-            user
-        )
-        .execute(&mut *transaction)
-        .await?;
         let row = sqlx::query!(
             "SELECT allow_dms, latest_msg_index FROM owner_notifications WHERE user_id = ?",
             user
@@ -147,17 +134,9 @@ impl Database {
 
     pub async fn remove_guild(&self, guild_id: Id<GuildMarker>) -> Result<(), sqlx::Error> {
         let guild = guild_id.to_string();
-        let mut transaction = self.pool.begin_with("BEGIN IMMEDIATE").await?;
         sqlx::query!("DELETE FROM guilds WHERE guild_id = ?", guild)
-            .execute(&mut *transaction)
+            .execute(&self.pool)
             .await?;
-        sqlx::query!(
-            "DELETE FROM owner_notifications WHERE NOT EXISTS (SELECT 1 FROM guild_owners WHERE \
-             guild_owners.user_id = owner_notifications.user_id)"
-        )
-        .execute(&mut *transaction)
-        .await?;
-        transaction.commit().await?;
         Ok(())
     }
 }

@@ -150,7 +150,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
     assert!(database.random_configs().await.unwrap().is_empty());
     assert_eq!(disabled.random.enabled, Some(false));
 
-    assert_eq!(database.owner_notification(guild, caller).await.unwrap().allow_dms, None);
+    assert_eq!(database.owner_notification(caller).await.unwrap().allow_dms, None);
     database
         .save_owner_notification(caller, &OwnerNotified {
             allow_dms: Some(false),
@@ -159,7 +159,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
         .await
         .unwrap();
     assert_eq!(
-        database.owner_notification(other_guild, caller).await.unwrap().allow_dms,
+        database.owner_notification(caller).await.unwrap().allow_dms,
         Some(false)
     );
     let mut tokens = StoredTokens {
@@ -186,7 +186,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
     assert_eq!(database.user_totals(caller).await.unwrap().initiated, 1);
     assert_eq!(database.user_totals(target).await.unwrap().countered, 0);
     assert!(database.guild_config(guild).await.unwrap().danger_zones.is_empty());
-    assert_eq!(database.owner_notification(other_guild, caller).await.unwrap().latest_msg_index, 1);
+    assert_eq!(database.owner_notification(caller).await.unwrap().latest_msg_index, 1);
     database.remove_guild(other_guild).await.unwrap();
     assert_eq!(database.user_totals(caller).await.unwrap().initiated, 0);
     assert!(database.credentials(caller).await.unwrap().is_some());

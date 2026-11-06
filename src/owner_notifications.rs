@@ -44,7 +44,7 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
     let notified = match notifications.entry(owner_id) {
         Entry::Occupied(entry) => entry.into_mut(),
         Entry::Vacant(entry) => {
-            let notified = STATE.database.owner_notification(guild_id, owner_id).await?;
+            let notified = STATE.database.owner_notification(owner_id).await?;
             entry.insert(notified)
         }
     };

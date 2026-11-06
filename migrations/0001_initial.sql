@@ -57,13 +57,6 @@ CREATE TABLE owner_notifications (
     latest_msg_index INTEGER NOT NULL DEFAULT 0 CHECK (latest_msg_index >= 0)
 ) STRICT;
 
-CREATE TABLE guild_owners (
-    guild_id TEXT PRIMARY KEY NOT NULL REFERENCES guilds ON DELETE CASCADE,
-    user_id TEXT NOT NULL REFERENCES owner_notifications ON DELETE CASCADE
-) STRICT;
-
-CREATE INDEX owner_guilds ON guild_owners (user_id);
-
 CREATE TABLE linked_accounts (
     user_id TEXT PRIMARY KEY NOT NULL CHECK (user_id != ''),
     access_token TEXT NOT NULL CHECK (length(access_token) > 0),
