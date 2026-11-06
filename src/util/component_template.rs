@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::iter;
 
 use twilight_model::channel::message::component::{
     ActionRow, Button, ButtonStyle, Component, Container, Separator, SeparatorSpacingSize,
@@ -46,5 +47,40 @@ impl<D: Display> From<TemplateComponent<D>> for Component {
                 })
             }
         }
+    }
+}
+
+pub struct Text;
+pub struct Iter;
+
+pub trait IntoTemplateComponents<D, Kind> {
+    type Iter: ExactSizeIterator<Item = TemplateComponent<D>>;
+    fn into_components(self) -> Self::Iter;
+}
+
+impl<D, I> IntoTemplateComponents<D, Iter> for I
+where
+    I: ExactSizeIterator<Item = TemplateComponent<D>>
+{
+    type Iter = I;
+
+    fn into_components(self) -> Self::Iter {
+        self
+    }
+}
+
+impl IntoTemplateComponents<String, Text> for String {
+    type Iter = iter::Once<TemplateComponent<String>>;
+
+    fn into_components(self) -> Self::Iter {
+        iter::once(TemplateComponent::Text(self))
+    }
+}
+
+impl<'a> IntoTemplateComponents<&'a str, Text> for &'a str {
+    type Iter = iter::Once<TemplateComponent<&'a str>>;
+
+    fn into_components(self) -> Self::Iter {
+        iter::once(TemplateComponent::Text(self))
     }
 }

@@ -1,14 +1,18 @@
+use std::fmt::Display;
+
 use custom_id::ModalCustomId;
 use derive_more::From;
 use twilight_model::application::interaction::modal::{
     ModalInteractionComponent, ModalInteractionData
 };
 use twilight_model::application::interaction::{Interaction, InteractionData};
-use twilight_model::channel::message::MessageFlags;
+use twilight_model::channel::message::{Component, MessageFlags};
 use twilight_model::guild::Permissions;
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_util::builder::InteractionResponseDataBuilder;
+use twilight_util::builder::embed::EmbedBuilder;
 
+use crate::util::component_template::{IntoTemplateComponents, TemplateComponent};
 use crate::{APPLICATION_ID, STATE};
 
 pub mod config;
@@ -72,13 +76,15 @@ fn field<'a>(
         .ok_or(config::ConfigModalActionError::InvalidField(custom_id))
 }
 
-async fn reply(
-    interaction: &Interaction,
-    content: impl Into<String>
-) -> Result<(), HandleModalSubmitError> {
+async fn reply<T, D, K>(interaction: &Interaction, content: T) -> Result<(), HandleModalSubmitError>
+where
+    T: IntoTemplateComponents<D, K>,
+    D: Display
+{
+    let components = content.into_components().map(Component::from);
     let data = InteractionResponseDataBuilder::new()
-        .flags(MessageFlags::EPHEMERAL)
-        .content(content)
+        .flags(MessageFlags::EPHEMERAL | MessageFlags::IS_COMPONENTS_V2)
+        .components(components)
         .build();
     STATE
         .client
