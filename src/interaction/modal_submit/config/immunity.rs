@@ -1,3 +1,7 @@
+use std::fmt::{self, Display};
+
+use itertools::Itertools;
+use twilight_mention::Mention;
 use twilight_model::application::interaction::Interaction;
 use twilight_model::application::interaction::modal::{
     ModalInteractionComponent, ModalInteractionData
@@ -10,9 +14,11 @@ use twilight_model::id::marker::RoleMarker;
 
 use super::ConfigModalActionError;
 use crate::STATE;
+use crate::assets::replies;
 use crate::data::config::GuildConfigImmunity;
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
+use crate::util::component_template::TemplateComponent;
 
 pub fn modal(current: &GuildConfigImmunity) -> InteractionResponseData {
     let fields = [
@@ -53,14 +59,18 @@ fn roles(
     data: &ModalInteractionData,
     id: &'static str
 ) -> Result<Vec<Id<RoleMarker>>, ConfigModalActionError> {
-    let ModalInteractionComponent::RoleSelect(select) = field(data, id)?
-    else {
-        return Err(ConfigModalActionError::InvalidField(id));
-    };
-    if select.values.len() > 25 {
-        return Err(ConfigModalActionError::InvalidField(id));
+    use ModalInteractionComponent as MIC;
+    match field(data, id)? {
+        MIC::RoleSelect(select) if select.values.len() <= 25 => Ok(select.values.clone()),
+        _ => Err(ConfigModalActionError::InvalidField(id))
     }
-    Ok(select.values.clone())
+}
+
+fn format_roles(roles: &[Id<RoleMarker>]) -> impl Display + Sync + '_ {
+    fmt::from_fn(move |f| match roles.is_empty() {
+        true => write!(f, "{}", replies::config::immunity::none()),
+        false => write!(f, "{}", roles.iter().map(|id| id.mention()).format(", "))
+    })
 }
 
 pub async fn action(
@@ -74,10 +84,16 @@ pub async fn action(
         general_silent: roles(data, "general_silent")?,
         random_silent: roles(data, "random_silent")?
     };
-    STATE.database.update_config(guild_id, |config| config.immunity = immunity).await?;
-    reply(
-        interaction,
-        "Immunity settings saved. Clear a role selection to unset that immunity type."
-    )
-    .await
+
+    let content: [&(dyn Display + Sync); 6] = [
+        &replies::config::immunity::saved(),
+        &replies::config::immunity::general_roles(format_roles(&immunity.general)),
+        &replies::config::immunity::random_roles(format_roles(&immunity.random)),
+        &replies::config::immunity::general_silent_roles(format_roles(&immunity.general_silent)),
+        &replies::config::immunity::random_silent_roles(format_roles(&immunity.random_silent)),
+        &replies::config::immunity::unset_hint()
+    ];
+
+    STATE.database.update_config(guild_id, |config| config.immunity = immunity.clone()).await?;
+    reply(interaction, content.into_iter().map(TemplateComponent::Text)).await
 }

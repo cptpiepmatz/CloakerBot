@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![allow(unstable_name_collisions)]
 
 use std::collections::HashMap;
 use std::ops::Deref;
