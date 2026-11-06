@@ -41,7 +41,8 @@ async fn set_allowance(
             MessageComponentCustomId::OwnerNotificationsDisable,
             owner_notifications::disable_button().to_string()
         )
-    } else {
+    }
+    else {
         (
             owner_notifications::disabled().to_string(),
             MessageComponentCustomId::OwnerNotificationsEnable,

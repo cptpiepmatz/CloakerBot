@@ -26,8 +26,7 @@ use crate::interaction::message_component::custom_id::{
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 
 pub fn component(current: Option<Id<ChannelMarker>>) -> Component {
-    let default_values: Vec<_> =
-        current.into_iter().map(SelectDefaultValue::Channel).collect();
+    let default_values: Vec<_> = current.into_iter().map(SelectDefaultValue::Channel).collect();
 
     Component::SelectMenu(SelectMenu {
         id: None,

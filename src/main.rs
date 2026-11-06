@@ -192,14 +192,17 @@ async fn main() -> miette::Result<()> {
     tracing::info!("linked-role metadata registered");
 
     // spawn server for account linking
-    let http_server = tokio::spawn(http_server::serve().instrument(tracing::info_span!("http_server")));
+    let http_server =
+        tokio::spawn(http_server::serve().instrument(tracing::info_span!("http_server")));
     let linked_roles = tokio::spawn(
         link::application_role_connection::maintain_connections()
             .instrument(tracing::info_span!("linked_role_maintenance"))
     );
 
     let discord_events = stream::unfold(shard, |mut shard| async {
-        shard.next_event(EventTypeFlags::all()).await
+        shard
+            .next_event(EventTypeFlags::all())
+            .await
             .map(|event| (BotEvent::Discord(event.map(Box::new)), shard))
     });
 
@@ -217,7 +220,9 @@ async fn main() -> miette::Result<()> {
         loop {
             match events.next().await {
                 None => return, // event stream ended
-                Some(BotEvent::Discord(Ok(event))) if matches!(*event, DiscordEvent::Ready(_)) => break,
+                Some(BotEvent::Discord(Ok(event))) if matches!(*event, DiscordEvent::Ready(_)) => {
+                    break;
+                }
                 Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
                 _ => continue
             }

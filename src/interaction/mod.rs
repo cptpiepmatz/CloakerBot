@@ -21,10 +21,11 @@ mod modal_submit;
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
 pub mod command_mentions {
-    pub use super::application_command::{
-        cloaker::MENTION as CLOAKER, config::MENTION as CONFIG, counter::MENTION as COUNTER,
-        help::MENTION as HELP, ranks::MENTION as RANKS
-    };
+    pub use super::application_command::cloaker::MENTION as CLOAKER;
+    pub use super::application_command::config::MENTION as CONFIG;
+    pub use super::application_command::counter::MENTION as COUNTER;
+    pub use super::application_command::help::MENTION as HELP;
+    pub use super::application_command::ranks::MENTION as RANKS;
 }
 
 #[derive(Debug, From)]

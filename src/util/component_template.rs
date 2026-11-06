@@ -20,11 +20,9 @@ impl<D: Display> From<TemplateComponent<D>> for Component {
             TemplateComponent::Text(content) => {
                 Self::TextDisplay(TextDisplay { id: None, content: content.to_string() })
             }
-            TemplateComponent::Separator { divider, spacing } => Self::Separator(Separator {
-                id: None,
-                divider,
-                spacing
-            }),
+            TemplateComponent::Separator { divider, spacing } => {
+                Self::Separator(Separator { id: None, divider, spacing })
+            }
             TemplateComponent::Container { color, components } => Self::Container(Container {
                 id: None,
                 accent_color: Some(Some(color)),

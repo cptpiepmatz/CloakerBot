@@ -28,12 +28,11 @@ fn routes() -> Router {
         .route("/", get(async || "👋"))
         .route("/icon.png", get(icon))
         .route("/invite", get(invite))
-        .route("/github", get(async || {
-            Redirect::temporary(env!("CARGO_PKG_REPOSITORY"))
-        }))
-        .route("/discord", get(async || {
-            Redirect::temporary(MANIFEST.package.metadata.discord_invite)
-        }))
+        .route("/github", get(async || Redirect::temporary(env!("CARGO_PKG_REPOSITORY"))))
+        .route(
+            "/discord",
+            get(async || Redirect::temporary(MANIFEST.package.metadata.discord_invite))
+        )
         .route("/version", get(async || env!("CARGO_PKG_VERSION")))
 }
 

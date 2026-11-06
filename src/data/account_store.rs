@@ -134,9 +134,7 @@ impl Database {
 
     pub async fn remove_guild(&self, guild_id: Id<GuildMarker>) -> Result<(), sqlx::Error> {
         let guild = guild_id.to_string();
-        sqlx::query!("DELETE FROM guilds WHERE guild_id = ?", guild)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query!("DELETE FROM guilds WHERE guild_id = ?", guild).execute(&self.pool).await?;
         Ok(())
     }
 }

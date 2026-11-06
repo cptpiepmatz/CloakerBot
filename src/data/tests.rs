@@ -158,10 +158,7 @@ async fn storage_roundtrip_and_guild_cleanup() {
         })
         .await
         .unwrap();
-    assert_eq!(
-        database.owner_notification(caller).await.unwrap().allow_dms,
-        Some(false)
-    );
+    assert_eq!(database.owner_notification(caller).await.unwrap().allow_dms, Some(false));
     let mut tokens = StoredTokens {
         access_token: SecretToken::try_from("access".to_owned()).unwrap(),
         refresh_token: SecretToken::try_from("refresh".to_owned()).unwrap(),

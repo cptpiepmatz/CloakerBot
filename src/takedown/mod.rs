@@ -207,7 +207,9 @@ async fn execute_takedown(
     preliminary_checks(kind, config, &target_roles)?;
     let channel_id = get_channel_id(target_id, guild_id)?;
     *target_channel = Some(channel_id);
-    if let TakedownType::DangerZone { channel_id: expected } = kind && channel_id != expected {
+    if let TakedownType::DangerZone { channel_id: expected } = kind &&
+        channel_id != expected
+    {
         return Err(TakedownFail::Fled);
     }
 
@@ -222,7 +224,14 @@ async fn execute_takedown(
 
     let takedown_res = takedown_in_voice(
         &mut call,
-        VoiceTakedown { target_id, target_roles: &target_roles, guild_id, channel_id, kind, config },
+        VoiceTakedown {
+            target_id,
+            target_roles: &target_roles,
+            guild_id,
+            channel_id,
+            kind,
+            config
+        },
         rng,
         counter_rx
     )
