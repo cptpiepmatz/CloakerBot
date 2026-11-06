@@ -1,35 +1,73 @@
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::MessageFlags;
+use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle, Component};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
-use twilight_util::builder::InteractionResponseDataBuilder;
 
+use crate::assets::replies::owner_notifications;
 use crate::interaction::message_component::HandleMessageComponentError;
+use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::{APPLICATION_ID, STATE};
 
 pub async fn disable(interaction: &Interaction) -> Result<(), HandleMessageComponentError> {
+    set_allowance(interaction, false).await
+}
+
+pub async fn enable(interaction: &Interaction) -> Result<(), HandleMessageComponentError> {
+    set_allowance(interaction, true).await
+}
+
+async fn set_allowance(
+    interaction: &Interaction,
+    allow_dms: bool
+) -> Result<(), HandleMessageComponentError> {
     let owner_id = interaction.author_id().ok_or(HandleMessageComponentError::NoAuthor)?;
     STATE
         .client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, &interaction.token, &InteractionResponse {
             kind: InteractionResponseType::DeferredChannelMessageWithSource,
-            data: Some(
-                InteractionResponseDataBuilder::new().flags(MessageFlags::EPHEMERAL).build()
-            )
+            data: None
         })
         .await?;
 
     {
         let mut notifications = STATE.owner_notifications.lock().await;
-        STATE.database.set_owner_notification_allowance(owner_id, false).await?;
+        STATE.database.set_owner_notification_allowance(owner_id, allow_dms).await?;
         notifications.remove(&owner_id);
     }
+
+    let (content, custom_id, label) = if allow_dms {
+        (
+            owner_notifications::enabled().to_string(),
+            MessageComponentCustomId::OwnerNotificationsDisable,
+            owner_notifications::disable_button().to_string()
+        )
+    } else {
+        (
+            owner_notifications::disabled().to_string(),
+            MessageComponentCustomId::OwnerNotificationsEnable,
+            owner_notifications::enable_button().to_string()
+        )
+    };
+    let components = [Component::ActionRow(ActionRow {
+        id: None,
+        components: vec![Component::Button(Button {
+            id: None,
+            style: ButtonStyle::Secondary,
+            custom_id: Some(custom_id.to_string()),
+            label: Some(label),
+            disabled: false,
+            emoji: None,
+            url: None,
+            sku_id: None
+        })]
+    })];
 
     STATE
         .client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
-        .content(Some("Owner notifications are now disabled. You won't receive future updates."))
+        .content(Some(&content))
+        .components(Some(&components))
         .await?;
     Ok(())
 }

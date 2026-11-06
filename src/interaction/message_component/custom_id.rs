@@ -13,13 +13,18 @@ use crate::interaction::message_component::HandleMessageComponentError;
     parse_err_fn = ParseMessageComponentCustomIdError::from_str,
 )]
 pub enum MessageComponentCustomId {
+    // owner notification preferences
     OwnerNotificationsDisable,
+    OwnerNotificationsEnable,
+
+    // open configuration dialogs
     ConfigOpenDangerZones,
     ConfigOpenLogChannel,
     ConfigOpenImmunity,
     ConfigOpenRandom,
     ConfigOpenTargetBots,
 
+    // clear configuration values
     ConfigUnsetDangerZones,
     ConfigUnsetImmunityGeneral,
     ConfigUnsetImmunityRandom,
@@ -27,9 +32,11 @@ pub enum MessageComponentCustomId {
     ConfigUnsetImmunityRandomSilent,
     ConfigUnsetLogChannel,
 
+    // toggle random takedowns
     ConfigEnableRandom,
     ConfigDisableRandom,
 
+    // configuration select menus
     DangerZonesSelect,
     ImmunityGeneralSelect,
     ImmunityRandomSelect,

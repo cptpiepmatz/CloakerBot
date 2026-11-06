@@ -41,6 +41,7 @@ pub async fn handle_message_component(
     use MessageComponentCustomId as MCCId;
     match custom_id {
         MCCId::OwnerNotificationsDisable => button::owner_notifications::disable(interaction).await,
+        MCCId::OwnerNotificationsEnable => button::owner_notifications::enable(interaction).await,
         MCCId::ConfigOpenDangerZones |
         MCCId::ConfigOpenLogChannel |
         MCCId::ConfigOpenImmunity |
