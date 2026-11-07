@@ -24,18 +24,6 @@ pub enum MessageComponentCustomId {
     ConfigOpenRandom,
     ConfigOpenTargetBots,
 
-    // clear configuration values
-    ConfigUnsetDangerZones,
-    ConfigUnsetImmunityGeneral,
-    ConfigUnsetImmunityRandom,
-    ConfigUnsetImmunityGeneralSilent,
-    ConfigUnsetImmunityRandomSilent,
-    ConfigUnsetLogChannel,
-
-    // toggle random takedowns
-    ConfigEnableRandom,
-    ConfigDisableRandom,
-
     // configuration select menus
     DangerZonesSelect,
     ImmunityGeneralSelect,

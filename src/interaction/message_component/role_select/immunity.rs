@@ -21,7 +21,6 @@ use twilight_util::builder::embed::EmbedBuilder;
 
 use crate::assets::{COLORS, QUOTES};
 use crate::interaction::message_component::HandleMessageComponentError;
-use crate::interaction::message_component::button::config::ConfigUnsetButton::ImmunityGeneralSilent;
 use crate::interaction::message_component::custom_id::{
     MessageComponentCustomId, ParseMessageComponentCustomIdError
 };
