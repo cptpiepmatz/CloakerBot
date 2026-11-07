@@ -166,17 +166,11 @@ fn codegen(
 
     let (return_type, body) = if let Some(components) = components {
         let indices = 0..literals.len();
-        let component_type = if mappings.is_empty() {
-            quote!(Component<&'static str>)
-        }
-        else {
-            quote!(Component<_>)
-        };
         let text = if mappings.is_empty() {
             quote! {
-                let text = |index: usize| -> &'static str {
+                let text = |index: usize| {
                     match index {
-                        #(#indices => #literals,)*
+                        #(#indices => #literals.to_owned(),)*
                         _ => unreachable!()
                     }
                 };
@@ -184,34 +178,26 @@ fn codegen(
         }
         else {
             quote! {
-                let render = std::sync::Arc::new(
-                    move |index: usize, f: &mut std::fmt::Formatter<'_>| {
-                        #(#ops)*
-                        match index {
-                            #(#indices => std::write!(f, #literals),)*
-                            _ => unreachable!()
-                        }
+                #(#ops)*
+                let text = |index: usize| {
+                    match index {
+                        #(#indices => std::format!(#literals),)*
+                        _ => unreachable!()
                     }
-                );
-                let text = move |index| {
-                    let render = std::sync::Arc::clone(&render);
-                    std::fmt::from_fn(move |f| render(index, f))
                 };
             }
         };
         let body = quote! {
-            use crate::util::component_template::TemplateComponent as Component;
+            use crate::util::component_template::ComponentTemplate as Component;
             use twilight_model::channel::message::component::{ButtonStyle, SeparatorSpacingSize};
             #text
             let _ = &text;
-            let components: Vec<#component_type> = vec![#(#components),*];
+            let components: Vec<Component> = vec![#(#components),*];
             components.into_iter()
         };
         (
             quote!(
-                impl ExactSizeIterator<
-                    Item = crate::util::component_template::TemplateComponent<impl Display>
-                >
+                impl ExactSizeIterator<Item = crate::util::component_template::ComponentTemplate>
             ),
             body
         )

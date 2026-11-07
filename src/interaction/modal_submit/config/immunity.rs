@@ -18,7 +18,7 @@ use crate::assets::replies;
 use crate::data::config::GuildConfigImmunity;
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
-use crate::util::component_template::TemplateComponent;
+use crate::util::component_template::ComponentTemplate;
 
 pub fn modal(current: &GuildConfigImmunity) -> InteractionResponseData {
     let fields = [
@@ -95,5 +95,5 @@ pub async fn action(
     ];
 
     STATE.database.update_config(guild_id, |config| config.immunity = immunity.clone()).await?;
-    reply(interaction, content.into_iter().map(TemplateComponent::Text)).await
+    reply(interaction, content.into_iter().map(|text| ComponentTemplate::Text(text.to_string()))).await
 }

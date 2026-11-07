@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::iter;
 
 use twilight_model::channel::message::component::{
@@ -6,40 +5,40 @@ use twilight_model::channel::message::component::{
     TextDisplay
 };
 
-/// A component tree whose text is formatted only when converted for Discord.
-pub enum TemplateComponent<D> {
-    Text(D),
+/// A component tree with text formatted for Discord.
+pub enum ComponentTemplate {
+    Text(String),
     Separator { divider: Option<bool>, spacing: Option<SeparatorSpacingSize> },
     Container { color: u32, components: Vec<Self> },
     ActionRow(Vec<Self>),
-    Button { style: ButtonStyle, custom_id: D, label: D, disabled: bool }
+    Button { style: ButtonStyle, custom_id: String, label: String, disabled: bool }
 }
 
-impl<D: Display> From<TemplateComponent<D>> for Component {
-    fn from(template: TemplateComponent<D>) -> Self {
+impl From<ComponentTemplate> for Component {
+    fn from(template: ComponentTemplate) -> Self {
         match template {
-            TemplateComponent::Text(content) => {
-                Self::TextDisplay(TextDisplay { id: None, content: content.to_string() })
+            ComponentTemplate::Text(content) => {
+                Self::TextDisplay(TextDisplay { id: None, content })
             }
-            TemplateComponent::Separator { divider, spacing } => {
+            ComponentTemplate::Separator { divider, spacing } => {
                 Self::Separator(Separator { id: None, divider, spacing })
             }
-            TemplateComponent::Container { color, components } => Self::Container(Container {
+            ComponentTemplate::Container { color, components } => Self::Container(Container {
                 id: None,
                 accent_color: Some(Some(color)),
                 spoiler: None,
                 components: components.into_iter().map(Into::into).collect()
             }),
-            TemplateComponent::ActionRow(components) => Self::ActionRow(ActionRow {
+            ComponentTemplate::ActionRow(components) => Self::ActionRow(ActionRow {
                 id: None,
                 components: components.into_iter().map(Into::into).collect()
             }),
-            TemplateComponent::Button { style, custom_id, label, disabled } => {
+            ComponentTemplate::Button { style, custom_id, label, disabled } => {
                 Self::Button(Button {
                     id: None,
                     style,
-                    custom_id: Some(custom_id.to_string()),
-                    label: Some(label.to_string()),
+                    custom_id: Some(custom_id),
+                    label: Some(label),
                     disabled,
                     emoji: None,
                     url: None,
@@ -53,14 +52,14 @@ impl<D: Display> From<TemplateComponent<D>> for Component {
 pub struct Text;
 pub struct Iter;
 
-pub trait IntoTemplateComponents<D, Kind> {
-    type Iter: ExactSizeIterator<Item = TemplateComponent<D>>;
+pub trait IntoComponentTemplates<Kind> {
+    type Iter: ExactSizeIterator<Item = ComponentTemplate>;
     fn into_components(self) -> Self::Iter;
 }
 
-impl<D, I> IntoTemplateComponents<D, Iter> for I
+impl<I> IntoComponentTemplates<Iter> for I
 where
-    I: ExactSizeIterator<Item = TemplateComponent<D>>
+    I: ExactSizeIterator<Item = ComponentTemplate>
 {
     type Iter = I;
 
@@ -69,18 +68,18 @@ where
     }
 }
 
-impl IntoTemplateComponents<String, Text> for String {
-    type Iter = iter::Once<TemplateComponent<String>>;
+impl IntoComponentTemplates<Text> for String {
+    type Iter = iter::Once<ComponentTemplate>;
 
     fn into_components(self) -> Self::Iter {
-        iter::once(TemplateComponent::Text(self))
+        iter::once(ComponentTemplate::Text(self))
     }
 }
 
-impl<'a> IntoTemplateComponents<&'a str, Text> for &'a str {
-    type Iter = iter::Once<TemplateComponent<&'a str>>;
+impl IntoComponentTemplates<Text> for &str {
+    type Iter = iter::Once<ComponentTemplate>;
 
     fn into_components(self) -> Self::Iter {
-        iter::once(TemplateComponent::Text(self))
+        iter::once(ComponentTemplate::Text(self.to_owned()))
     }
 }

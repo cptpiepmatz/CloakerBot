@@ -40,7 +40,7 @@ macro_rules! defer_macros {
 }
 
 defer_macros! {
-    /// Generates a display template, or lazy component templates with
+    /// Generates a lazy display template, or formatted component templates with
     /// `components = true`.
     ///
     /// The template path is relative to the source file invoking the macro. The
@@ -58,10 +58,10 @@ defer_macros! {
     ///
     /// The generated function takes all placeholders used in the document,
     /// including HTML attributes and button labels. It returns an
-    /// `ExactSizeIterator` of `TemplateComponent` values whose text implements
-    /// `Display`. Convert each value into a Twilight `Component` when preparing
-    /// the message; that is when text gets formatted. The generated code uses
-    /// the calling crate's `crate::util::component_template::TemplateComponent`.
+    /// `ExactSizeIterator` of `ComponentTemplate` values with text already formatted
+    /// into owned strings. Convert each value into a Twilight `Component` when
+    /// preparing the message. The generated code uses
+    /// the calling crate's `crate::util::component_template::ComponentTemplate`.
     ///
     /// Keep the `.md` extension. This is Markdown with a small set of component
     /// elements, not MDX or JSX. Put component elements on their own lines, with

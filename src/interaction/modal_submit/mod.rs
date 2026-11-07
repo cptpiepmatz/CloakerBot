@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use custom_id::ModalCustomId;
 use derive_more::From;
 use twilight_model::application::interaction::modal::{
@@ -12,7 +10,7 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::util::component_template::{IntoTemplateComponents, TemplateComponent};
+use crate::util::component_template::IntoComponentTemplates;
 use crate::{APPLICATION_ID, STATE};
 
 pub mod config;
@@ -76,10 +74,9 @@ fn field<'a>(
         .ok_or(config::ConfigModalActionError::InvalidField(custom_id))
 }
 
-async fn reply<T, D, K>(interaction: &Interaction, content: T) -> Result<(), HandleModalSubmitError>
+async fn reply<T, K>(interaction: &Interaction, content: T) -> Result<(), HandleModalSubmitError>
 where
-    T: IntoTemplateComponents<D, K>,
-    D: Display
+    T: IntoComponentTemplates<K>
 {
     let components = content.into_components().map(Component::from);
     let data = InteractionResponseDataBuilder::new()
