@@ -63,22 +63,26 @@ No danger zones are set now.
 [config.immunity]
 saved = "## 🛡️ Immunity Settings Saved"
 general_roles = """
-**General immunity** — protected from all takedowns:
+**General immunity**
+-# protected from all takedowns
 {roles}
 """
 random_roles = """
-**Random immunity** — protected from random takedowns only:
+**Random immunity**
+-# protected from random takedowns only
 {roles}
 """
 general_silent_roles = """
-**Silent general immunity** — never targeted by any takedown:
+**Silent general immunity**
+-# never targeted by any takedown
 {roles}
 """
 random_silent_roles = """
-**Silent random immunity** — never selected for random takedowns:
+**Silent random immunity**
+-# never selected for random takedowns
 {roles}
 """
-unset_hint = "Clear a role selection to unset that immunity type."
+unset_hint = "*Clear a role selection to unset that immunity type.*"
 none = "None"
 
 [config.immunity.general]

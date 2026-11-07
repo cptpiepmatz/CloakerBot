@@ -7,7 +7,9 @@ use twilight_model::application::interaction::modal::{
     ModalInteractionComponent, ModalInteractionData
 };
 use twilight_model::channel::message::Component;
-use twilight_model::channel::message::component::{SelectDefaultValue, SelectMenuType};
+use twilight_model::channel::message::component::{
+    SelectDefaultValue, SelectMenuType, SeparatorSpacingSize
+};
 use twilight_model::http::interaction::InteractionResponseData;
 use twilight_model::id::Id;
 use twilight_model::id::marker::RoleMarker;
@@ -67,9 +69,20 @@ fn roles(
 }
 
 fn format_roles(roles: &[Id<RoleMarker>]) -> impl Display + Sync + '_ {
-    fmt::from_fn(move |f| match roles.is_empty() {
-        true => write!(f, "{}", replies::config::immunity::none()),
-        false => write!(f, "{}", roles.iter().map(|id| id.mention()).format(", "))
+    fmt::from_fn(move |f| {
+        if roles.is_empty() {
+            return write!(f, "{}", replies::config::immunity::none());
+        }
+
+        let mut iter = roles.into_iter().peekable();
+        while let Some(id) = iter.next() {
+            write!(f, "- {}", id.mention())?;
+            if iter.peek().is_some() {
+                write!(f, "\n")?;
+            }
+        }
+
+        Ok(())
     })
 }
 
@@ -85,15 +98,28 @@ pub async fn action(
         random_silent: roles(data, "random_silent")?
     };
 
-    let content: [&(dyn Display + Sync); 6] = [
-        &replies::config::immunity::saved(),
-        &replies::config::immunity::general_roles(format_roles(&immunity.general)),
-        &replies::config::immunity::random_roles(format_roles(&immunity.random)),
-        &replies::config::immunity::general_silent_roles(format_roles(&immunity.general_silent)),
-        &replies::config::immunity::random_silent_roles(format_roles(&immunity.random_silent)),
-        &replies::config::immunity::unset_hint()
+    fn text(content: impl Display) -> ComponentTemplate {
+        ComponentTemplate::Text(content.to_string())
+    }
+
+    fn separator(spacing: SeparatorSpacingSize) -> ComponentTemplate {
+        ComponentTemplate::Separator { divider: Some(false), spacing: Some(spacing) }
+    }
+
+    use replies::config::immunity::*;
+    let components = [
+        text(saved()),
+        text(general_roles(format_roles(&immunity.general))),
+        separator(SeparatorSpacingSize::Small),
+        text(random_roles(format_roles(&immunity.random))),
+        separator(SeparatorSpacingSize::Small),
+        text(general_silent_roles(format_roles(&immunity.general_silent))),
+        separator(SeparatorSpacingSize::Small),
+        text(random_silent_roles(format_roles(&immunity.random_silent))),
+        separator(SeparatorSpacingSize::Large),
+        text(unset_hint())
     ];
 
     STATE.database.update_config(guild_id, |config| config.immunity = immunity.clone()).await?;
-    reply(interaction, content.into_iter().map(|text| ComponentTemplate::Text(text.to_string()))).await
+    reply(interaction, components.into_iter()).await
 }
