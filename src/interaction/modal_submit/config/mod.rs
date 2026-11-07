@@ -4,6 +4,8 @@ pub mod log_channel;
 pub mod random;
 pub mod target_bots;
 
+use std::fmt::Display;
+
 use twilight_model::channel::message::Component;
 use twilight_model::channel::message::component::{
     Label, SelectDefaultValue, SelectMenu, SelectMenuType
@@ -20,11 +22,11 @@ pub enum ConfigModalActionError {
     UnexpectedCustomId(ModalCustomId)
 }
 
-fn label(name: &str, description: &str, component: Component) -> Component {
+fn label(name: impl Display, description: impl Display, component: Component) -> Component {
     Component::Label(Label {
         id: None,
-        label: name.into(),
-        description: Some(description.into()),
+        label: name.to_string(),
+        description: Some(description.to_string()),
         component: Box::new(component)
     })
 }
@@ -52,12 +54,12 @@ fn select(
 
 fn modal(
     custom_id: ModalCustomId,
-    title: &str,
+    title: impl Display,
     components: impl IntoIterator<Item = Component>
 ) -> InteractionResponseData {
     InteractionResponseDataBuilder::new()
         .custom_id(custom_id.to_string())
-        .title(title)
+        .title(title.to_string())
         .components(components)
         .build()
 }

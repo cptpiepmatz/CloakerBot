@@ -2,7 +2,7 @@ use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle, Component};
 use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 
-use crate::assets::replies::owner_notifications;
+use crate::assets::templates::owner_notifications;
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::{APPLICATION_ID, STATE};

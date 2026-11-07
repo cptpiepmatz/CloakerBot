@@ -13,7 +13,7 @@ use twilight_model::id::marker::ChannelMarker;
 
 use super::ConfigModalActionError;
 use crate::STATE;
-use crate::assets::{QUOTES, replies};
+use crate::assets::{QUOTES, templates};
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
 
@@ -25,9 +25,10 @@ pub fn modal(current: &[Id<ChannelMarker>]) -> InteractionResponseData {
         25
     );
     select.channel_types = Some(vec![ChannelType::GuildVoice]);
-    super::modal(ModalCustomId::ConfigDangerZones, "Configure danger zones", [super::label(
-        "Danger zones",
-        "Choose voice channels that trigger automatic takedowns. Clear the selection to unset.",
+    use templates::config::danger_zones::modal;
+    super::modal(ModalCustomId::ConfigDangerZones, modal::title(), [super::label(
+        modal::label(),
+        modal::description(),
         Component::SelectMenu(select)
     )])
 }
@@ -49,10 +50,10 @@ pub async fn action(
         .update_config(guild_id, |config| config.danger_zones = select.values.clone())
         .await?;
     let content = if select.values.is_empty() {
-        replies::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels).to_string()
+        templates::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels).to_string()
     }
     else {
-        replies::config::danger_zones::set(
+        templates::config::danger_zones::set(
             select.values.iter().map(|id| format!("- {}", id.mention())).join("\n"),
             QUOTES.config.danger_zones.channels
         )

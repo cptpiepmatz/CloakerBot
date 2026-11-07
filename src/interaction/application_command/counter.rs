@@ -13,7 +13,7 @@ use twilight_model::id::marker::CommandMarker;
 use twilight_util::builder::command::CommandBuilder;
 
 use super::COMMANDS_REGISTER;
-use crate::assets::replies;
+use crate::assets::templates;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
@@ -73,10 +73,10 @@ pub async fn action(
 
     let content = match result {
         Ok(target_id) => {
-            replies::counter::success(target_id.mention(), crate::assets::QUOTES.counter.success)
+            templates::counter::success(target_id.mention(), crate::assets::QUOTES.counter.success)
                 .to_string()
         }
-        Err(()) => replies::counter::miss(crate::assets::QUOTES.counter.miss).to_string()
+        Err(()) => templates::counter::miss(crate::assets::QUOTES.counter.miss).to_string()
     };
 
     application_command::update_defer_msg(interaction, &content).await?;

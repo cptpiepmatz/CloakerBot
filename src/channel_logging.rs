@@ -6,7 +6,7 @@ use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
 
-use crate::assets::replies::channel_logging;
+use crate::assets::templates::channel_logging;
 use crate::util::ClientError;
 use crate::{BOT_USER_ID, STATE};
 

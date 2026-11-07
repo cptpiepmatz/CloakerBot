@@ -16,32 +16,43 @@ use twilight_model::id::marker::RoleMarker;
 
 use super::ConfigModalActionError;
 use crate::STATE;
-use crate::assets::replies;
+use crate::assets::templates;
 use crate::data::config::GuildConfigImmunity;
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
 use crate::util::component_template::ComponentTemplate;
 
 pub fn modal(current: &GuildConfigImmunity) -> InteractionResponseData {
+    use templates::config::immunity::modal;
     let fields = [
-        ("general", "General immunity", "Protected from all takedowns.", &current.general),
-        ("random", "Random immunity", "Protected from random takedowns only.", &current.random),
+        (
+            "general",
+            modal::general::label().to_string(),
+            modal::general::description().to_string(),
+            &current.general
+        ),
+        (
+            "random",
+            modal::random::label().to_string(),
+            modal::random::description().to_string(),
+            &current.random
+        ),
         (
             "general_silent",
-            "Silent general immunity",
-            "Never targeted by any takedown.",
+            modal::general_silent::label().to_string(),
+            modal::general_silent::description().to_string(),
             &current.general_silent
         ),
         (
             "random_silent",
-            "Silent random immunity",
-            "Never selected for random takedowns.",
+            modal::random_silent::label().to_string(),
+            modal::random_silent::description().to_string(),
             &current.random_silent
         )
     ];
     super::modal(
         ModalCustomId::ConfigImmunity,
-        "Immunity",
+        modal::title(),
         fields.map(|(id, title, description, roles)| {
             super::label(
                 title,
@@ -71,7 +82,7 @@ fn roles(
 fn format_roles(roles: &[Id<RoleMarker>]) -> impl Display + Sync + '_ {
     fmt::from_fn(move |f| {
         if roles.is_empty() {
-            return write!(f, "{}", replies::config::immunity::none());
+            return write!(f, "{}", templates::config::immunity::none());
         }
 
         let mut iter = roles.into_iter().peekable();
@@ -106,7 +117,7 @@ pub async fn action(
         ComponentTemplate::Separator { divider: Some(false), spacing: Some(spacing) }
     }
 
-    use replies::config::immunity::*;
+    use templates::config::immunity::*;
     let components = [
         text(saved()),
         text(general_roles(format_roles(&immunity.general))),

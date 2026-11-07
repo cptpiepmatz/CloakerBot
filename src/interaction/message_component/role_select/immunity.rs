@@ -136,7 +136,7 @@ pub async fn action(
         .await?;
 
     let roles_insert = roles.iter().map(|r| format!("- {}", r.mention())).join("\n");
-    use assets::replies::config;
+    use assets::templates::config;
     let content = match (roles.is_empty(), variant) {
         (true, ImmunitySelect::General) => {
             config::immunity::general::unset(QUOTES.config.immunity.general.no_roles).to_string()

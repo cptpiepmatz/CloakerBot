@@ -40,7 +40,7 @@ pub async fn handle_modal_submit(interaction: &Interaction) -> Result<(), Handle
     if !can_manage {
         return reply(
             interaction,
-            "You need Manage Server permission to change the configuration."
+            crate::assets::templates::config::manage_permission_required().to_string()
         )
         .await;
     }

@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::Deref;
 
 use twilight_model::application::interaction::Interaction;
@@ -12,45 +13,50 @@ use twilight_model::http::interaction::InteractionResponseData;
 
 use super::ConfigModalActionError;
 use crate::STATE;
-use crate::assets::{QUOTES, replies};
+use crate::assets::{QUOTES, templates};
 use crate::data::config::{CompleteDefault, GuildConfigRandom};
 use crate::interaction::application_command::help;
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
 
 pub fn modal(current: &GuildConfigRandom) -> InteractionResponseData {
+    use templates::config::random::modal;
     let mut enabled = super::select("enabled", SelectMenuType::Text, vec![], 1);
     enabled.default_values = None;
     enabled.required = Some(true);
     enabled.min_values = Some(1);
     enabled.options = Some(
-        [("Enabled", "true", true), ("Disabled", "false", false)]
-            .into_iter()
-            .map(|(label, value, state)| SelectMenuOption {
-                label: label.into(),
-                value: value.into(),
-                default: current.complete().enabled == state,
-                description: None,
-                emoji: None
-            })
-            .collect()
+        [
+            (modal::enabled().to_string(), "true", true),
+            (modal::disabled().to_string(), "false", false)
+        ]
+        .into_iter()
+        .map(|(label, value, state)| SelectMenuOption {
+            label: label.into(),
+            value: value.into(),
+            default: current.complete().enabled == state,
+            description: None,
+            emoji: None
+        })
+        .collect()
     );
-    super::modal(ModalCustomId::ConfigRandom, "Configure random takedowns", [
-        super::label(
-            "Random takedowns",
-            "Enable or disable automatic random takedowns.",
-            Component::SelectMenu(enabled)
-        ),
-        interval("min", "Minimum interval (hours)", current.min, "Default: 1 hour"),
-        interval("max", "Maximum interval (hours)", current.max, "Default: 24 hours")
+    super::modal(ModalCustomId::ConfigRandom, modal::title(), [
+        super::label(modal::label(), modal::description(), Component::SelectMenu(enabled)),
+        interval("min", modal::min::label(), current.min, modal::min::placeholder()),
+        interval("max", modal::max::label(), current.max, modal::max::placeholder())
     ])
 }
 
 #[allow(deprecated)]
-fn interval(custom_id: &str, name: &str, value: Option<f64>, placeholder: &str) -> Component {
+fn interval(
+    custom_id: &str,
+    name: impl Display,
+    value: Option<f64>,
+    placeholder: impl Display
+) -> Component {
     super::label(
         name,
-        "Enter hours, up to 8760. Leave blank or enter -1 to restore the default.",
+        templates::config::random::modal::interval_description(),
         Component::TextInput(TextInput {
             id: None,
             custom_id: custom_id.into(),
@@ -59,7 +65,7 @@ fn interval(custom_id: &str, name: &str, value: Option<f64>, placeholder: &str) 
             required: Some(false),
             min_length: None,
             max_length: Some(100),
-            placeholder: Some(placeholder.into()),
+            placeholder: Some(placeholder.to_string()),
             value: value.map(|value| value.to_string())
         })
     )
@@ -101,28 +107,19 @@ pub async fn action(
     let (min, max) = match (parse_interval(data, "min"), parse_interval(data, "max")) {
         (Ok(min), Ok(max)) => (min, max),
         _ => {
-            return reply(
-                interaction,
-                "Nothing was saved. Intervals must be positive numbers of hours, at most 8760. \
-                 Leave blank or enter -1 for defaults. Open Random takedowns in /config to try \
-                 again."
-            )
-            .await;
+            return reply(interaction, templates::config::random::invalid_interval().to_string())
+                .await;
         }
     };
     let random = GuildConfigRandom { enabled: Some(enabled), min, max };
     let complete = random.complete();
     if complete.min > complete.max {
-        return reply(
-            interaction,
-            "Nothing was saved. The minimum interval cannot exceed the maximum interval \
-             (including defaults). Open Random takedowns in /config to try again."
-        )
-        .await;
+        return reply(interaction, templates::config::random::invalid_interval_order().to_string())
+            .await;
     }
     STATE.database.update_config(guild_id, |config| config.random = random.clone()).await?;
     let content = if enabled {
-        replies::config::random::enabled(
+        templates::config::random::enabled(
             help::MENTION.deref(),
             complete.max,
             complete.min,
@@ -131,7 +128,7 @@ pub async fn action(
         .to_string()
     }
     else {
-        replies::config::random::disabled(QUOTES.config.random.disabled).to_string()
+        templates::config::random::disabled(QUOTES.config.random.disabled).to_string()
     };
     reply(interaction, content).await
 }

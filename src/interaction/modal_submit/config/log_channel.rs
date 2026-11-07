@@ -11,7 +11,7 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::ChannelMarker;
 
 use super::ConfigModalActionError;
-use crate::assets::{QUOTES, replies};
+use crate::assets::{QUOTES, templates};
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
 use crate::{BOT_USER_ID, STATE};
@@ -24,9 +24,10 @@ pub fn modal(current: Option<Id<ChannelMarker>>) -> InteractionResponseData {
         1
     );
     select.channel_types = Some(vec![ChannelType::GuildText]);
-    super::modal(ModalCustomId::ConfigLogChannel, "Configure log channel", [super::label(
-        "Log channel",
-        "Choose a text channel. Clear the selection to use the automatic fallback.",
+    use templates::config::log_channel::modal;
+    super::modal(ModalCustomId::ConfigLogChannel, modal::title(), [super::label(
+        modal::label(),
+        modal::description(),
         Component::SelectMenu(select)
     )])
 }
@@ -46,13 +47,13 @@ pub async fn action(
     let channel = select.values.first().copied();
     STATE.database.update_config(guild_id, |config| config.log_channel = channel).await?;
     let content = match channel {
-        Some(id) => replies::config::log_channel::set(
+        Some(id) => templates::config::log_channel::set(
             BOT_USER_ID.mention(),
             id.mention(),
             QUOTES.config.log_channel.channel
         )
         .to_string(),
-        None => replies::config::log_channel::unset(
+        None => templates::config::log_channel::unset(
             BOT_USER_ID.mention(),
             crate::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel

@@ -17,7 +17,7 @@ use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{CommandBuilder, StringBuilder};
 
 use super::COMMANDS_REGISTER;
-use crate::assets::{COLORS, replies};
+use crate::assets::{COLORS, templates};
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError, cloaker, config, counter, ranks
 };
@@ -103,14 +103,14 @@ pub async fn action(
     command: HelpCommand
 ) -> Result<(), HandleApplicationCommandError> {
     let mut content = String::new();
-    let help_title = replies::help::title();
+    let help_title = templates::help::title();
 
     // writing to String is infallible anyways
     #[allow(unused_must_use)]
     {
         match command {
             HelpCommand::All => {
-                write!(content, "{}", replies::help::overview());
+                write!(content, "{}", templates::help::overview());
                 content.write_char('\n');
                 writeln!(content, "{}", cloaker::MENTION.deref());
                 writeln!(content, "{}", cloaker::DESCRIPTION);
@@ -186,7 +186,7 @@ pub async fn action(
 
         content.write_char('\n');
         content.write_char('\n');
-        write!(content, "{}", replies::help::support());
+        write!(content, "{}", templates::help::support());
     }
 
     let response = InteractionResponse {

@@ -64,10 +64,10 @@ pub async fn action(
 
     let content = match channels.is_empty() {
         true => {
-            assets::replies::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels)
+            assets::templates::config::danger_zones::unset(QUOTES.config.danger_zones.no_channels)
                 .to_string()
         }
-        false => assets::replies::config::danger_zones::set(
+        false => assets::templates::config::danger_zones::set(
             channels.iter().map(|c_id| format!("- {}", c_id.mention())).join("\n"),
             QUOTES.config.danger_zones.channels
         )

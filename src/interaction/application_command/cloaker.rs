@@ -20,7 +20,7 @@ use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
-use crate::assets::replies::cloaker;
+use crate::assets::templates::cloaker;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError, update_defer_msg

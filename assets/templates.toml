@@ -7,11 +7,6 @@ Target: {target} in {channel}
 """
 unknown_channel = "unknown channel"
 
-[channel_logging.source]
-called = "Called by {caller}"
-random = "Random takedown"
-danger_zone = "Danger zone {channel}"
-
 [channel_logging.outcome]
 success = "Target removed from voice"
 parried = "Parried by {counterer}"
@@ -24,13 +19,44 @@ audio = "Audio playback failed"
 client = "Discord request failed"
 database = "Could not load guild configuration"
 
-[owner_notifications]
-enabled = "Owner notifications are now enabled. You'll receive future updates."
-disabled = "Owner notifications are now disabled. You won't receive future updates."
-enable_button = "Enable owner notifications"
-disable_button = "Disable owner notifications"
+[channel_logging.source]
+called = "Called by {caller}"
+random = "Random takedown"
+danger_zone = "Danger zone {channel}"
+
+[cloaker]
+success = """
+## 🎯 Takedown Successful
+You successfully took down {target}.
+
+-# > {quote}
+"""
+
+countered = """
+## 🔄 Takedown Got Countered
+The takedown was countered by {counterer}.
+
+-# > {quote}
+"""
+
+[cloaker.fail]
+template = """
+## ❌ Takedown Failed
+{reason}
+
+-# > {quote}
+"""
+
+join = "Failed to join voice channel."
+missing-perms = "Missing permissions to remove target from channel."
+not-found = "Could not find the target in a voice channel."
+fled = "Target fled from the channel."
+immune = "Target is immune to takedowns."
+rejected = "{CloakerBot} got moved from voice channel."
+other = "An error occurred: \n> {error}"
 
 [config]
+manage_permission_required = "You need Manage Server permission to change the configuration."
 menu = """
 ## 🛠️ Configure CloakerBot
 Configure the {CloakerBot} to be as chaotic as you want.
@@ -59,6 +85,11 @@ No danger zones are set now.
 
 -# > {quote}
 """
+
+[config.danger_zones.modal]
+title = "Configure danger zones"
+label = "Danger zones"
+description = "Choose voice channels that trigger automatic takedowns. Clear the selection to unset."
 
 [config.immunity]
 saved = "## 🛡️ Immunity Settings Saved"
@@ -132,6 +163,25 @@ No **silent general** immunity roles are set now.
 -# > {quote}
 """
 
+[config.immunity.modal]
+title = "Immunity"
+
+[config.immunity.modal.general]
+label = "General immunity"
+description = "Protected from all takedowns."
+
+[config.immunity.modal.general_silent]
+label = "Silent general immunity"
+description = "Never targeted by any takedown."
+
+[config.immunity.modal.random]
+label = "Random immunity"
+description = "Protected from random takedowns only."
+
+[config.immunity.modal.random_silent]
+label = "Silent random immunity"
+description = "Never selected for random takedowns."
+
 [config.immunity.random]
 select = """
 ## 🛠️ Configure Random Immunity Roles
@@ -179,7 +229,6 @@ No **random** immunity roles are set now.
 -# > {quote}
 """
 
-
 [config.log_channel]
 select = """
 ## 🛠️ Configure Log Channel
@@ -203,7 +252,19 @@ Fallback channel is {default} if {CloakerBot} is allowed to chat there.
 -# > {quote}
 """
 
+[config.log_channel.modal]
+title = "Configure log channel"
+label = "Log channel"
+description = "Choose a text channel. Clear the selection to use the automatic fallback."
+
 [config.random]
+invalid_interval = """
+Nothing was saved. Intervals must be positive numbers of hours, at most 8760. \
+Leave blank or enter -1 for defaults. Open Random takedowns in /config to try \
+again."""
+invalid_interval_order = """
+Nothing was saved. The minimum interval cannot exceed the maximum interval \
+(including defaults). Open Random takedowns in /config to try again."""
 disabled = """
 ## 🛑 No Random Takedowns
 Random takedowns are **disabled**.
@@ -223,6 +284,22 @@ For more info use {/help topic:random takedowns}.
 -# > {quote}
 """
 
+[config.random.modal]
+title = "Configure random takedowns"
+label = "Random takedowns"
+description = "Enable or disable automatic random takedowns."
+enabled = "Enabled"
+disabled = "Disabled"
+interval_description = "Enter hours, up to 8760. Leave blank or enter -1 to restore the default."
+
+[config.random.modal.max]
+label = "Maximum interval (hours)"
+placeholder = "Default: 24 hours"
+
+[config.random.modal.min]
+label = "Minimum interval (hours)"
+placeholder = "Default: 1 hour"
+
 [config.target_bots]
 disabled = """
 ## 🚸 Don't Target Bots
@@ -235,6 +312,28 @@ enabled = """
 ## 🤖🔫 Targeting Bots
 Bots are valid targets for takedowns.
 This also applies to random takedowns.
+
+-# > {quote}
+"""
+
+[config.target_bots.modal]
+title = "Configure bot targeting"
+label = "Target bots"
+description = "Allow takedowns against bots, including random takedowns. Allowed by default."
+allowed = "Allowed"
+protected = "Protected"
+
+[counter]
+success = """
+## 🏸 Counter Successful
+You countered the takedown on {target}.
+
+-# > {quote}
+"""
+
+miss = """
+## 🪠 Nothing to Counter
+No takedown currently happening.
 
 -# > {quote}
 """
@@ -255,48 +354,8 @@ If you have any issues come over to the [discord server](https://cptpiepmatz.de/
 
 title = "## 🔎 Help on "
 
-[cloaker]
-success = """
-## 🎯 Takedown Successful
-You successfully took down {target}.
-
--# > {quote}
-"""
-
-countered = """
-## 🔄 Takedown Got Countered
-The takedown was countered by {counterer}.
-
--# > {quote}
-"""
-
-[cloaker.fail]
-template = """
-## ❌ Takedown Failed
-{reason}
-
--# > {quote}
-"""
-
-join = "Failed to join voice channel."
-missing-perms = "Missing permissions to remove target from channel."
-not-found = "Could not find the target in a voice channel."
-fled = "Target fled from the channel."
-immune = "Target is immune to takedowns."
-rejected = "{CloakerBot} got moved from voice channel."
-other = "An error occurred: \n> {error}"
-
-[counter]
-success = """
-## 🏸 Counter Successful
-You countered the takedown on {target}.
-
--# > {quote}
-"""
-
-miss = """
-## 🪠 Nothing to Counter
-No takedown currently happening.
-
--# > {quote}
-"""
+[owner_notifications]
+enabled = "Owner notifications are now enabled. You'll receive future updates."
+disabled = "Owner notifications are now disabled. You won't receive future updates."
+enable_button = "Enable owner notifications"
+disable_button = "Disable owner notifications"

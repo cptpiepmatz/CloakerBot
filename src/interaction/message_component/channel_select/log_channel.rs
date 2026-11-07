@@ -69,13 +69,13 @@ pub async fn action(
     STATE.database.update_config(guild_id, |config| config.log_channel = channel).await?;
 
     let content = match channel {
-        Some(ch_id) => assets::replies::config::log_channel::set(
+        Some(ch_id) => assets::templates::config::log_channel::set(
             BOT_USER_ID.mention(),
             ch_id.mention(),
             QUOTES.config.log_channel.channel
         )
         .to_string(),
-        None => assets::replies::config::log_channel::unset(
+        None => assets::templates::config::log_channel::unset(
             BOT_USER_ID.mention(),
             crate::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel

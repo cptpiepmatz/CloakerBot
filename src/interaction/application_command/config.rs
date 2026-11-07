@@ -66,7 +66,7 @@ pub async fn action(interaction: &Interaction) -> Result<(), HandleApplicationCo
         .components([
             Component::TextDisplay(TextDisplay {
                 id: None,
-                content: crate::assets::replies::config::menu(BOT_USER_ID.mention()).to_string()
+                content: crate::assets::templates::config::menu(BOT_USER_ID.mention()).to_string()
             }),
             Component::Separator(Separator {
                 id: None,

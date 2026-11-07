@@ -3,7 +3,7 @@ use std::env::var;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use assets::replies::config;
+use assets::templates::config;
 use derive_more::From;
 use twilight_http::request::Request;
 use twilight_http::response::marker::EmptyBody;
