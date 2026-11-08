@@ -1,4 +1,10 @@
 {
+  "rust-analyzer.rustfmt.overrideCommand": [
+    "rustup",
+    "run",
+    "nightly",
+    "rustfmt"
+  ],
   "rust-analyzer.server.extraEnv": {
     "RUST_ANALYZER_USE_POSTCARD": "1"
   },
