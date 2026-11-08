@@ -450,6 +450,8 @@ async fn get_call(
     guild_id: Id<GuildMarker>,
     channel_id: Id<ChannelMarker>
 ) -> Result<Arc<Mutex<Call>>, TakedownFail> {
+    let call = STATE.songbird.get_or_insert(guild_id);
+    call.lock().await.deafen(true).await.map_err(TakedownFail::Join)?;
     STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)
 }
 
