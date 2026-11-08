@@ -1,12 +1,25 @@
+use std::env;
+use std::path::PathBuf;
+use std::sync::LazyLock;
+
+static OUT_DIR: LazyLock<PathBuf> =
+    LazyLock::new(|| PathBuf::from(env::var("OUT_DIR").expect("set by cargo")));
+static_toml::static_toml! {
+    static MANIFEST = include_toml!("Cargo.toml");
+}
+
 fn main() {
     sounds::regain_audio_files();
+    git::detect_branch();
 }
 
 mod sounds {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
     use std::{fs, process};
 
     use hound::{SampleFormat, WavReader, WavWriter};
+
+    use super::*;
 
     const AUDIO_FILES: &[&str] = &[
         "fails/pain1.wav",
@@ -88,12 +101,47 @@ mod sounds {
     }
 
     pub fn regain_audio_files() {
-        let out_dir = std::env::var("OUT_DIR").expect("set by cargo");
         for audio_file in AUDIO_FILES {
-            let path = PathBuf::new().join(&out_dir).join("sounds").join(audio_file);
+            println!("cargo::rerun-if-changed=assets/sounds/{audio_file}");
+            let path = OUT_DIR.join("sounds").join(audio_file);
             let dirname = path.parent().expect("files have a dir");
             fs::create_dir_all(dirname).unwrap();
             regain_audio_file("assets/sounds/".to_string() + audio_file, path);
         }
+    }
+}
+
+mod git {
+    use std::fs;
+    use std::process::Command;
+
+    use quote::quote;
+
+    use super::*;
+
+    pub fn detect_branch() {
+        println!("cargo::rerun-if-changed=.git/HEAD");
+        let branch = Command::new("git")
+            .args(["branch", "--show-current"])
+            .output()
+            .map(|output| {
+                let output = String::from_utf8(output.stdout)
+                    .expect("git should return valid utf8")
+                    .trim()
+                    .to_owned();
+                match output.len() {
+                    0 => MANIFEST.package.metadata.git.default_branch.to_owned(),
+                    _ => output
+                }
+            })
+            .unwrap_or_else(|_| MANIFEST.package.metadata.git.default_branch.to_owned());
+
+        let code = quote! {
+            mod git {
+                pub const BRANCH: &str = #branch;
+            }
+        };
+
+        fs::write(OUT_DIR.join("git.rs"), code.to_string()).unwrap();
     }
 }

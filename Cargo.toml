@@ -10,7 +10,8 @@ edition.workspace = true
 default-run = "CloakerBot"
 
 [package.metadata]
-discord_invite = "https://discord.gg/XMsdwM5NXf"
+discord.invite = "https://discord.gg/XMsdwM5NXf"
+git.default-branch = "main"
 
 [[bin]]
 name = "CloakerBot"
@@ -32,8 +33,10 @@ package.license-file = "LICENSE"
 debug-assertions = false
 
 [workspace.dependencies]
-itertools = "0.15"
 hound = "3.5"
+itertools = "0.15"
+quote = "1"
+static-toml = "1"
 
 [dependencies]
 # custom libs
@@ -68,7 +71,7 @@ itertools.workspace = true
 konst = "0.4"
 rand = "0.10"
 smart-default = "0.7"
-static-toml = "1"
+static-toml.workspace = true
 strum = { version = "0.28", features = ["derive"] }
 thiserror = "2"
 miette = { version = "7", features = ["fancy"] }
@@ -122,6 +125,8 @@ features = ["chrono", "env-filter", "json"]
 
 [build-dependencies]
 hound.workspace = true
+quote.workspace = true
+static-toml.workspace = true
 
 [dev-dependencies]
 tempfile = "3"

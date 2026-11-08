@@ -54,11 +54,17 @@ mod sync;
 mod takedown;
 mod util;
 
+include!(concat!(env!("OUT_DIR"), "/git.rs"));
+
 #[cfg(all(feature = "dev", feature = "prod"))]
 compile_error!("the feature `dev` and `prod` are mutually exclusive");
 
 #[cfg(all(not(feature = "dev"), not(feature = "prod")))]
 compile_error!("one of the features `dev` or `prod` are required");
+
+static_toml::static_toml! {
+    static MANIFEST = include_toml!("Cargo.toml");
+}
 
 #[rustfmt::skip]
 const CLIENT_ID: u64 = macros::env!(

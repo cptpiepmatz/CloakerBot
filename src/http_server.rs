@@ -2,18 +2,15 @@ use std::sync::LazyLock;
 
 use axum::Router;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::routing::get;
+use axum::routing::{MethodRouter, get};
 use http::{HeaderMap, StatusCode, header};
 use sha2::{Digest, Sha256};
 use twilight_model::guild::Permissions;
 use url::Url;
 
 use crate::link::oauth;
-use crate::{CLIENT_ID, HTTP_HOST, HTTP_PORT, INVITE_SCOPES};
-
-static_toml::static_toml! {
-    static MANIFEST = include_toml!("Cargo.toml");
-}
+use crate::util::repo_url;
+use crate::{CLIENT_ID, HTTP_HOST, HTTP_PORT, INVITE_SCOPES, MANIFEST};
 
 pub async fn serve() -> std::io::Result<()> {
     let router = Router::new().merge(routes()).merge(oauth::routes());
@@ -28,30 +25,16 @@ fn routes() -> Router {
         .route("/", get(async || "👋"))
         .route("/icon.png", get(icon))
         .route("/invite", get(invite))
-        .route(
-            "/terms",
-            get(async || {
-                Redirect::temporary(concat!(
-                    env!("CARGO_PKG_REPOSITORY"),
-                    "/blob/main/docs/terms-of-service.md"
-                ))
-            })
-        )
-        .route(
-            "/privacy",
-            get(async || {
-                Redirect::temporary(concat!(
-                    env!("CARGO_PKG_REPOSITORY"),
-                    "/blob/main/docs/privacy-policy.md"
-                ))
-            })
-        )
-        .route("/github", get(async || Redirect::temporary(env!("CARGO_PKG_REPOSITORY"))))
-        .route(
-            "/discord",
-            get(async || Redirect::temporary(MANIFEST.package.metadata.discord_invite))
-        )
+        .route("/tos", redirect(repo_url!("/docs/terms-of-service.md")))
+        .route("/privacy", redirect(repo_url!("/docs/privacy-policy.md")))
+        .route("/github", redirect(MANIFEST.package.repository))
+        .route("/discord", redirect(MANIFEST.package.metadata.discord.invite))
         .route("/version", get(async || env!("CARGO_PKG_VERSION")))
+}
+
+fn redirect(uri: &str) -> MethodRouter {
+    let redirect = Redirect::temporary(uri);
+    get(move || std::future::ready(redirect))
 }
 
 async fn invite() -> Redirect {

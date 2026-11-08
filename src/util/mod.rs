@@ -87,6 +87,19 @@ macro_rules! map {
 
 pub(crate) use map;
 
+macro_rules! repo_url {
+    ($path:literal) => {
+        ::const_format::concatcp!(
+            $crate::MANIFEST.package.repository,
+            "/blob/",
+            $crate::git::BRANCH,
+            $path
+        )
+    };
+}
+
+pub(crate) use repo_url;
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
