@@ -11,22 +11,19 @@ use twilight_mention::fmt::CommandMention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
-use twilight_model::channel::message::MessageFlags;
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 use twilight_model::id::Id;
 use twilight_model::id::marker::CommandMarker;
-use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 use twilight_validate::message::MessageValidationError;
 
 use crate::diagnostics::panic::ExpectReport;
-use crate::interaction::HandleInteractionError;
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
+use crate::interaction::{DeferError, HandleInteractionError};
 use crate::{APPLICATION_ID, STATE};
 
 pub(super) mod cloaker;
@@ -239,29 +236,6 @@ pub async fn handle_application_command(
         ApplicationCommand::Help(command) => help::action(interaction, command).await,
         ApplicationCommand::Ranks(command) => ranks::action(interaction, command).await
     }
-}
-
-#[derive(Debug)]
-pub struct DeferError(twilight_http::Error);
-
-impl From<twilight_http::Error> for DeferError {
-    fn from(value: TwilightHttpError) -> Self {
-        DeferError(value)
-    }
-}
-
-async fn defer(interaction: &Interaction) -> Result<(), DeferError> {
-    let response = InteractionResponse {
-        kind: InteractionResponseType::DeferredChannelMessageWithSource,
-        data: Some(InteractionResponseDataBuilder::new().flags(MessageFlags::EPHEMERAL).build())
-    };
-    STATE
-        .client
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, interaction.token.as_str(), &response)
-        .await?;
-
-    Ok(())
 }
 
 #[derive(Debug, From)]

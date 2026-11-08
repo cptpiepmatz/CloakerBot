@@ -1,8 +1,8 @@
 use twilight_model::application::interaction::Interaction;
 use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle, Component};
-use twilight_model::http::interaction::{InteractionResponse, InteractionResponseType};
 
 use crate::assets::templates::owner_notifications;
+use crate::interaction::defer;
 use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::{APPLICATION_ID, STATE};
@@ -20,14 +20,7 @@ async fn set_allowance(
     allow_dms: bool
 ) -> Result<(), HandleMessageComponentError> {
     let owner_id = interaction.author_id().ok_or(HandleMessageComponentError::NoAuthor)?;
-    STATE
-        .client
-        .interaction(APPLICATION_ID)
-        .create_response(interaction.id, &interaction.token, &InteractionResponse {
-            kind: InteractionResponseType::DeferredChannelMessageWithSource,
-            data: None
-        })
-        .await?;
+    defer::public(interaction).await?;
 
     {
         let mut notifications = STATE.owner_notifications.lock().await;

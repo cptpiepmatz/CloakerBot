@@ -23,10 +23,10 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 use super::COMMANDS_REGISTER;
 use crate::assets::graphics::user_rank::BANNER;
 use crate::discord::emojis::EMOJIS_REGISTER;
-use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::interaction::defer;
 use crate::ranks::{self, Badges, CalculateRanksError, Ranks, Stats, Times};
 use crate::{APPLICATION_ID, STATE};
 
@@ -96,7 +96,7 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(RanksActionError::NotInGuild)?;
     let author_id = interaction.author_id().ok_or(RanksActionError::NoAuthor)?;
-    application_command::defer(interaction).await?;
+    defer::ephemeral(interaction).await?;
 
     let user_id = command.user_id.unwrap_or(author_id);
     let member = STATE.client.guild_member(guild_id, user_id).await?.model().await?;

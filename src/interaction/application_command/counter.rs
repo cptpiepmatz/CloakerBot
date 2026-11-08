@@ -14,10 +14,10 @@ use twilight_util::builder::command::CommandBuilder;
 
 use super::COMMANDS_REGISTER;
 use crate::assets::templates;
-use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError
 };
+use crate::interaction::{application_command, defer};
 use crate::takedown;
 
 pub const NAME: &str = "counter";
@@ -69,7 +69,7 @@ pub async fn action(
     let guild_id = interaction.guild_id.ok_or(CounterActionError::NotInGuild)?;
     let author_id = interaction.author_id().ok_or(CounterActionError::NoAuthor)?;
     let result = takedown::counter::counter(guild_id, author_id);
-    application_command::defer(interaction).await?;
+    defer::ephemeral(interaction).await?;
 
     let content = match result {
         Ok(target_id) => {

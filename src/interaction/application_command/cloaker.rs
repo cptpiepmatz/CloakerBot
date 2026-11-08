@@ -21,10 +21,10 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::assets::templates::cloaker;
-use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError, update_defer_msg
 };
+use crate::interaction::defer;
 use crate::takedown::{TakedownFail, TakedownSuccess, TakedownType};
 use crate::{APPLICATION_ID, BOT_USER_ID, STATE, takedown};
 
@@ -127,7 +127,7 @@ pub async fn action(
 ) -> Result<(), HandleApplicationCommandError> {
     let guild_id = interaction.guild_id.ok_or(CloakerActionError::NotInGuild)?;
     let author_id = interaction.author_id().ok_or(CloakerActionError::NoAuthor)?;
-    application_command::defer(interaction).await?;
+    defer::ephemeral(interaction).await?;
 
     let content = match takedown::takedown(command.target_id, guild_id, TakedownType::Called {
         caller_id: author_id

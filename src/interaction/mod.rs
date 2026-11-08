@@ -20,6 +20,47 @@ mod modal_submit;
 
 pub use application_command::{COMMANDS_REGISTER, CommandsRegister};
 
+#[derive(Debug, From)]
+pub struct DeferError(twilight_http::Error);
+
+pub mod defer {
+    use twilight_model::application::interaction::Interaction;
+    use twilight_model::channel::message::MessageFlags;
+    use twilight_model::http::interaction::{
+        InteractionResponse, InteractionResponseData, InteractionResponseType
+    };
+    use twilight_util::builder::InteractionResponseDataBuilder;
+
+    use super::DeferError;
+    use crate::{APPLICATION_ID, STATE};
+
+    pub async fn public(interaction: &Interaction) -> Result<(), DeferError> {
+        respond(interaction, None).await
+    }
+
+    pub async fn ephemeral(interaction: &Interaction) -> Result<(), DeferError> {
+        let data = InteractionResponseDataBuilder::new().flags(MessageFlags::EPHEMERAL).build();
+        respond(interaction, Some(data)).await
+    }
+
+    async fn respond(
+        interaction: &Interaction,
+        data: Option<InteractionResponseData>
+    ) -> Result<(), DeferError> {
+        let response = InteractionResponse {
+            kind: InteractionResponseType::DeferredChannelMessageWithSource,
+            data
+        };
+        STATE
+            .client
+            .interaction(APPLICATION_ID)
+            .create_response(interaction.id, interaction.token.as_str(), &response)
+            .await?;
+
+        Ok(())
+    }
+}
+
 pub mod command_mentions {
     pub use super::application_command::cloaker::MENTION as CLOAKER;
     pub use super::application_command::config::MENTION as CONFIG;
