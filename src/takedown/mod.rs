@@ -356,7 +356,10 @@ async fn takedown_in_voice(
     }
 
     // no counter so continue with takedown
-    let has_immune_role = target_roles.iter().any(|role| config.immunity.general.contains(role));
+    let has_immune_role = target_roles.iter().any(|role| {
+        config.immunity.general.contains(role) ||
+            (matches!(kind, TakedownType::Random) && config.immunity.random.contains(role))
+    });
     if has_immune_role {
         fail_sound.play_and_wait(call, None).await;
         return Err(TakedownFail::Immune);
@@ -450,8 +453,18 @@ async fn get_call(
     channel_id: Id<ChannelMarker>
 ) -> Result<Arc<Mutex<Call>>, TakedownFail> {
     let call = STATE.songbird.get_or_insert(guild_id);
-    call.lock().await.deafen(true).await.map_err(TakedownFail::Join)?;
-    STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)
+    let result = async {
+        call.lock().await.deafen(true).await.map_err(TakedownFail::Join)?;
+        STATE.songbird.join(guild_id, channel_id).await.map_err(TakedownFail::Join)
+    }
+    .await;
+    // a failed join may already have moved the bot into the channel
+    if result.is_err() &&
+        let Err(error) = call.lock().await.leave().await
+    {
+        tracing::warn!(%guild_id, %channel_id, ?error, "could not leave voice channel after failed join");
+    }
+    result
 }
 
 #[inline]
