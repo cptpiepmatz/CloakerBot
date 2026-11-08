@@ -231,6 +231,34 @@ not publish the port on the host. If your proxy runs on the host instead, use
 to `0.0.0.0` inside the container so the proxy can reach it. If you change the
 compiled port, update the Compose port configuration and proxy upstream too.
 
+### Container helper script
+
+For local builds and runs, [images.nu](./images.nu) provides a
+[Nushell](https://www.nushell.sh/) helper. Run it from the repository root with
+Podman or Docker installed; it prefers Podman when both are available.
+
+```sh
+nu images.nu build
+nu images.nu run
+
+# For ARM64 instead:
+nu images.nu build arm64
+nu images.nu run arm64
+```
+
+Images are tagged with the package version and current Git commit. The run
+command uses that tag, reads `DISCORD_TOKEN`, `DISCORD_CLIENT_SECRET`, and
+`COOKIE_SECRET` from the environment, and prompts with hidden input for any
+missing or empty values. It mounts local `./data` into the container and
+publishes port `25625` on **all IPv4 interfaces**. Keep network access restricted
+as appropriate and use an HTTPS reverse proxy for account linking.
+
+The helper's build commands use the Dockerfile's defaults; they do not forward
+build-time environment variables as build arguments. For a custom application
+ID or other build-time settings, use Compose as shown above, or build directly
+with Docker or Podman using `--build-arg`. Run `nu images.nu --help` to list the
+available commands.
+
 ## Contributing
 
 If something is broken or you have an idea,
