@@ -28,6 +28,24 @@ fn routes() -> Router {
         .route("/", get(async || "👋"))
         .route("/icon.png", get(icon))
         .route("/invite", get(invite))
+        .route(
+            "/terms",
+            get(async || {
+                Redirect::temporary(concat!(
+                    env!("CARGO_PKG_REPOSITORY"),
+                    "/blob/main/docs/terms-of-service.md"
+                ))
+            })
+        )
+        .route(
+            "/privacy",
+            get(async || {
+                Redirect::temporary(concat!(
+                    env!("CARGO_PKG_REPOSITORY"),
+                    "/blob/main/docs/privacy-policy.md"
+                ))
+            })
+        )
         .route("/github", get(async || Redirect::temporary(env!("CARGO_PKG_REPOSITORY"))))
         .route(
             "/discord",
