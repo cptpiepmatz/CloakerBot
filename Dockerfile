@@ -19,7 +19,7 @@ let platform = match $env.TARGETARCH {
     _ => { error make { msg: $"Unsupported target architecture: ($env.TARGETARCH)" } }
 }
 ^apt-get update
-^apt-get install -y --no-install-recommends ca-certificates cmake build-essential
+^apt-get install -y --no-install-recommends ca-certificates cmake build-essential git
 if $env.BUILDARCH != $env.TARGETARCH {
     ^apt-get install -y --no-install-recommends $"gcc-($platform.compiler)" $"g++-($platform.compiler)"
 }
@@ -46,7 +46,13 @@ COPY macros ./macros
 COPY assets ./assets
 COPY icon ./icon
 COPY src ./src
+COPY .git ./.git
 ARG PROD=0
+ARG DISCORD_CLIENT_ID
+ARG HTTP_PORT
+ARG HTTP_HOST
+ARG DISCORD_REDIRECT_URI
+ARG BACKUP_INTERVAL_SECONDS
 RUN <<EOF
 let target = open --raw /rust-target | str trim
 if $env.PROD == '1' {
