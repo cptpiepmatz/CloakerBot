@@ -77,7 +77,7 @@ pub async fn action(
         .to_string(),
         None => assets::templates::config::log_channel::unset(
             BOT_USER_ID.mention(),
-            crate::channel_logging::fallback_description(guild_id).await,
+            crate::discord::channel_logging::fallback_description(guild_id).await,
             QUOTES.config.log_channel.no_channel
         )
         .to_string()

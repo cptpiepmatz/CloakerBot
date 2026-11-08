@@ -30,8 +30,10 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::oauth::scope;
 
 use crate::data::Database;
+use crate::diagnostics::panic::ExpectReport;
+use crate::diagnostics::{logging, panic};
+use crate::discord::emojis;
 use crate::interaction::{HandleInteractionError, handle_interaction};
-use crate::panic::ExpectReport;
 use crate::sync::{KeyLock, VolatileMap};
 use crate::takedown::PlannedTakedown;
 use crate::takedown::danger_zones::{CheckDangerZonesError, check_danger_zones};
@@ -40,16 +42,13 @@ use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 use crate::util::trim::trim;
 
 mod assets;
-mod channel_logging;
 mod data;
-mod discord_error_codes;
-mod emojis;
+mod diagnostics;
+mod discord;
 mod http_server;
 mod interaction;
 mod link;
-mod logging;
 mod owner_notifications;
-mod panic;
 mod ranks;
 mod sync;
 mod takedown;
@@ -344,7 +343,7 @@ type LazyString = LazyLock<String>;
 macro_rules! lazy_env {
     ($env:literal) => {
         LazyLock::new(|| {
-            use crate::panic::ExpectReport;
+            use crate::diagnostics::panic::ExpectReport;
             std::env::var($env).expect_report(concat!("could not read env variable ", $env))
         })
     };

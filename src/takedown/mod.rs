@@ -18,7 +18,7 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 
 use crate::data::config::GuildConfig;
-use crate::discord_error_codes::{MISSING_ACCESS, MISSING_PERMISSIONS};
+use crate::discord::error_codes::{MISSING_ACCESS, MISSING_PERMISSIONS};
 use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
 use crate::util::ClientError;
@@ -174,7 +174,8 @@ async fn record_outcome(
         tracing::info!(%guild_id, %target_id, ?kind, "takedown completed");
     }
     if let Err(error) =
-        crate::channel_logging::log_takedown(guild_id, target_id, channel_id, kind, result).await
+        crate::discord::channel_logging::log_takedown(guild_id, target_id, channel_id, kind, result)
+            .await
     {
         tracing::warn!(%guild_id, ?error, "could not log takedown to discord");
     }

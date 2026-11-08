@@ -20,13 +20,13 @@ use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 use twilight_validate::message::MessageValidationError;
 
+use crate::diagnostics::panic::ExpectReport;
 use crate::interaction::HandleInteractionError;
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
 use crate::interaction::application_command::help::HelpCommand;
 use crate::interaction::application_command::ranks::{RanksActionError, RanksCommand};
-use crate::panic::ExpectReport;
 use crate::{APPLICATION_ID, STATE};
 
 pub(super) mod cloaker;

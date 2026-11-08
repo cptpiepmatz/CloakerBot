@@ -9,7 +9,7 @@ use twilight_model::channel::message::component::Component;
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
-use crate::discord_error_codes::CANNOT_SEND_MESSAGES_TO_THIS_USER;
+use crate::discord::error_codes::CANNOT_SEND_MESSAGES_TO_THIS_USER;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
 

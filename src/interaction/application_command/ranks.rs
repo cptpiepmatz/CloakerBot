@@ -22,7 +22,7 @@ use twilight_util::builder::command::{CommandBuilder, UserBuilder};
 
 use super::COMMANDS_REGISTER;
 use crate::assets::graphics::user_rank::BANNER;
-use crate::emojis::EMOJIS_REGISTER;
+use crate::discord::emojis::EMOJIS_REGISTER;
 use crate::interaction::application_command;
 use crate::interaction::application_command::{
     HandleApplicationCommandError, TryFromInteractionError

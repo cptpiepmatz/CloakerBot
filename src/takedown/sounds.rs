@@ -16,7 +16,7 @@ use tokio::sync::MutexGuard;
 use wav::BitDepth;
 
 use crate::assets;
-use crate::panic::ExpectReport;
+use crate::diagnostics::panic::ExpectReport;
 
 pub static WULULULULU: LazyLock<Sound> = lazy_sound!(WULULULULU);
 pub static FAILS: LazyLock<Vec<Sound>> = lazy_sound!(FAILS+);

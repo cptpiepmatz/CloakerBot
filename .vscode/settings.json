@@ -10,6 +10,8 @@
     "button": "components",
     "channel_select": "input",
     "config": "config",
+    "diagnostics": "debug",
+    "discord": "messages",
     "fails": "error",
     "graphics": "images",
     "help": "docs",

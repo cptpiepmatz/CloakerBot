@@ -7,7 +7,7 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::EmojiMarker;
 
 use crate::assets::graphics::user_rank::badges::*;
-use crate::panic::ExpectReport;
+use crate::diagnostics::panic::ExpectReport;
 use crate::{APPLICATION_ID, STATE};
 
 /// Application emoji IDs, usable in message text with
