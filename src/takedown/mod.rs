@@ -383,17 +383,15 @@ async fn fetch_member_roles(
     guild_id: Id<GuildMarker>,
     member_id: Id<UserMarker>
 ) -> Result<Vec<Id<RoleMarker>>, TakedownFail> {
-    match util::cache_or_fetch(
-        STATE.cache.member(guild_id, member_id),
-        |member| member.roles().to_vec(),
-        STATE.client.guild_member(guild_id, member_id),
-        |member| member.roles
-    )
-    .await
-    {
-        Ok(member_roles) => Ok(member_roles),
-        Err(err) => Err(TakedownFail::Client(err))
-    }
+    let member = STATE
+        .client
+        .guild_member(guild_id, member_id)
+        .await
+        .map_err(ClientError::from)?
+        .model()
+        .await
+        .map_err(ClientError::from)?;
+    Ok(member.roles)
 }
 
 #[inline]
