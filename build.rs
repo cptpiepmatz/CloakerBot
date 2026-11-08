@@ -4,6 +4,7 @@ use std::sync::LazyLock;
 
 static OUT_DIR: LazyLock<PathBuf> =
     LazyLock::new(|| PathBuf::from(env::var("OUT_DIR").expect("set by cargo")));
+
 static_toml::static_toml! {
     static MANIFEST = include_toml!("Cargo.toml");
 }
