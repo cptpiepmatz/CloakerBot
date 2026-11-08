@@ -46,13 +46,13 @@ COPY macros ./macros
 COPY assets ./assets
 COPY icon ./icon
 COPY src ./src
-ARG BOT_ENV=dev
+ARG PROD=0
 RUN <<EOF
-if $env.BOT_ENV not-in [prod dev] {
-    error make { msg: "BOT_ENV must be prod or dev" }
-}
 let target = open --raw /rust-target | str trim
-^cargo build --locked --release --no-default-features --features $env.BOT_ENV --target $target
+if $env.PROD == '1' {
+    $env.RUSTFLAGS = $"($env.RUSTFLAGS? | default '') --cfg prod"
+}
+^cargo build --locked --release --target $target
 mkdir /out
 cp $"target/($target)/release/CloakerBot" /out/CloakerBot
 EOF

@@ -117,8 +117,8 @@ pub fn env(input: TokenStream2) -> syn::Result<TokenStream2> {
         }
     }
 
-    let dev = dev.map(|value| quote!(#[cfg(feature = "dev")] let value = #value;));
-    let prod = prod.map(|value| quote!(#[cfg(feature = "prod")] let value = #value;));
+    let dev = dev.map(|value| quote!(#[cfg(not(prod))] let value = #value;));
+    let prod = prod.map(|value| quote!(#[cfg(prod)] let value = #value;));
     let fallback = fallback.map(|value| quote!(let value = #value;));
 
     Ok(quote! { const {

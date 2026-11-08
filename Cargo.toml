@@ -17,10 +17,9 @@ git.default-branch = "main"
 name = "CloakerBot"
 path = "src/main.rs"
 
-[features]
-default = ["dev"]
-prod = []
-dev = []
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ["cfg(prod)"]
 
 [workspace]
 members = ["macros"]
