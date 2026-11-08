@@ -1,7 +1,5 @@
-use twilight_cache_inmemory::UpdateCache;
 use twilight_mention::Mention;
 use twilight_model::channel::ChannelType;
-use twilight_model::gateway::payload::incoming::MemberAdd;
 use twilight_model::guild::Permissions;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker};
@@ -13,8 +11,6 @@ use crate::{BOT_USER_ID, STATE};
 pub async fn fallback_channel(
     guild_id: Id<GuildMarker>
 ) -> Result<Option<Id<ChannelMarker>>, ClientError> {
-    cache_bot_member(guild_id).await?;
-
     let Some(guild) = STATE.cache.guild(guild_id)
     else {
         return Ok(None);
@@ -40,15 +36,6 @@ pub async fn fallback_channel(
     Ok(candidates.into_iter().find(|id| can_log(*id)))
 }
 
-async fn cache_bot_member(guild_id: Id<GuildMarker>) -> Result<(), ClientError> {
-    if STATE.cache.member(guild_id, BOT_USER_ID).is_none() {
-        let member = STATE.client.guild_member(guild_id, BOT_USER_ID).await?.model().await?;
-        STATE.cache.update(&MemberAdd { guild_id, member });
-    }
-
-    Ok(())
-}
-
 #[derive(Debug, derive_more::From)]
 pub enum LogError {
     Client(ClientError),
@@ -68,7 +55,6 @@ pub async fn log_takedown(
     let configured = STATE.database.guild_config(guild_id).await?.log_channel;
     let channel_id = match configured {
         Some(channel_id) => {
-            cache_bot_member(guild_id).await?;
             if !can_log(channel_id) ||
                 !STATE
                     .cache
