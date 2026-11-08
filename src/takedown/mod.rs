@@ -18,6 +18,7 @@ use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMarker};
 
 use crate::data::config::GuildConfig;
+use crate::discord_error_codes::{MISSING_ACCESS, MISSING_PERMISSIONS};
 use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
 use crate::util::ClientError;
@@ -65,13 +66,10 @@ pub enum TakedownFail {
     Rejected
 }
 
-const MISSING_PERMS_ERROR_CODE: u64 = 50013;
-const MISSING_ACCESS_ERROR_CODE: u64 = 50001;
-
 fn missing_permissions(error: &twilight_http::Error) -> bool {
     matches!(error.kind(), ErrorType::Response {
         error: ApiError::General(GeneralApiError {
-            code: MISSING_PERMS_ERROR_CODE | MISSING_ACCESS_ERROR_CODE,
+            code: MISSING_PERMISSIONS | MISSING_ACCESS,
             ..
         }),
         ..

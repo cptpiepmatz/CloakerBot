@@ -42,6 +42,7 @@ use crate::util::trim::trim;
 mod assets;
 mod channel_logging;
 mod data;
+mod discord_error_codes;
 mod emojis;
 mod http_server;
 mod interaction;

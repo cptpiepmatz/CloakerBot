@@ -9,6 +9,7 @@ use twilight_model::channel::message::component::Component;
 
 use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
+use crate::discord_error_codes::CANNOT_SEND_MESSAGES_TO_THIS_USER;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
 
@@ -62,7 +63,10 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
         }
         Err(ClientError::Http(error))
             if matches!(error.kind(), ErrorType::Response {
-                error: ApiError::General(GeneralApiError { code: 50007, .. }),
+                error: ApiError::General(GeneralApiError {
+                    code: CANNOT_SEND_MESSAGES_TO_THIS_USER,
+                    ..
+                }),
                 ..
             }) =>
         {
