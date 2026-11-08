@@ -1,7 +1,39 @@
-# 🎉 Update v3 🎉
+# 🎉 Update v3 - Resurrection of the CloakerBot 🎉
 
-{CloakerBot} Update v3 is live!
-It took quite some time, but now we finally have some long awaited features.
+{CloakerBot} is alive again and in v3!
+It took basically forever now, but I finally got myself together and updated
+the bot and finished the full rewrite.
+We now have at least some cool new features.
+
+<hr size="large" divider="false">
+
+## 🪦 Big Reset
+
+The {CloakerBot} was down for over a year, my Raspberry Pi that hosted the bot
+died and with it it's entire database.
+The rewrite wasn't done and my motivation to finish v3 wasn't high.
+So that's why it took so long.
+Also this removed everything we had in the database, so the bot has to be fully
+reconfigured again and all stats are reset.
+I'm sorry about that, but now I have simple backups in place.
+So as long my house down't burn down, we should be able to revive the bot asap. 
+
+<hr size="large" divider="false">
+
+## 🌱 Open Source
+
+I promised that v3 will be open source, and I follow through on that.
+The entire source code for the bot is available [here]({repo_url}).
+You can clone it, modify it and host your own instance, but I will still host
+this instance.
+You cannot sell it, check the license.
+
+You can also look through the history if you're interested how the bot changed
+over time.
+
+<hr size="large" divider="false">
+
+*Ok, now to the actual new features:*
 
 <hr size="large" divider="false">
 
@@ -84,7 +116,7 @@ Hopefully this allows all to have fun with this bot.
 ## 🏅 Updated Ranks
 
 The old ranks system was very brittle and did not work correctly all the time.
-The recorded ranks will therefore get removed, and we all start from zero.
+Since we lost the database we all start from zero.
 Takedown stats are now recorded more precisely allowing to check who is your 
 rival, who got taken down the most and who is practically a ghost.
 
@@ -94,12 +126,13 @@ rival, who got taken down the most and who is practically a ghost.
 
 Discord introduced
 [Linked Roles](https://support.discord.com/hc/en-us/articles/10388356626711-Connections-Linked-Roles-Admins)
-about a year ago.
+some time ago, I don't know.
 This allows servers to define criteria a user must reach in order to get a role.
 
 With the introduction of v3 it is now possible to use the {CloakerBot} as a
 source for such criteria.
-Users can link their Discord account to the bot to qualify for roles based on their stats.
+Users can link their Discord account to the bot to qualify for roles based on
+their stats.
 The metadata that the bot will provide are:
 
 - how many successful takedowns you initiated globally (`times_smacked`)
@@ -120,7 +153,7 @@ incorporated in the config commands.
 
 If you have any trouble configuring the bot still, the `/help` command can help
 you out.
-Or join the CloakerBot Fort.
+[Or join the CloakerBot Fort]({invite_url}).
 
 <hr size="large" divider="false">
 
@@ -129,7 +162,8 @@ Or join the CloakerBot Fort.
 The bot is fully rewritten in a new language with many improvements wisely 
 planned.
 This should cause the bot to be even more stable and available.
-If the bot should still get stuck, simply ping me in the CloakerBot Fort.
+If the bot should still get stuck, simply ping me in the
+[CloakerBot Fort]({invite_url}).
 
 <hr size="large" divider="false">
 

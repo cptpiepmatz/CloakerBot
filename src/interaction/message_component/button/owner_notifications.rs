@@ -1,13 +1,13 @@
 use twilight_model::application::interaction::Interaction;
+use twilight_model::channel::message::MessageFlags;
 use twilight_model::channel::message::component::{
     ActionRow, Button, ButtonStyle, Component, Separator, SeparatorSpacingSize, TextDisplay
 };
-use twilight_model::channel::message::MessageFlags;
 
 use crate::assets::templates::owner_notifications;
 use crate::interaction::defer;
-use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::interaction::message_component::HandleMessageComponentError;
+use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::{APPLICATION_ID, STATE};
 
 pub async fn disable(interaction: &Interaction) -> Result<(), HandleMessageComponentError> {

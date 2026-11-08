@@ -7,11 +7,11 @@ use twilight_model::channel::Message;
 use twilight_model::channel::message::MessageFlags;
 use twilight_model::channel::message::component::Component;
 
-use crate::STATE;
 use crate::data::owner_notifications::OwnerNotified;
 use crate::discord::error_codes::CANNOT_SEND_MESSAGES_TO_THIS_USER;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
 use crate::util::ClientError;
+use crate::{MANIFEST, STATE};
 
 const MAX_MESSAGE_TEXT_LENGTH: usize = 4000;
 const MAX_MESSAGE_COMPONENTS: usize = 40;
@@ -86,7 +86,9 @@ pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError>
 fn owner_update() -> impl Iterator<Item = impl Into<Component>> {
     crate::assets::owner_notifications::v3_update(
         crate::BOT_USER_ID.mention(),
-        MessageComponentCustomId::OwnerNotificationsDisable.to_string()
+        MessageComponentCustomId::OwnerNotificationsDisable,
+        MANIFEST.package.metadata.discord.invite,
+        MANIFEST.package.repository
     )
 }
 
@@ -147,7 +149,7 @@ async fn send_update(
         STATE
             .client
             .create_message(channel.id)
-            .flags(MessageFlags::IS_COMPONENTS_V2)
+            .flags(MessageFlags::IS_COMPONENTS_V2 | MessageFlags::SUPPRESS_EMBEDS)
             .components(components)
             .await?;
     }
