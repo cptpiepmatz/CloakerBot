@@ -17,7 +17,7 @@ their respective rights holders.
 
 ## Banner artwork
 
-`assets/graphics/banner.webp` uses a portion of
+`assets/graphics/user_rank/banner.webp` uses a portion of
 ["Cloaker Takedown" by sthellen](https://www.deviantart.com/sthellen/art/Cloaker-Takedown-446933017)
 on DeviantArt.
 
