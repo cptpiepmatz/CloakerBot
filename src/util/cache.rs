@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
 use twilight_cache_inmemory::{InMemoryCache, UpdateCache};
 use twilight_model::gateway::event::{Event as DiscordEvent, Event};
 use twilight_model::gateway::payload::incoming::VoiceStateUpdate;
@@ -11,8 +10,7 @@ use crate::util;
 
 #[derive(Debug)]
 pub struct ObservableCache {
-    inner: InMemoryCache,
-    emitter: TokioMpscSender<CacheUpdateEvent>
+    inner: InMemoryCache
 }
 
 #[derive(Debug)]
@@ -37,18 +35,17 @@ impl Deref for ObservableCache {
 }
 
 impl ObservableCache {
-    pub fn new() -> (Self, TokioMpscReceiver<CacheUpdateEvent>) {
-        let (tx, rx) = tokio::sync::mpsc::channel(1);
-        (Self { inner: Default::default(), emitter: tx }, rx)
+    pub fn new() -> Self {
+        Self { inner: Default::default() }
     }
 
-    pub async fn observe(&self, event: &DiscordEvent) {
+    pub fn observe(&self, event: &DiscordEvent) -> Option<CacheUpdateEvent> {
         let update = match event {
             Event::VoiceStateUpdate(update) => self.voice_channel_update(update),
             _ => None
         };
         self.inner.update(event);
-        if let Some(update) = update {
+        update.map(|update| {
             tracing::trace!(
                 guild_id = %update.guild_id,
                 user_id = %update.user_id,
@@ -56,8 +53,8 @@ impl ObservableCache {
                 new_channel_id = update.new.map(|id| id.get()),
                 "observed voice channel transition"
             );
-            let _ = self.emitter.send(CacheUpdateEvent::VoiceChannelUpdate(update)).await;
-        }
+            CacheUpdateEvent::VoiceChannelUpdate(update)
+        })
     }
 
     fn voice_channel_update(&self, update: &VoiceStateUpdate) -> Option<VoiceChannelCacheUpdate> {

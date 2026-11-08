@@ -17,8 +17,7 @@ use sync::Eject;
 use takedown::sounds::Sound;
 use thiserror::Error;
 use tokio::sync::Mutex;
-use tokio::sync::mpsc::{Receiver as TokioMpscReceiver, Sender as TokioMpscSender};
-use tokio_stream::wrappers::{IntervalStream, ReceiverStream};
+use tokio_stream::wrappers::IntervalStream;
 use tracing::Instrument;
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
 use twilight_gateway::{EventTypeFlags, Shard, StreamExt as TwilightStreamExt};
@@ -111,7 +110,6 @@ struct State {
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
     cache: ObservableCache,
-    cache_rx: Eject<TokioMpscReceiver<CacheUpdateEvent>>,
     songbird: Songbird,
     owner_notifications: Mutex<HashMap<Id<UserMarker>, data::owner_notifications::OwnerNotified>>,
     linked_role_locks: KeyLock<Id<UserMarker>>
@@ -137,8 +135,7 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
     let takedown_locks = Default::default();
     let planned_takedowns = Default::default();
 
-    let (cache, cache_rx) = ObservableCache::new();
-    let cache_rx = Eject::new(cache_rx);
+    let cache = ObservableCache::new();
 
     let database = tokio::task::block_in_place(|| {
         tokio::runtime::Handle::current()
@@ -154,7 +151,6 @@ static STATE: LazyLock<State> = LazyLock::new(|| {
         takedown_locks,
         planned_takedowns,
         cache,
-        cache_rx,
         songbird,
         owner_notifications: Default::default(),
         linked_role_locks: Default::default()
@@ -182,7 +178,6 @@ async fn main() -> miette::Result<()> {
     ));
 
     let shard = state.shard.eject().expect_report("shard went missing");
-    let cache_rx = state.cache_rx.eject().expect_report("cache_rx went missing");
 
     // ensure that technically lazy elements are evaluated
     tracing::debug!("loading bundled sounds");
@@ -216,10 +211,7 @@ async fn main() -> miette::Result<()> {
     let random_check_interval = IntervalStream::new(tokio::time::interval(RANDOM_CHECK_EVERY))
         .map(|_| BotEvent::RandomCheck);
 
-    let cache_updates = ReceiverStream::new(cache_rx).map(BotEvent::CacheUpdate);
-
     let events = select(discord_events, random_check_interval);
-    let mut events = select(events, cache_updates);
 
     let event_handler = tokio::spawn(async {
         futures::pin_mut!(events);
@@ -227,16 +219,23 @@ async fn main() -> miette::Result<()> {
         loop {
             match events.next().await {
                 None => return, // event stream ended
+                Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
                 Some(BotEvent::Discord(Ok(event))) if matches!(*event, DiscordEvent::Ready(_)) => {
+                    STATE.cache.observe(&event);
                     break;
                 }
-                Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
                 _ => continue
             }
         }
 
         tracing::info!("bot is ready");
         while let Some(event) = events.next().await {
+            // update the cache in gateway order before dispatching concurrent
+            // handlers
+            if let Some(event) = cache_update(&event) {
+                tokio::spawn(handle_event(event).in_current_span());
+            }
+
             tokio::spawn(handle_event(event).in_current_span());
         }
     });
@@ -249,6 +248,15 @@ async fn main() -> miette::Result<()> {
     }
 
     Err(miette::miette!("a bot worker stopped unexpectedly"))
+}
+
+fn cache_update(event: &BotEvent) -> Option<BotEvent> {
+    let BotEvent::Discord(Ok(event)) = event
+    else {
+        return None;
+    };
+
+    STATE.cache.observe(event).map(BotEvent::CacheUpdate)
 }
 
 #[derive(Debug)]
@@ -320,8 +328,6 @@ enum HandleDiscordEventError {
 }
 
 async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEventError> {
-    // observe voice changes before songbird waits on an active call
-    STATE.cache.observe(&event).await;
     STATE.songbird.process(&event).await;
     match event {
         // clear persistent data from this guild
