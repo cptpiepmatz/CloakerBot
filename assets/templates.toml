@@ -18,6 +18,8 @@ join = "Could not join voice"
 audio = "Audio playback failed"
 client = "Discord request failed"
 database = "Could not load guild configuration"
+immune = "Target is immune to takedowns"
+not_found = "Could not find the target in a voice channel"
 
 [channel_logging.source]
 called = "Called by {caller}"

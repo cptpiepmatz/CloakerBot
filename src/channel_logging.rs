@@ -65,9 +65,6 @@ pub async fn log_takedown(
 ) -> Result<(), LogError> {
     use crate::takedown::{CounterOutcome, TakedownFail, TakedownType};
 
-    if matches!(result, Err(TakedownFail::Immune | TakedownFail::NotFound)) {
-        return Ok(());
-    }
     let configured = STATE.database.guild_config(guild_id).await?.log_channel;
     let channel_id = match configured {
         Some(channel_id) => {
@@ -119,7 +116,8 @@ pub async fn log_takedown(
         Err(TakedownFail::Audio(_)) => channel_logging::outcome::audio().to_string(),
         Err(TakedownFail::Client(_)) => channel_logging::outcome::client().to_string(),
         Err(TakedownFail::Database(_)) => channel_logging::outcome::database().to_string(),
-        Err(TakedownFail::Immune | TakedownFail::NotFound) => unreachable!()
+        Err(TakedownFail::Immune) => channel_logging::outcome::immune().to_string(),
+        Err(TakedownFail::NotFound) => channel_logging::outcome::not_found().to_string()
     };
     let target_channel = match target_channel_id {
         Some(channel_id) => channel_id.mention().to_string(),
