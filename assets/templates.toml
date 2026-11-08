@@ -357,7 +357,7 @@ If you have any issues come over to the [discord server](https://cptpiepmatz.de/
 title = "## 🔎 Help on "
 
 [owner_notifications]
-enabled = "Owner notifications are now enabled. You'll receive future updates."
-disabled = "Owner notifications are now disabled. You won't receive future updates."
+enabled = "Owner notifications are now **enabled**. You'll receive future updates."
+disabled = "Owner notifications are now **disabled**. You won't receive future updates."
 enable_button = "Enable owner notifications"
 disable_button = "Disable owner notifications"

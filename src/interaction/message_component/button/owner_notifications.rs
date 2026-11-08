@@ -1,10 +1,13 @@
 use twilight_model::application::interaction::Interaction;
-use twilight_model::channel::message::component::{ActionRow, Button, ButtonStyle, Component};
+use twilight_model::channel::message::component::{
+    ActionRow, Button, ButtonStyle, Component, Separator, SeparatorSpacingSize, TextDisplay
+};
+use twilight_model::channel::message::MessageFlags;
 
 use crate::assets::templates::owner_notifications;
 use crate::interaction::defer;
-use crate::interaction::message_component::HandleMessageComponentError;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
+use crate::interaction::message_component::HandleMessageComponentError;
 use crate::{APPLICATION_ID, STATE};
 
 pub async fn disable(interaction: &Interaction) -> Result<(), HandleMessageComponentError> {
@@ -42,25 +45,34 @@ async fn set_allowance(
             owner_notifications::enable_button().to_string()
         )
     };
-    let components = [Component::ActionRow(ActionRow {
-        id: None,
-        components: vec![Component::Button(Button {
+
+    let components = [
+        Component::TextDisplay(TextDisplay { id: None, content }),
+        Component::Separator(Separator {
             id: None,
-            style: ButtonStyle::Secondary,
-            custom_id: Some(custom_id.to_string()),
-            label: Some(label),
-            disabled: false,
-            emoji: None,
-            url: None,
-            sku_id: None
-        })]
-    })];
+            divider: Some(false),
+            spacing: Some(SeparatorSpacingSize::Small)
+        }),
+        Component::ActionRow(ActionRow {
+            id: None,
+            components: vec![Component::Button(Button {
+                id: None,
+                style: ButtonStyle::Secondary,
+                custom_id: Some(custom_id.to_string()),
+                label: Some(label),
+                disabled: false,
+                emoji: None,
+                url: None,
+                sku_id: None
+            })]
+        })
+    ];
 
     STATE
         .client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
-        .content(Some(&content))
+        .flags(MessageFlags::IS_COMPONENTS_V2)
         .components(Some(&components))
         .await?;
     Ok(())
