@@ -85,11 +85,11 @@ fn format_roles(roles: &[Id<RoleMarker>]) -> impl Display + Sync + '_ {
             return write!(f, "{}", templates::config::immunity::none());
         }
 
-        let mut iter = roles.into_iter().peekable();
+        let mut iter = roles.iter().peekable();
         while let Some(id) = iter.next() {
             write!(f, "- {}", id.mention())?;
             if iter.peek().is_some() {
-                write!(f, "\n")?;
+                writeln!(f)?;
             }
         }
 

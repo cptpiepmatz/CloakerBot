@@ -32,7 +32,7 @@ pub fn modal(current: &GuildConfigRandom) -> InteractionResponseData {
         ]
         .into_iter()
         .map(|(label, value, state)| SelectMenuOption {
-            label: label.into(),
+            label,
             value: value.into(),
             default: current.complete().enabled == state,
             description: None,

@@ -25,7 +25,7 @@ pub fn modal(current: bool) -> InteractionResponseData {
         ]
         .into_iter()
         .map(|(label, value, state)| SelectMenuOption {
-            label: label.into(),
+            label,
             value: value.into(),
             default: current == state,
             description: None,
