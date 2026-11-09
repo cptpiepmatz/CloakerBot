@@ -154,6 +154,9 @@ pub async fn action(
                 }
                 TakedownFail::Client(err) => write!(f, "{}", cloaker::fail::other(err)),
                 TakedownFail::Audio(err) => write!(f, "{}", cloaker::fail::other(err)),
+                TakedownFail::SelfTarget => {
+                    write!(f, "{}", cloaker::fail::self_target(BOT_USER_ID.mention()))
+                }
                 TakedownFail::Database(_) => {
                     write!(f, "{}", cloaker::fail::other("could not load guild configuration"))
                 }

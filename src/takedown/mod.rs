@@ -63,7 +63,9 @@ pub enum TakedownFail {
     /// The target is immune.
     Immune,
     /// The bot got removed from the voice channel.
-    Rejected
+    Rejected,
+    /// The bot was targeting itself.
+    SelfTarget
 }
 
 fn missing_permissions(error: &twilight_http::Error) -> bool {
@@ -189,21 +191,8 @@ async fn execute_takedown(
     target_channel: &mut Option<Id<ChannelMarker>>
 ) -> TakedownResult {
     let rng = &mut rand::rngs::StdRng::from_rng(&mut rand::rng());
-    if !config.target_bots {
-        let is_bot = util::cache_or_fetch(
-            STATE.cache.user(target_id),
-            |user| user.bot,
-            STATE.client.user(target_id),
-            |user| user.bot
-        )
-        .await
-        .map_err(TakedownFail::Client)?;
-        if is_bot {
-            return Err(TakedownFail::Immune);
-        }
-    }
-    let target_roles = fetch_member_roles(guild_id, target_id).await?;
-    preliminary_checks(kind, config, &target_roles)?;
+    let member_roles = fetch_member_roles(guild_id, target_id).await?;
+    preliminary_checks(target_id, &member_roles, guild_id, kind, config).await?;
     let channel_id = get_channel_id(target_id, guild_id)?;
     *target_channel = Some(channel_id);
     if let TakedownType::DangerZone { channel_id: expected } = kind &&
@@ -225,7 +214,7 @@ async fn execute_takedown(
         &mut call,
         VoiceTakedown {
             target_id,
-            target_roles: &target_roles,
+            target_roles: &member_roles,
             guild_id,
             channel_id,
             kind,
@@ -395,18 +384,37 @@ async fn fetch_member_roles(
 }
 
 #[inline]
-fn preliminary_checks(
+async fn preliminary_checks(
+    target_id: Id<UserMarker>,
+    target_roles: &[Id<RoleMarker>],
+    guild_id: Id<GuildMarker>,
     kind: TakedownType,
-    config: &GuildConfig,
-    member_roles: &[Id<RoleMarker>]
+    config: &GuildConfig
 ) -> Result<(), TakedownFail> {
+    if target_id == BOT_USER_ID {
+        return Err(TakedownFail::SelfTarget);
+    }
+
+    if !config.target_bots {
+        let is_bot = util::cache_or_fetch(
+            STATE.cache.user(target_id),
+            |user| user.bot,
+            STATE.client.user(target_id),
+            |user| user.bot
+        )
+        .await
+        .map_err(TakedownFail::Client)?;
+        if is_bot {
+            return Err(TakedownFail::Immune);
+        }
+    }
     if let TakedownType::Random = kind &&
-        member_roles.iter().any(|role| config.immunity.random_silent.contains(role))
+        target_roles.iter().any(|role| config.immunity.random_silent.contains(role))
     {
         return Err(TakedownFail::Immune);
     }
 
-    if member_roles.iter().any(|role| config.immunity.general_silent.contains(role)) {
+    if target_roles.iter().any(|role| config.immunity.general_silent.contains(role)) {
         return Err(TakedownFail::Immune);
     }
 

@@ -103,7 +103,10 @@ pub async fn log_takedown(
         Err(TakedownFail::Client(_)) => channel_logging::outcome::client().to_string(),
         Err(TakedownFail::Database(_)) => channel_logging::outcome::database().to_string(),
         Err(TakedownFail::Immune) => channel_logging::outcome::immune().to_string(),
-        Err(TakedownFail::NotFound) => channel_logging::outcome::not_found().to_string()
+        Err(TakedownFail::NotFound) => channel_logging::outcome::not_found().to_string(),
+
+        // do not log the bot trying to take down itself
+        Err(TakedownFail::SelfTarget) => return Ok(())
     };
     let target_channel = match target_channel_id {
         Some(channel_id) => channel_id.mention().to_string(),

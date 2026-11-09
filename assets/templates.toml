@@ -55,6 +55,7 @@ not-found = "Could not find the target in a voice channel."
 fled = "Target fled from the channel."
 immune = "Target is immune to takedowns."
 rejected = "{CloakerBot} got moved from voice channel."
+self-target = "Cannot target the {CloakerBot} itself."
 other = "An error occurred: \n> {error}"
 
 [config]
