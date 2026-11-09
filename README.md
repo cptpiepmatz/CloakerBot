@@ -1,6 +1,6 @@
 <p align="center">
   <picture>
-    <img height="250" src="./assets/graphics/user_rank/banner.webp" alt="Cloaker Takedown banner">
+    <img width="665" src="./assets/graphics/user_rank/banner.webp" alt="Cloaker Takedown banner">
   </picture>
 </p>
 <h1 align="center">CloakerBot</h1>
@@ -12,8 +12,8 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/github/license/cptpiepmatz/CloakerBot?style=for-the-badge)](./LICENSE)
-[![Version](https://img.shields.io/github/v/release/cptpiepmatz/CloakerBot?style=for-the-badge&label=version)](https://github.com/cptpiepmatz/CloakerBot/releases)
+[![License](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-blue?style=for-the-badge)](./LICENSE)
+[![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcptpiepmatz%2FCloakerBot%2Fmain%2FCargo.toml&query=%24.workspace.package.version&style=for-the-badge&label=version&prefix=v&color=brightgreen)](https://github.com/cptpiepmatz/CloakerBot/tags)
 [![Rust](https://img.shields.io/badge/Built_with-Rust-D34516?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Add to Discord](https://img.shields.io/badge/Add_to_Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://cloakerbot.cptpiepmatz.de/invite)
 
