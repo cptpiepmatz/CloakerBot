@@ -23,7 +23,7 @@ check-cfg = ["cfg(prod)"]
 
 [workspace]
 members = ["macros"]
-package.version = "3.0.0"
+package.version = "3.0.1"
 package.edition = "2024"
 package.rust-version = "1.95.0"
 package.license-file = "LICENSE"
