@@ -31,8 +31,11 @@ Quick enough? Counter the attack and send it back at whoever called it.
 Takedowns, unfortunate victims, and successful counters all have their own stats
 and ranks, so there is something to show for the chaos.
 
-<!-- TODO: Upload the WebM demo to GitHub and put its attachment URL here. -->
-> **Demo:** A video of CloakerBot in action will go here.
+<div align="center">
+  
+https://github.com/user-attachments/assets/351b32d2-c103-4972-a489-cc033d75fd1e
+  
+</div>
 
 ## Add to your Discord
 
