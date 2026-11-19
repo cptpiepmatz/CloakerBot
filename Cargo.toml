@@ -22,7 +22,7 @@ level = "warn"
 check-cfg = ["cfg(prod)"]
 
 [workspace]
-members = ["macros"]
+members = ["infra", "macros"]
 package.version = "3.0.1"
 package.edition = "2024"
 package.rust-version = "1.95.0"
@@ -32,12 +32,6 @@ package.license-file = "LICENSE"
 debug-assertions = false
 
 [workspace.dependencies]
-hound = "3.5"
-itertools = "0.15"
-quote = "1"
-static-toml = "1"
-
-[dependencies]
 # custom libs
 macros = { path = "./macros", package = "cloaker-bot-macros" }
 
@@ -45,6 +39,7 @@ macros = { path = "./macros", package = "cloaker-bot-macros" }
 base64 = "0.23"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+static-toml = "1"
 
 # persistence
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "chrono"] }
@@ -65,12 +60,10 @@ chrono = { version = "0.4", features = ["serde"] }
 bitflags = "2.9"
 const_format = { version = "0.2", features = ["rust_1_51"] }
 derive_more = { version = "2", features = ["full"] }
-heapless = "0.9"
-itertools.workspace = true
+itertools = "0.15"
 konst = "0.4"
 rand = "0.10"
 smart-default = "0.7"
-static-toml.workspace = true
 strum = { version = "0.28", features = ["derive"] }
 thiserror = "2"
 miette = { version = "7", features = ["fancy"] }
@@ -95,32 +88,92 @@ sha2 = "0.11"
 
 # audio handling
 wav = "1"
-hound.workspace = true
+hound = "3.5"
 symphonia = { version = "0.5.5", default-features = false, features = ["wav", "pcm"] }
 
-[dependencies.songbird]
+# procedural macros
+heck = "0.5.0"
+proc-macro2 = "1"
+quote = "1"
+pulldown-cmark = { version = "0.13", default-features = false }
+pulldown-cmark-to-cmark = "22"
+regex = "1.11"
+scraper = { version = "0.29", default-features = false }
+syn = "3"
+toml = "1.1"
+
+# testing
+indoc = "2"
+tempfile = "3"
+
+[workspace.dependencies.songbird]
 version = "0.6"
 default-features = false
 features = ["driver", "gateway", "twilight", "rustls", "tungstenite"]
 
 # http request
-[dependencies.rustls]
+[workspace.dependencies.rustls]
 version = "0.23"
 default-features = false
 features = ["ring", "std", "tls12"]
 
-[dependencies.reqwest]
+[workspace.dependencies.reqwest]
 version = "0.13"
 default-features = false
 features = ["json", "form", "rustls-no-provider"]
 
 # logging
-[dependencies.tracing]
+[workspace.dependencies.tracing]
 version = "0.1"
 
-[dependencies.tracing-subscriber]
+[workspace.dependencies.tracing-subscriber]
 version = "0.3"
 features = ["chrono", "env-filter", "json"]
+
+[dependencies]
+async-trait.workspace = true
+axum-extra.workspace = true
+axum.workspace = true
+base64.workspace = true
+bitflags.workspace = true
+chrono.workspace = true
+const_format.workspace = true
+cookie.workspace = true
+derive_more.workspace = true
+futures.workspace = true
+http.workspace = true
+itertools.workspace = true
+konst.workspace = true
+macros.workspace = true
+miette.workspace = true
+mime.workspace = true
+parking_lot.workspace = true
+rand.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+sha2.workspace = true
+smart-default.workspace = true
+songbird.workspace = true
+sqlx.workspace = true
+static-toml.workspace = true
+strum.workspace = true
+symphonia.workspace = true
+thiserror.workspace = true
+tokio-stream.workspace = true
+tokio.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+twilight-cache-inmemory.workspace = true
+twilight-gateway.workspace = true
+twilight-http.workspace = true
+twilight-mention.workspace = true
+twilight-model.workspace = true
+twilight-util.workspace = true
+twilight-validate.workspace = true
+url.workspace = true
+wav.workspace = true
 
 [build-dependencies]
 hound.workspace = true
@@ -128,4 +181,4 @@ quote.workspace = true
 static-toml.workspace = true
 
 [dev-dependencies]
-tempfile = "3"
+tempfile.workspace = true

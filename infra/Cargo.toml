@@ -1,0 +1,8 @@
+[package]
+name = "cloaker-bot-infra"
+publish = false
+description = "Infra for CloakerBot."
+license-file.workspace = true
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
