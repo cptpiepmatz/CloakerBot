@@ -1,4 +1,5 @@
 use derive_more::From;
+use macros::require;
 use serde::Serialize;
 use twilight_http::Client;
 use twilight_http::request::{Method, RequestBuilder};
@@ -154,10 +155,7 @@ async fn sync_user(
     user_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>
 ) -> Result<(), SyncError> {
     let _lock = STATE.linked_role_locks.lock(user_id).await;
-    let Some(mut tokens) = STATE.database.credentials(user_id).await?
-    else {
-        return Ok(());
-    };
+    let mut tokens = require!(Some(STATE.database.credentials(user_id).await?) else Ok(()));
     if tokens.expires_at <= chrono::Utc::now() + chrono::Duration::seconds(60) {
         tracing::debug!("refreshing linked-role credentials: near expiry");
         tokens = refresh_and_store(user_id, &tokens).await?;

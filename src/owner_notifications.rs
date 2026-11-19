@@ -1,5 +1,6 @@
 use std::collections::hash_map::Entry;
 
+use macros::require;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
 use twilight_mention::Mention;
@@ -26,20 +27,10 @@ pub enum OwnerNotificationError {
 }
 
 pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError> {
-    let Some(guild_id) = message.guild_id
-    else {
-        return Ok(());
-    };
-    if message.author.bot {
-        return Ok(());
-    }
-    let owner_id = match STATE.cache.guild(guild_id) {
-        Some(guild) => guild.owner_id(),
-        None => return Ok(())
-    };
-    if message.author.id != owner_id {
-        return Ok(());
-    }
+    let guild_id = require!(Some(message.guild_id) else Ok(()));
+    require!(!message.author.bot else Ok(()));
+    let owner_id = require!(Some(STATE.cache.guild(guild_id)) else Ok(())).owner_id();
+    require!(message.author.id == owner_id else Ok(()));
 
     let mut notifications = STATE.owner_notifications.lock().await;
     let notified = match notifications.entry(owner_id) {

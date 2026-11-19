@@ -11,7 +11,7 @@ use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use cookie::Key;
 use http::{StatusCode, header};
-use macros::map;
+use macros::{map, require};
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;
 use twilight_http::Client as TwilightClient;
@@ -129,10 +129,7 @@ pub async fn callback(
     let me_data =
         client.current_authorization().await.map_err(err500)?.model().await.map_err(err500)?;
 
-    let me_user = match me_data.user {
-        None => return Err(StatusCode::FORBIDDEN),
-        Some(user) => user
-    };
+    let me_user = require!(Some(me_data.user) else Err(StatusCode::FORBIDDEN));
 
     tracing::Span::current().record("user_id", tracing::field::display(me_user.id));
     let tokens = tokens.into_stored().map_err(err500)?;

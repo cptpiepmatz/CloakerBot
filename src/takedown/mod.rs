@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use derive_more::From;
+use macros::require;
 use rand::prelude::*;
 use songbird::Call;
 use songbird::error::JoinError;
@@ -391,9 +392,7 @@ async fn preliminary_checks(
     kind: TakedownType,
     config: &GuildConfig
 ) -> Result<(), TakedownFail> {
-    if target_id == BOT_USER_ID {
-        return Err(TakedownFail::SelfTarget);
-    }
+    require!(target_id != BOT_USER_ID else Err(TakedownFail::SelfTarget));
 
     if !config.target_bots {
         let is_bot = util::cache_or_fetch(

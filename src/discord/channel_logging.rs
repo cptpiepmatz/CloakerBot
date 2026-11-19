@@ -1,3 +1,4 @@
+use macros::require;
 use twilight_mention::Mention;
 use twilight_model::channel::ChannelType;
 use twilight_model::guild::Permissions;
@@ -119,10 +120,7 @@ pub async fn log_takedown(
 }
 
 fn can_log(channel_id: Id<ChannelMarker>) -> bool {
-    let Some(channel) = STATE.cache.channel(channel_id)
-    else {
-        return false;
-    };
+    let channel = require!(Some(STATE.cache.channel(channel_id)) else false);
     if !matches!(channel.kind, ChannelType::GuildText | ChannelType::GuildAnnouncement) {
         return false;
     }
