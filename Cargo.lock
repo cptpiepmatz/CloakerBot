@@ -415,6 +415,7 @@ dependencies = [
  "base64 0.23.1",
  "bitflags 2.13.2",
  "chrono",
+ "cloaker-bot-infra",
  "cloaker-bot-macros",
  "const_format",
  "cookie",

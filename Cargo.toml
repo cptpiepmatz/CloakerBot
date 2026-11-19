@@ -33,6 +33,7 @@ debug-assertions = false
 
 [workspace.dependencies]
 # custom libs
+infra = { path = "./infra", package = "cloaker-bot-infra" }
 macros = { path = "./macros", package = "cloaker-bot-macros" }
 
 # data serialization
@@ -142,6 +143,7 @@ cookie.workspace = true
 derive_more.workspace = true
 futures.workspace = true
 http.workspace = true
+infra.workspace = true
 itertools.workspace = true
 konst.workspace = true
 macros.workspace = true
