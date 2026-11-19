@@ -23,7 +23,7 @@ use crate::takedown;
 pub const NAME: &str = "counter";
 pub const DESCRIPTION: &str = "Counter an incoming takedown.";
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.counter);
-pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = macros::command_mention![command];
 
 pub struct CounterCommand;
 

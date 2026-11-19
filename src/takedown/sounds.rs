@@ -9,14 +9,12 @@ use std::{io, mem};
 
 use futures::future::try_join_all;
 use futures::stream::FuturesUnordered;
+use macros::lazy_sound;
 use songbird::Call;
 use songbird::input::cached::{CodecCacheError, Decompressed, Memory};
 use songbird::input::{AudioStream, Input, LiveInput};
 use tokio::sync::MutexGuard;
 use wav::BitDepth;
-
-use crate::assets;
-use crate::diagnostics::panic::ExpectReport;
 
 pub static WULULULULU: LazyLock<Sound> = lazy_sound!(WULULULULU);
 pub static FAILS: LazyLock<Vec<Sound>> = lazy_sound!(FAILS+);
@@ -104,33 +102,6 @@ pub enum SoundFromBytesError {
     #[error("could not read WAV sound")]
     Io(#[from] io::Error)
 }
-
-macro_rules! lazy_sound {
-    ($ident:ident) => {
-        LazyLock::new(|| {
-            Sound::from_static_wav_bytes(assets::sounds::$ident).expect_report(concat!(
-                "could not load ",
-                stringify!($ident),
-                " sound"
-            ))
-        })
-    };
-
-    ($ident:ident+) => {
-        LazyLock::new(|| {
-            assets::sounds::$ident
-                .into_iter()
-                .enumerate()
-                .map(|(i, bytes)| {
-                    Sound::from_static_wav_bytes(bytes)
-                        .expect_report(format!("could not load {}[{i}] sound", stringify!($ident)))
-                })
-                .collect()
-        })
-    };
-}
-
-use lazy_sound;
 
 trait CalcDuration {
     fn calc_duration(&self) -> Duration;

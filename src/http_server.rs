@@ -4,12 +4,12 @@ use axum::Router;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{MethodRouter, get};
 use http::{HeaderMap, StatusCode, header};
+use macros::repo_url;
 use sha2::{Digest, Sha256};
 use twilight_model::guild::Permissions;
 use url::Url;
 
 use crate::link::oauth;
-use crate::util::repo_url;
 use crate::{CLIENT_ID, HTTP_HOST, HTTP_PORT, INVITE_SCOPES, MANIFEST};
 
 pub async fn serve() -> std::io::Result<()> {

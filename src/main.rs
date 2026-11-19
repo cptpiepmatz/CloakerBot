@@ -10,6 +10,7 @@ use std::{io, iter};
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
 use interaction::COMMANDS_REGISTER;
+use macros::{lazy_env, trim};
 use miette::IntoDiagnostic;
 use songbird::Songbird;
 use songbird::shards::TwilightMap;
@@ -38,7 +39,6 @@ use crate::takedown::PlannedTakedown;
 use crate::takedown::danger_zones::{CheckDangerZonesError, check_danger_zones};
 use crate::takedown::random::{CheckRandomError, handle_random_check};
 use crate::util::cache::{CacheUpdateEvent, ObservableCache};
-use crate::util::trim::trim;
 
 mod assets;
 mod data;
@@ -346,13 +346,3 @@ async fn handle_discord_event(event: DiscordEvent) -> Result<(), HandleDiscordEv
 }
 
 type LazyString = LazyLock<String>;
-macro_rules! lazy_env {
-    ($env:literal) => {
-        LazyLock::new(|| {
-            use crate::diagnostics::panic::ExpectReport;
-            std::env::var($env).expect_report(concat!("could not read env variable ", $env))
-        })
-    };
-}
-
-use lazy_env;

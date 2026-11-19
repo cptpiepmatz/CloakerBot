@@ -33,7 +33,7 @@ use crate::{APPLICATION_ID, STATE};
 pub const NAME: &str = "ranks";
 pub const DESCRIPTION: &str = "Show off your takedown stats in a rank profile.";
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.ranks);
-pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = macros::command_mention![command];
 
 #[derive(Debug)]
 pub struct RanksCommand {

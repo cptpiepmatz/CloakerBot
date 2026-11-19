@@ -36,7 +36,7 @@ pub static TOPICS: &[&str] = &[
     "ranks"
 ];
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.help);
-pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = macros::command_mention![command];
 
 pub enum HelpCommand {
     All,

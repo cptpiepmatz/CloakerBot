@@ -31,7 +31,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE, takedown};
 pub const NAME: &str = "cloaker";
 pub const DESCRIPTION: &str = "Take down your friends!";
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.cloaker);
-pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = macros::command_mention![command];
 
 #[derive(Debug)]
 pub struct CloakerCommand {

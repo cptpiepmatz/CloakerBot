@@ -7,7 +7,6 @@ use derive_more::From;
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
-use twilight_mention::fmt::CommandMention;
 use twilight_model::application::command::{Command, CommandType};
 use twilight_model::application::interaction::application_command::CommandOptionValue;
 use twilight_model::application::interaction::{Interaction, InteractionData};
@@ -188,26 +187,6 @@ pub static COMMANDS_REGISTER: LazyLock<CommandsRegister> = LazyLock::new(|| {
 
     CommandsRegister { config, cloaker, counter, help, ranks }
 });
-
-macro_rules! mention {
-    (command) => {{
-        use twilight_mention::Mention;
-        LazyLock::new(|| CommandMention::Command { id: *ID, name: NAME.to_string() }.mention())
-    }};
-
-    (subcommand) => {{
-        use twilight_mention::Mention;
-        LazyLock::new(|| {
-            CommandMention::SubCommand {
-                id: super::super::COMMANDS_REGISTER.config,
-                name: super::NAME.to_string(),
-                sub_command: NAME.to_string()
-            }
-            .mention()
-        })
-    }};
-}
-use mention;
 
 #[derive(Debug, From)]
 pub enum HandleApplicationCommandError {

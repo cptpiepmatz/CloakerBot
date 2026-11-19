@@ -23,7 +23,7 @@ use crate::{APPLICATION_ID, BOT_USER_ID, STATE};
 pub const NAME: &str = "config";
 pub const DESCRIPTION: &str = "Configure the CloakerBot.";
 pub static ID: LazyLock<Id<CommandMarker>> = LazyLock::new(|| COMMANDS_REGISTER.config);
-pub static MENTION: LazyLock<MentionFormat<CommandMention>> = super::mention![command];
+pub static MENTION: LazyLock<MentionFormat<CommandMention>> = macros::command_mention![command];
 
 pub fn chat_input() -> Command {
     CommandBuilder::new(NAME, DESCRIPTION, CommandType::ChatInput)
