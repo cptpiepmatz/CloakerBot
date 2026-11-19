@@ -8,17 +8,18 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
-COPY macros/Cargo.toml ./macros/Cargo.toml
 COPY infra/Cargo.toml ./infra/Cargo.toml
+COPY macros/Cargo.toml ./macros/Cargo.toml
+COPY macros/proc/Cargo.toml ./macros/proc/Cargo.toml
 COPY .cargo ./.cargo
 
 # compile external dependencies using placeholders, without copying application sources
-RUN mkdir -p src macros/src infra/src \
+RUN mkdir -p src infra/src macros/src macros/proc/src \
     && printf 'fn main() {}\n' > src/main.rs \
     && printf 'fn main() {}\n' > build.rs \
-    && touch macros/src/lib.rs infra/src/lib.rs \
+    && touch infra/src/lib.rs macros/src/lib.rs macros/proc/src/lib.rs \
     && cargo build --locked --release --workspace \
-    && cargo clean --release -p cloaker-bot -p cloaker-bot-macros -p cloaker-bot-infra
+    && cargo clean --release --workspace
 
 FROM dependencies AS macros
 COPY macros ./macros

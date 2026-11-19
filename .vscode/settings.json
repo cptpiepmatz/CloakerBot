@@ -27,6 +27,7 @@
     "message_component": "components",
     "modal_submit": "input",
     "owner_notifications": "event",
+    "proc": "functions",
     "role_select": "input",
     "sync": "ci",
     "takedown": "error",

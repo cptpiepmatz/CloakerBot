@@ -1,7 +1,7 @@
 [package]
 name = "cloaker-bot-infra"
 publish = false
-description = "Infra for CloakerBot."
+description = "Infrastructure and utility for the CloakerBot."
 license-file.workspace = true
 rust-version.workspace = true
 version.workspace = true

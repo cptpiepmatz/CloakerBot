@@ -22,7 +22,7 @@ level = "warn"
 check-cfg = ["cfg(prod)"]
 
 [workspace]
-members = ["infra", "macros"]
+members = ["infra", "macros", "macros/proc"]
 package.version = "3.0.1"
 package.edition = "2024"
 package.rust-version = "1.95.0"
