@@ -5,5 +5,4 @@ mod lazy_env;
 mod lazy_sound;
 mod map;
 mod repo_url;
-mod require;
 mod trim;

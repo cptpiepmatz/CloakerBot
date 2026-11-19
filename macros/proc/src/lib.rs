@@ -5,6 +5,7 @@ use proc_macro2::TokenStream as TokenStream2;
 
 mod env;
 mod markdown;
+mod require;
 mod template;
 
 fn resolve_path(file_path: &syn::LitStr) -> syn::Result<PathBuf> {
@@ -128,4 +129,7 @@ defer_macros! {
     template_md: template::md,
     template_toml: template::toml,
     env: env::env,
+    /// Returns early when a condition fails, or unwraps `Some(...)` / `Ok(...)`.
+    /// An optional `else` supplies the return value; otherwise returns `()`.
+    require: require::require,
 }
