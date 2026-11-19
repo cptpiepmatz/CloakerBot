@@ -178,8 +178,7 @@ route generates an invite for the application ID you built with.
 
 ### Docker Compose
 
-The [Dockerfile](./Dockerfile) supports `amd64` and `arm64` builds. Pass the
-build-time variables above through **`build.args`**, and runtime variables
+Pass the build-time variables above through **`build.args`**, and runtime variables
 through **`environment`**. Setting a build-time variable in `environment` does
 not change the compiled bot. Never pass tokens or secrets as build arguments.
 
@@ -243,10 +242,6 @@ Podman or Docker installed; it prefers Podman when both are available.
 ```sh
 nu images.nu build
 nu images.nu run
-
-# For ARM64 instead:
-nu images.nu build arm64
-nu images.nu run arm64
 ```
 
 Images are tagged with the package version and current Git commit. The run

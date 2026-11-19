@@ -6,12 +6,12 @@ def builder [] {
   $builders | get 0.path
 }
 
-def tag [platform: string] {
+def tag [] {
   let cargo_toml = open Cargo.toml
   let short_sha = ^git rev-parse --short HEAD
 
   let version = $cargo_toml.workspace.package.version + "-" + $short_sha
-  return ("cloaker-bot/" + $platform + ":" + $version)
+  return ("cloaker-bot:" + $version)
 }
 
 export def main [] {
@@ -19,22 +19,13 @@ export def main [] {
 }
 
 export def "main build" [] {
-  let tag = tag "amd64"
-  ^(builder) build --tag $tag --platform linux/amd64 .
+  let tag = tag
+  ^(builder) build --tag $tag .
 }
 
-export def "main build arm64" [] {
-  let tag = tag "arm64"
-  ^(builder) build --tag $tag --platform linux/arm64 .
-}
-
-export def "main run" [platform: string = "amd64"] {
-  if $platform not-in [amd64 arm64] {
-    error make { msg: "Supported platforms are amd64 and arm64." }
-  }
-
+export def "main run" [] {
   let builder = builder
-  let tag = tag $platform
+  let tag = tag
   let data_dir = (pwd | path join data)
   mkdir $data_dir
   mut runtime_env = {}
@@ -48,6 +39,6 @@ export def "main run" [platform: string = "amd64"] {
   }
 
   with-env $runtime_env {
-    ^($builder) run --rm --init --tty --sig-proxy=true --platform $"linux/($platform)" --publish 0.0.0.0:25625:25625 --volume $"($data_dir):/cloaker-bot/data" --env DISCORD_TOKEN --env DISCORD_CLIENT_SECRET --env COOKIE_SECRET $tag
+    ^($builder) run --rm --init --tty --sig-proxy=true --publish 0.0.0.0:25625:25625 --volume $"($data_dir):/cloaker-bot/data" --env DISCORD_TOKEN --env DISCORD_CLIENT_SECRET --env COOKIE_SECRET $tag
   }
 }
