@@ -30,14 +30,17 @@ impl<T> DerefMut for State<T> {
 
 impl<T> State<T> {
     pub fn new(
-        dependencies: &impl StateDependencies,
+        dependencies: StateDependencies<'_>,
         custom: impl FnOnce(State<()>) -> Self
     ) -> Self {
-        let shard =
-            Shard::new(ShardId::ONE, dependencies.discord_token(), dependencies.discord_intents());
+        let shard = Shard::new(
+            ShardId::ONE,
+            dependencies.discord_token.to_owned(),
+            dependencies.discord_intents
+        );
 
         let discord_client = twilight_http::client::Client::builder()
-            .token(dependencies.discord_token())
+            .token(dependencies.discord_token.to_owned())
             .default_allowed_mentions(AllowedMentions::default())
             .build();
 
@@ -63,7 +66,7 @@ impl State<()> {
     }
 }
 
-pub trait StateDependencies {
-    fn discord_token(&self) -> String;
-    fn discord_intents(&self) -> Intents;
+pub struct StateDependencies<'a> {
+    pub discord_token: &'a str,
+    pub discord_intents: Intents
 }
