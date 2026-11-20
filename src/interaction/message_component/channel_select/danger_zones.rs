@@ -80,7 +80,7 @@ pub async fn action(
         .components(None)
         .build();
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &InteractionResponse {
             kind: InteractionResponseType::UpdateMessage,

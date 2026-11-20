@@ -84,7 +84,7 @@ where
         .components(components)
         .build();
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, &interaction.token, &InteractionResponse {
             kind: InteractionResponseType::ChannelMessageWithSource,

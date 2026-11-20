@@ -42,7 +42,8 @@ pub static EMOJIS_REGISTER: LazyLock<EmojisRegister> = LazyLock::new(|| {
 
 #[tracing::instrument(skip_all)]
 async fn register() -> Result<EmojisRegister, RegisterEmojisError> {
-    let emojis = STATE.client.get_application_emojis(APPLICATION_ID).await?.model().await?.items;
+    let emojis =
+        STATE.discord_client.get_application_emojis(APPLICATION_ID).await?.model().await?.items;
 
     Ok(EmojisRegister {
         immunity: ensure_emoji(&emojis, "immunity", IMMUNITY).await?,
@@ -66,8 +67,12 @@ async fn ensure_emoji(
     }
 
     let image = format!("data:image/webp;base64,{}", STANDARD.encode(image));
-    let emoji =
-        STATE.client.add_application_emoji(APPLICATION_ID, name, &image).await?.model().await?;
+    let emoji = STATE
+        .discord_client
+        .add_application_emoji(APPLICATION_ID, name, &image)
+        .await?
+        .model()
+        .await?;
     tracing::info!(name, emoji_id = %emoji.id, "created application emoji");
 
     Ok(emoji.id)

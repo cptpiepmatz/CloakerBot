@@ -69,7 +69,7 @@ pub async fn register_metadata() -> Result<(), RegisterMetadataRecordsError> {
     .json(&metadata())
     .build()?;
 
-    STATE.client.request::<serde_json::Value>(request).await?;
+    STATE.discord_client.request::<serde_json::Value>(request).await?;
 
     Ok(())
 }

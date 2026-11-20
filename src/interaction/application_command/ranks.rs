@@ -99,7 +99,7 @@ pub async fn action(
     defer::ephemeral(interaction).await?;
 
     let user_id = command.user_id.unwrap_or(author_id);
-    let member = STATE.client.guild_member(guild_id, user_id).await?.model().await?;
+    let member = STATE.discord_client.guild_member(guild_id, user_id).await?.model().await?;
     let stats = ranks::calculate_ranks(user_id, guild_id)
         .await
         .map_err(RanksActionError::CalculateRanks)?;
@@ -109,7 +109,7 @@ pub async fn action(
     let components = profile_components(user_id, avatar, stats, badges);
 
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
         .flags(MessageFlags::IS_COMPONENTS_V2)

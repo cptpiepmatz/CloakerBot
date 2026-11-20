@@ -43,7 +43,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
         }
         tracing::debug!(%guild_id, "claimed random takedown schedule");
 
-        let guild_voice_states = STATE.cache.guild_voice_states(guild_id);
+        let guild_voice_states = STATE.discord_cache.guild_voice_states(guild_id);
         let voice_user_count = guild_voice_states.as_ref().map_or(0, |states| states.len());
         let Some(guild_voice_states) = guild_voice_states.filter(|states| states.len() >= 3)
         else {
@@ -55,7 +55,7 @@ pub async fn handle_random_check() -> Result<(), CheckRandomError> {
         let Some(target_id) = guild_voice_states
             .iter()
             .filter(|user_id| {
-                target_bots || STATE.cache.user(**user_id).is_some_and(|user| !user.bot)
+                target_bots || STATE.discord_cache.user(**user_id).is_some_and(|user| !user.bot)
             })
             .choose(&mut rng)
         else {

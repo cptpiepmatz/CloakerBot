@@ -121,7 +121,7 @@ pub async fn takedown(
     tracing::debug!("waiting for takedown lock");
     let _takedown_lock = STATE.takedown_locks.lock(guild_id).await;
     tracing::debug!("acquired takedown lock");
-    if STATE.cache.guild(guild_id).is_none() {
+    if STATE.discord_cache.guild(guild_id).is_none() {
         tracing::info!("takedown did not complete: guild not found");
         return Err(TakedownFail::NotFound);
     }
@@ -267,7 +267,7 @@ async fn takedown_in_voice(
     tracing::debug!(%channel_id, countered_by_id = countered_by_id.map(|id| id.get()), "takedown notification finished");
 
     let bot_channel =
-        STATE.cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());
+        STATE.discord_cache.voice_state(BOT_USER_ID, guild_id).map(|state| state.channel_id());
     if bot_channel != Some(channel_id) ||
         call.current_channel() != Some(ChannelId::from(channel_id))
     {
@@ -292,7 +292,7 @@ async fn takedown_in_voice(
             return fail;
         };
 
-        let caller_is_here = match STATE.cache.voice_state(caller_id, guild_id) {
+        let caller_is_here = match STATE.discord_cache.voice_state(caller_id, guild_id) {
             Some(caller_vs) => caller_vs.channel_id() == channel_id,
             None => false
         };
@@ -322,7 +322,7 @@ async fn takedown_in_voice(
         }
 
         if let Err(err) =
-            STATE.client.update_guild_member(guild_id, caller_id).channel_id(None).await
+            STATE.discord_client.update_guild_member(guild_id, caller_id).channel_id(None).await
         {
             if !missing_permissions(&err) {
                 tracing::warn!(%guild_id, %caller_id, error = ?err, "returned takedown failed");
@@ -339,7 +339,7 @@ async fn takedown_in_voice(
     }
 
     let target_end_channel_id =
-        STATE.cache.voice_state(target_id, guild_id).as_ref().map(|cvs| cvs.channel_id());
+        STATE.discord_cache.voice_state(target_id, guild_id).as_ref().map(|cvs| cvs.channel_id());
     if target_end_channel_id != channel_id.into() {
         fail_sound.play_and_wait(call, None).await;
         return Err(TakedownFail::Fled);
@@ -355,7 +355,9 @@ async fn takedown_in_voice(
         return Err(TakedownFail::Immune);
     }
 
-    if let Err(err) = STATE.client.update_guild_member(guild_id, target_id).channel_id(None).await {
+    if let Err(err) =
+        STATE.discord_client.update_guild_member(guild_id, target_id).channel_id(None).await
+    {
         if missing_permissions(&err) {
             fail_sound.play_and_wait(call, None).await;
             return Err(TakedownFail::MissingPermissions);
@@ -374,7 +376,7 @@ async fn fetch_member_roles(
     member_id: Id<UserMarker>
 ) -> Result<Vec<Id<RoleMarker>>, TakedownFail> {
     let member = STATE
-        .client
+        .discord_client
         .guild_member(guild_id, member_id)
         .await
         .map_err(ClientError::from)?
@@ -396,9 +398,9 @@ async fn preliminary_checks(
 
     if !config.target_bots {
         let is_bot = infra::util::cache_or_fetch(
-            STATE.cache.user(target_id),
+            STATE.discord_cache.user(target_id),
             |user| user.bot,
-            STATE.client.user(target_id),
+            STATE.discord_client.user(target_id),
             |user| user.bot
         )
         .await
@@ -426,7 +428,7 @@ fn get_channel_id(
     guild_id: Id<GuildMarker>
 ) -> Result<Id<ChannelMarker>, TakedownFail> {
     STATE
-        .cache
+        .discord_cache
         .voice_state(target_id, guild_id)
         .map(|cvs| cvs.channel_id())
         .ok_or(TakedownFail::NotFound)

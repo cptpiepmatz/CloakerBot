@@ -11,8 +11,9 @@ use derive_more::From;
 use futures::stream::{self, StreamExt, select};
 use infra::diagnostics::panic::ExpectReport;
 use infra::diagnostics::{logging, panic};
-use infra::sync::{Eject, KeyLock, VolatileMap};
-use infra::util::cache::{CacheUpdateEvent, ObservableCache};
+use infra::state::{State, StateDependencies};
+use infra::sync::{KeyLock, VolatileMap};
+use infra::util::cache::CacheUpdateEvent;
 use interaction::COMMANDS_REGISTER;
 use macros::{lazy_env, trim};
 use miette::IntoDiagnostic;
@@ -24,10 +25,9 @@ use tokio::sync::Mutex;
 use tokio_stream::wrappers::IntervalStream;
 use tracing::Instrument;
 use twilight_gateway::error::{ReceiveMessageError, ReceiveMessageErrorType};
-use twilight_gateway::{EventTypeFlags, Shard, StreamExt as TwilightStreamExt};
-use twilight_http::client::Client;
+use twilight_gateway::{EventTypeFlags, StreamExt as TwilightStreamExt};
+use twilight_model::gateway::Intents;
 use twilight_model::gateway::event::Event as DiscordEvent;
-use twilight_model::gateway::{Intents, ShardId};
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::oauth::scope;
@@ -88,10 +88,7 @@ const BACKUP_INTERVAL: Duration =
     Duration::from_secs(macros::env!("BACKUP_INTERVAL_SECONDS", 300u64));
 
 #[derive(Debug)]
-struct State {
-    shard: Eject<Shard>,
-    client: Client,
-    http_client: reqwest::Client,
+struct AppState {
     database: Database,
     /// Lock per guild to allow only one takedown to happen per guild.
     takedown_locks: KeyLock<Id<GuildMarker>>,
@@ -99,52 +96,41 @@ struct State {
     ///
     /// As only one takedown may happen per guild, a single values is fine.
     planned_takedowns: VolatileMap<Id<GuildMarker>, PlannedTakedown>,
-    cache: ObservableCache,
     songbird: Songbird,
     owner_notifications: Mutex<HashMap<Id<UserMarker>, data::owner_notifications::OwnerNotified>>,
     linked_role_locks: KeyLock<Id<UserMarker>>
 }
 
-static STATE: LazyLock<State> = LazyLock::new(|| {
-    let discord_token = TOKEN.deref();
-    let mut shard = Shard::new(ShardId::ONE, discord_token.to_owned(), INTENTS);
-    let client = Client::builder()
-        .token(discord_token.to_owned())
-        .default_allowed_mentions(twilight_model::channel::message::AllowedMentions::default())
-        .build();
+static STATE: LazyLock<State<AppState>> = LazyLock::new(|| {
+    State::new(
+        StateDependencies { discord_token: &TOKEN, discord_intents: INTENTS },
+        |mut state| {
+            let shard = state.discord_shard.get().expect_report("shard went missing");
 
-    let http_client = reqwest::Client::new();
+            let songbird = Songbird::twilight(
+                Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
+                BOT_USER_ID
+            );
 
-    let songbird = Songbird::twilight(
-        Arc::new(TwilightMap::new(HashMap::from([(shard.id().number(), shard.sender())]))),
-        BOT_USER_ID
-    );
+            let takedown_locks = Default::default();
+            let planned_takedowns = Default::default();
 
-    let shard = Eject::new(shard);
+            let database = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current()
+                    .block_on(Database::init("data/cloaker.sqlite"))
+                    .expect_report("could not init database")
+            });
 
-    let takedown_locks = Default::default();
-    let planned_takedowns = Default::default();
-
-    let cache = ObservableCache::new();
-
-    let database = tokio::task::block_in_place(|| {
-        tokio::runtime::Handle::current()
-            .block_on(Database::init("data/cloaker.sqlite"))
-            .expect_report("could not init database")
-    });
-
-    State {
-        shard,
-        client,
-        http_client,
-        database,
-        takedown_locks,
-        planned_takedowns,
-        cache,
-        songbird,
-        owner_notifications: Default::default(),
-        linked_role_locks: Default::default()
-    }
+            state.with(AppState {
+                database,
+                takedown_locks,
+                planned_takedowns,
+                songbird,
+                owner_notifications: Default::default(),
+                linked_role_locks: Default::default()
+            })
+        }
+    )
 });
 
 #[tokio::main]
@@ -167,7 +153,7 @@ async fn main() -> miette::Result<()> {
         tracing::info_span!("database_backups", interval_seconds = BACKUP_INTERVAL.as_secs())
     ));
 
-    let shard = state.shard.eject().expect_report("shard went missing");
+    let shard = state.discord_shard.eject().expect_report("shard went missing");
 
     // ensure that technically lazy elements are evaluated
     tracing::debug!("loading bundled sounds");
@@ -211,7 +197,7 @@ async fn main() -> miette::Result<()> {
                 None => return, // event stream ended
                 Some(event @ BotEvent::Discord(Err(_))) => handle_event(event).await,
                 Some(BotEvent::Discord(Ok(event))) if matches!(*event, DiscordEvent::Ready(_)) => {
-                    STATE.cache.observe(&event);
+                    STATE.discord_cache.observe(&event);
                     break;
                 }
                 _ => continue
@@ -246,7 +232,7 @@ fn cache_update(event: &BotEvent) -> Option<BotEvent> {
         return None;
     };
 
-    STATE.cache.observe(event).map(BotEvent::CacheUpdate)
+    STATE.discord_cache.observe(event).map(BotEvent::CacheUpdate)
 }
 
 #[derive(Debug)]

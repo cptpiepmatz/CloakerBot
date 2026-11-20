@@ -12,7 +12,7 @@ use crate::{BOT_USER_ID, STATE};
 pub async fn fallback_channel(
     guild_id: Id<GuildMarker>
 ) -> Result<Option<Id<ChannelMarker>>, ClientError> {
-    let Some(guild) = STATE.cache.guild(guild_id)
+    let Some(guild) = STATE.discord_cache.guild(guild_id)
     else {
         return Ok(None);
     };
@@ -22,11 +22,11 @@ pub async fn fallback_channel(
         .collect();
     drop(guild);
 
-    if let Some(channels) = STATE.cache.guild_channels(guild_id) {
+    if let Some(channels) = STATE.discord_cache.guild_channels(guild_id) {
         let mut general: Vec<_> = channels
             .iter()
             .filter_map(|id| {
-                let channel = STATE.cache.channel(*id)?;
+                let channel = STATE.discord_cache.channel(*id)?;
                 (channel.name.as_deref() == Some("general")).then_some(*id)
             })
             .collect();
@@ -58,7 +58,7 @@ pub async fn log_takedown(
         Some(channel_id) => {
             if !can_log(channel_id) ||
                 !STATE
-                    .cache
+                    .discord_cache
                     .channel(channel_id)
                     .is_some_and(|channel| channel.guild_id == Some(guild_id))
             {
@@ -115,16 +115,16 @@ pub async fn log_takedown(
     };
     let content =
         channel_logging::takedown(target_channel, outcome, source, target_id.mention()).to_string();
-    STATE.client.create_message(channel_id).content(&content).await?;
+    STATE.discord_client.create_message(channel_id).content(&content).await?;
     Ok(())
 }
 
 fn can_log(channel_id: Id<ChannelMarker>) -> bool {
-    let channel = require!(Some(STATE.cache.channel(channel_id)) else false);
+    let channel = require!(Some(STATE.discord_cache.channel(channel_id)) else false);
     if !matches!(channel.kind, ChannelType::GuildText | ChannelType::GuildAnnouncement) {
         return false;
     }
-    STATE.cache.permissions().in_channel(BOT_USER_ID, channel_id).is_ok_and(|permissions| {
+    STATE.discord_cache.permissions().in_channel(BOT_USER_ID, channel_id).is_ok_and(|permissions| {
         permissions.contains(Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES)
     })
 }

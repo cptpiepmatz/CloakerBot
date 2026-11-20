@@ -30,7 +30,7 @@ pub async fn open_modal(
         .is_some_and(|permissions| permissions.contains(Permissions::MANAGE_GUILD));
     if !can_manage {
         STATE
-            .client
+            .discord_client
             .interaction(APPLICATION_ID)
             .create_response(interaction.id, &interaction.token, &InteractionResponse {
                 kind: InteractionResponseType::ChannelMessageWithSource,
@@ -77,6 +77,6 @@ pub async fn open_modal(
     .use_authorization_token(false)
     .json(&response)
     .build()?;
-    STATE.client.request::<EmptyBody>(request).await?;
+    STATE.discord_client.request::<EmptyBody>(request).await?;
     Ok(())
 }

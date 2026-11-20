@@ -198,7 +198,7 @@ pub async fn action(
             .into()
     };
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, interaction.token.as_str(), &response)
         .await?;

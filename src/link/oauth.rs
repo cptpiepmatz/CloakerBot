@@ -156,9 +156,10 @@ fn connected_page() -> Response {
 }
 
 async fn notify_connected(user_id: Id<UserMarker>) -> Result<(), ClientError> {
-    let private_channel = STATE.client.create_private_channel(user_id).await?.model().await?;
+    let private_channel =
+        STATE.discord_client.create_private_channel(user_id).await?.model().await?;
     STATE
-        .client
+        .discord_client
         .create_message(private_channel.id)
         .content(&crate::assets::oauth::connected().to_string())
         .await?;

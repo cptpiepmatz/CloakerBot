@@ -29,7 +29,7 @@ pub enum OwnerNotificationError {
 pub async fn on_message(message: &Message) -> Result<(), OwnerNotificationError> {
     let guild_id = require!(Some(message.guild_id) else Ok(()));
     require!(!message.author.bot else Ok(()));
-    let owner_id = require!(Some(STATE.cache.guild(guild_id)) else Ok(())).owner_id();
+    let owner_id = require!(Some(STATE.discord_cache.guild(guild_id)) else Ok(())).owner_id();
     require!(message.author.id == owner_id else Ok(()));
 
     let mut notifications = STATE.owner_notifications.lock().await;
@@ -135,10 +135,10 @@ async fn send_update(
     owner_id: twilight_model::id::Id<twilight_model::id::marker::UserMarker>,
     messages: &[Vec<Component>]
 ) -> Result<(), ClientError> {
-    let channel = STATE.client.create_private_channel(owner_id).await?.model().await?;
+    let channel = STATE.discord_client.create_private_channel(owner_id).await?.model().await?;
     for components in messages {
         STATE
-            .client
+            .discord_client
             .create_message(channel.id)
             .flags(MessageFlags::IS_COMPONENTS_V2 | MessageFlags::SUPPRESS_EMBEDS)
             .components(components)

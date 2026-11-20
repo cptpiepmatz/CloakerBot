@@ -122,7 +122,7 @@ pub async fn action(interaction: &Interaction) -> Result<(), HandleApplicationCo
         ])
         .build();
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .create_response(interaction.id, &interaction.token, &InteractionResponse {
             kind: InteractionResponseType::ChannelMessageWithSource,

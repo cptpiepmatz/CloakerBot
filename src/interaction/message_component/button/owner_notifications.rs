@@ -69,7 +69,7 @@ async fn set_allowance(
     ];
 
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
         .flags(MessageFlags::IS_COMPONENTS_V2)

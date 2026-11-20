@@ -115,7 +115,7 @@ pub enum RegisterCommandsError {
 }
 
 pub static COMMANDS_REGISTER: LazyLock<CommandsRegister> = LazyLock::new(|| {
-    let client = STATE.client.interaction(APPLICATION_ID);
+    let client = STATE.discord_client.interaction(APPLICATION_ID);
 
     let commands = tokio::task::block_in_place(|| {
         tokio::runtime::Handle::current()
@@ -226,7 +226,7 @@ pub enum UpdateDeferError {
 
 async fn update_defer_msg(interaction: &Interaction, msg: &str) -> Result<(), UpdateDeferError> {
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .update_response(interaction.token.as_str())
         .content(Some(msg))
@@ -240,7 +240,7 @@ async fn update_defer_embeds(
     embed_builder: EmbedBuilder
 ) -> Result<(), UpdateDeferError> {
     STATE
-        .client
+        .discord_client
         .interaction(APPLICATION_ID)
         .update_response(&interaction.token)
         .embeds(Some(&[embed_builder.validate()?.build()]))
