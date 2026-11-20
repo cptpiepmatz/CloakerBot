@@ -18,6 +18,12 @@ impl<T> Eject<T> {
         Self(Mutex::new(Some(inner)))
     }
 
+    /// Borrows the inner value if it has not been ejected.
+    #[must_use]
+    pub fn get(&mut self) -> Option<&T> {
+        self.0.get_mut().as_ref()
+    }
+
     /// Extracts the inner value once.
     ///
     /// Returning `Some(T)` on the first call, and `None` on subsequent calls
