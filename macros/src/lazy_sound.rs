@@ -1,4 +1,8 @@
 #[macro_export]
+#[allow(
+    clippy::crate_in_macro_def,
+    reason = "sound assets and diagnostics belong to the calling crate"
+)]
 macro_rules! lazy_sound {
     ($ident:ident) => {
         ::std::sync::LazyLock::new(|| {

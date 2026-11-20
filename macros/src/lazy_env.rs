@@ -1,4 +1,5 @@
 #[macro_export]
+#[allow(clippy::crate_in_macro_def, reason = "diagnostics belong to the calling crate")]
 macro_rules! lazy_env {
     ($env:literal) => {
         ::std::sync::LazyLock::new(|| {
