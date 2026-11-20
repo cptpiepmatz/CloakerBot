@@ -11,6 +11,7 @@ use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use cookie::Key;
 use http::{StatusCode, header};
+use infra::ClientError;
 use macros::{map, require};
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;
@@ -20,7 +21,6 @@ use twilight_model::id::marker::UserMarker;
 use url::Url;
 
 use crate::data::linked_roles::{SecretToken, StoredTokens};
-use crate::util::ClientError;
 use crate::{CLIENT_SECRET, COOKIE_SECRET, LazyString, REDIRECT_URI, STATE};
 
 pub const LINKED_ROLE_PATH: &str = "/linked-role";

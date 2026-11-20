@@ -1,14 +1,12 @@
 use std::ops::Deref;
 
-use twilight_cache_inmemory::{InMemoryCache, UpdateCache};
+use twilight_cache_inmemory::InMemoryCache;
 use twilight_model::gateway::event::{Event as DiscordEvent, Event};
 use twilight_model::gateway::payload::incoming::VoiceStateUpdate;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{ChannelMarker, GuildMarker, UserMarker};
 
-use crate::util;
-
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ObservableCache {
     inner: InMemoryCache
 }

@@ -62,7 +62,7 @@ defer_macros! {
     /// `ExactSizeIterator` of `ComponentTemplate` values with text already formatted
     /// into owned strings. Convert each value into a Twilight `Component` when
     /// preparing the message. The generated code uses
-    /// the calling crate's `crate::util::component_template::ComponentTemplate`.
+    /// `infra::component_template::ComponentTemplate`.
     ///
     /// Keep the `.md` extension. This is Markdown with a small set of component
     /// elements, not MDX or JSX. Put component elements on their own lines, with

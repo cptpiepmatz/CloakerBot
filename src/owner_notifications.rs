@@ -1,5 +1,6 @@
 use std::collections::hash_map::Entry;
 
+use infra::ClientError;
 use macros::require;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;
@@ -11,7 +12,6 @@ use twilight_model::channel::message::component::Component;
 use crate::data::owner_notifications::OwnerNotified;
 use crate::discord::error_codes::CANNOT_SEND_MESSAGES_TO_THIS_USER;
 use crate::interaction::message_component::custom_id::MessageComponentCustomId;
-use crate::util::ClientError;
 use crate::{MANIFEST, STATE};
 
 const MAX_MESSAGE_TEXT_LENGTH: usize = 4000;

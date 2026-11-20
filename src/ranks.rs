@@ -1,9 +1,9 @@
+use infra::iterator_ext::IteratorExt;
 use thiserror::Error;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, RoleMarker, UserMarker};
 
 use crate::STATE;
-use crate::util::iterator_ext::IteratorExt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Ranks {

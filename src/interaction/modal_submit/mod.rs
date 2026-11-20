@@ -1,5 +1,6 @@
 use custom_id::ModalCustomId;
 use derive_more::From;
+use infra::component_template::IntoComponentTemplates;
 use twilight_model::application::interaction::modal::{
     ModalInteractionComponent, ModalInteractionData
 };
@@ -10,7 +11,6 @@ use twilight_model::http::interaction::{InteractionResponse, InteractionResponse
 use twilight_util::builder::InteractionResponseDataBuilder;
 use twilight_util::builder::embed::EmbedBuilder;
 
-use crate::util::component_template::IntoComponentTemplates;
 use crate::{APPLICATION_ID, STATE};
 
 pub mod config;

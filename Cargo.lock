@@ -461,6 +461,15 @@ dependencies = [
 [[package]]
 name = "cloaker-bot-infra"
 version = "3.0.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tracing",
+ "twilight-cache-inmemory",
+ "twilight-http",
+ "twilight-model",
+]
 
 [[package]]
 name = "cloaker-bot-macros"

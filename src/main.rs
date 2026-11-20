@@ -9,6 +9,7 @@ use std::{io, iter};
 
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
+use infra::cache::{CacheUpdateEvent, ObservableCache};
 use interaction::COMMANDS_REGISTER;
 use macros::{lazy_env, trim};
 use miette::IntoDiagnostic;
@@ -38,7 +39,6 @@ use crate::sync::{KeyLock, VolatileMap};
 use crate::takedown::PlannedTakedown;
 use crate::takedown::danger_zones::{CheckDangerZonesError, check_danger_zones};
 use crate::takedown::random::{CheckRandomError, handle_random_check};
-use crate::util::cache::{CacheUpdateEvent, ObservableCache};
 
 mod assets;
 mod data;
@@ -51,7 +51,6 @@ mod owner_notifications;
 mod ranks;
 mod sync;
 mod takedown;
-mod util;
 
 include!(concat!(env!("OUT_DIR"), "/git.rs"));
 

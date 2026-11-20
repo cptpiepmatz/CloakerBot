@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
 
+use infra::component_template::ComponentTemplate;
 use itertools::Itertools;
 use twilight_mention::Mention;
 use twilight_model::application::interaction::Interaction;
@@ -20,7 +21,6 @@ use crate::assets::templates;
 use crate::data::config::GuildConfigImmunity;
 use crate::interaction::modal_submit::custom_id::ModalCustomId;
 use crate::interaction::modal_submit::{HandleModalSubmitError, field, reply};
-use crate::util::component_template::ComponentTemplate;
 
 pub fn modal(current: &GuildConfigImmunity) -> InteractionResponseData {
     use templates::config::immunity::modal;

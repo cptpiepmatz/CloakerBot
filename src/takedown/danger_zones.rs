@@ -1,11 +1,11 @@
 use derive_more::From;
+use infra::ClientError;
+use infra::cache::VoiceChannelCacheUpdate;
 use itertools::Itertools;
 use macros::require;
 
 use crate::data::config::GuildConfig;
 use crate::takedown::{TakedownFail, TakedownResult, TakedownType, takedown};
-use crate::util::ClientError;
-use crate::util::cache::VoiceChannelCacheUpdate;
 use crate::{BOT_USER_ID, STATE};
 
 #[derive(Debug, From)]

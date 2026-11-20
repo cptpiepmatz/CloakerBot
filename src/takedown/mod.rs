@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use derive_more::From;
+use infra::ClientError;
 use macros::require;
 use rand::prelude::*;
 use songbird::Call;
@@ -22,8 +23,7 @@ use crate::data::config::GuildConfig;
 use crate::discord::error_codes::{MISSING_ACCESS, MISSING_PERMISSIONS};
 use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
-use crate::util::ClientError;
-use crate::{BOT_USER_ID, STATE, util};
+use crate::{BOT_USER_ID, STATE};
 
 pub mod counter;
 pub mod danger_zones;
@@ -395,7 +395,7 @@ async fn preliminary_checks(
     require!(target_id != BOT_USER_ID else Err(TakedownFail::SelfTarget));
 
     if !config.target_bots {
-        let is_bot = util::cache_or_fetch(
+        let is_bot = infra::cache_or_fetch(
             STATE.cache.user(target_id),
             |user| user.bot,
             STATE.client.user(target_id),

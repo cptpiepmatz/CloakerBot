@@ -88,12 +88,12 @@ fn codegen(
         .collect();
 
     let imports = quote! {
-        use std::borrow::Borrow;
-        use twilight_mention::fmt::{MentionFormat, CommandMention};
-        use twilight_model::id::{Id, marker::UserMarker};
-        use std::fmt::Display;
-        use std::convert::AsRef;
-        use crate::util::template_format::{Template, TemplateFormat};
+        use ::std::borrow::Borrow;
+        use ::twilight_mention::fmt::{MentionFormat, CommandMention};
+        use ::twilight_model::id::{Id, marker::UserMarker};
+        use ::std::fmt::Display;
+        use ::std::convert::AsRef;
+        use ::infra::template_format::{Template, TemplateFormat};
     };
 
     struct Mapping {
@@ -181,24 +181,22 @@ fn codegen(
                 #(#ops)*
                 let text = |index: usize| {
                     match index {
-                        #(#indices => std::format!(#literals),)*
+                        #(#indices => ::std::format!(#literals),)*
                         _ => unreachable!()
                     }
                 };
             }
         };
         let body = quote! {
-            use crate::util::component_template::ComponentTemplate as Component;
-            use twilight_model::channel::message::component::{ButtonStyle, SeparatorSpacingSize};
+            use ::infra::component_template::ComponentTemplate as Component;
+            use ::twilight_model::channel::message::component::{ButtonStyle, SeparatorSpacingSize};
             #text
             let _ = &text;
             let components: Vec<Component> = vec![#(#components),*];
             components.into_iter()
         };
         (
-            quote!(
-                impl ExactSizeIterator<Item = crate::util::component_template::ComponentTemplate>
-            ),
+            quote!(impl ExactSizeIterator<Item = ::infra::component_template::ComponentTemplate>),
             body
         )
     }
@@ -209,9 +207,9 @@ fn codegen(
         }
         else {
             quote! {
-                std::fmt::from_fn(move |f| {
+                ::std::fmt::from_fn(move |f| {
                     #(#ops)*
-                    std::write!(f, #lit)
+                    ::std::write!(f, #lit)
                 })
             }
         };
