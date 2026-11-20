@@ -1,12 +1,9 @@
 #[macro_export]
-#[allow(
-    clippy::crate_in_macro_def,
-    reason = "sound assets and diagnostics belong to the calling crate"
-)]
+#[allow(clippy::crate_in_macro_def, reason = "sound assets belong to the calling crate")]
 macro_rules! lazy_sound {
     ($ident:ident) => {
         ::std::sync::LazyLock::new(|| {
-            use crate::diagnostics::panic::ExpectReport;
+            use ::infra::diagnostics::panic::ExpectReport;
             crate::takedown::sounds::Sound::from_static_wav_bytes(crate::assets::sounds::$ident)
                 .expect_report(concat!("could not load ", stringify!($ident), " sound"))
         })
@@ -14,7 +11,7 @@ macro_rules! lazy_sound {
 
     ($ident:ident+) => {
         ::std::sync::LazyLock::new(|| {
-            use crate::diagnostics::panic::ExpectReport;
+            use ::infra::diagnostics::panic::ExpectReport;
             crate::assets::sounds::$ident
                 .into_iter()
                 .enumerate()

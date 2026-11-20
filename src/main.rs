@@ -9,6 +9,8 @@ use std::{io, iter};
 
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
+use infra::diagnostics::panic::ExpectReport;
+use infra::diagnostics::{logging, panic};
 use infra::sync::{Eject, KeyLock, VolatileMap};
 use infra::util::cache::{CacheUpdateEvent, ObservableCache};
 use interaction::COMMANDS_REGISTER;
@@ -31,8 +33,6 @@ use twilight_model::id::marker::{ApplicationMarker, GuildMarker, UserMarker};
 use twilight_model::oauth::scope;
 
 use crate::data::Database;
-use crate::diagnostics::panic::ExpectReport;
-use crate::diagnostics::{logging, panic};
 use crate::discord::emojis;
 use crate::interaction::{HandleInteractionError, handle_interaction};
 use crate::takedown::PlannedTakedown;
@@ -41,7 +41,6 @@ use crate::takedown::random::{CheckRandomError, handle_random_check};
 
 mod assets;
 mod data;
-mod diagnostics;
 mod discord;
 mod http_server;
 mod interaction;

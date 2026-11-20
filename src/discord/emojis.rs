@@ -2,12 +2,12 @@ use std::sync::LazyLock;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use infra::diagnostics::panic::ExpectReport;
 use twilight_model::guild::Emoji;
 use twilight_model::id::Id;
 use twilight_model::id::marker::EmojiMarker;
 
 use crate::assets::graphics::user_rank::badges::*;
-use crate::diagnostics::panic::ExpectReport;
 use crate::{APPLICATION_ID, STATE};
 
 /// Application emoji IDs, usable in message text with

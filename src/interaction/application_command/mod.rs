@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::sync::LazyLock;
 
 use derive_more::From;
+use infra::diagnostics::panic::ExpectReport;
 use twilight_http::client::InteractionClient;
 use twilight_http::error::Error as TwilightHttpError;
 use twilight_http::response::DeserializeBodyError;
@@ -16,7 +17,6 @@ use twilight_util::builder::embed::EmbedBuilder;
 use twilight_validate::embed::EmbedValidationError;
 use twilight_validate::message::MessageValidationError;
 
-use crate::diagnostics::panic::ExpectReport;
 use crate::interaction::application_command::cloaker::{CloakerActionError, CloakerCommand};
 use crate::interaction::application_command::config::ConfigActionError;
 use crate::interaction::application_command::counter::{CounterActionError, CounterCommand};
