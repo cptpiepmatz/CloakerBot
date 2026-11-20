@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::hash::Hash;
 
-use futures::FutureExt;
 use parking_lot::Mutex;
 
 /// Thread-safe map with automatic entry removal.

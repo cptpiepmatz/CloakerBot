@@ -462,9 +462,11 @@ dependencies = [
 name = "cloaker-bot-infra"
 version = "3.0.1"
 dependencies = [
+ "parking_lot 0.13.0",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
+ "tokio",
  "tracing",
  "twilight-cache-inmemory",
  "twilight-http",

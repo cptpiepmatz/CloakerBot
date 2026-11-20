@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-use parking_lot::{Mutex, MutexGuard};
+use parking_lot::Mutex;
 use tokio::sync::Notify;
 
 /// A synchronization primitive for mutually exclusive access to code based on
@@ -92,12 +92,9 @@ impl Drop for KeyLockGuard {
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
-    use std::sync::{Arc, LazyLock};
     use std::time::Duration;
 
-    use itertools::Itertools;
     use tokio::task::JoinSet;
-    use tokio::time::Timeout;
     use tokio::time::error::Elapsed;
 
     use super::*;

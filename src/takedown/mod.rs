@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use derive_more::From;
+use infra::sync::VolatileMapGuard;
 use infra::util::ClientError;
 use macros::require;
 use rand::prelude::*;
@@ -21,7 +22,6 @@ use twilight_model::id::marker::{ChannelMarker, GuildMarker, RoleMarker, UserMar
 
 use crate::data::config::GuildConfig;
 use crate::discord::error_codes::{MISSING_ACCESS, MISSING_PERMISSIONS};
-use crate::sync::VolatileMapGuard;
 use crate::takedown::sounds::Sound;
 use crate::{BOT_USER_ID, STATE};
 
