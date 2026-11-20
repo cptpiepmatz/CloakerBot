@@ -11,12 +11,14 @@ edition.workspace = true
 konst.workspace = true
 miette.workspace = true
 parking_lot.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-tracing.workspace = true
 tracing-subscriber.workspace = true
+tracing.workspace = true
 twilight-cache-inmemory.workspace = true
+twilight-gateway.workspace = true
 twilight-http.workspace = true
 twilight-model.workspace = true
 

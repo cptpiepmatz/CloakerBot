@@ -465,6 +465,7 @@ dependencies = [
  "konst 0.4.3",
  "miette",
  "parking_lot 0.13.0",
+ "reqwest 0.13.5",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -472,6 +473,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "twilight-cache-inmemory",
+ "twilight-gateway",
  "twilight-http",
  "twilight-model",
 ]
