@@ -1,6 +1,6 @@
 use custom_id::ModalCustomId;
 use derive_more::From;
-use infra::component_template::IntoComponentTemplates;
+use infra::util::component_template::IntoComponentTemplates;
 use twilight_model::application::interaction::modal::{
     ModalInteractionComponent, ModalInteractionData
 };

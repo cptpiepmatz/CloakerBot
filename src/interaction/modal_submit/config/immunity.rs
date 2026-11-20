@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 
-use infra::component_template::ComponentTemplate;
+use infra::util::component_template::ComponentTemplate;
 use itertools::Itertools;
 use twilight_mention::Mention;
 use twilight_model::application::interaction::Interaction;

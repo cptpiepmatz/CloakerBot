@@ -1,4 +1,4 @@
-use infra::iterator_ext::IteratorExt;
+use infra::util::iterator_ext::IteratorExt;
 use thiserror::Error;
 use twilight_model::id::Id;
 use twilight_model::id::marker::{GuildMarker, RoleMarker, UserMarker};

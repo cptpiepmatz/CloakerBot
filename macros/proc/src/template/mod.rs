@@ -93,7 +93,7 @@ fn codegen(
         use ::twilight_model::id::{Id, marker::UserMarker};
         use ::std::fmt::Display;
         use ::std::convert::AsRef;
-        use ::infra::template_format::{Template, TemplateFormat};
+        use ::infra::util::template_format::{Template, TemplateFormat};
     };
 
     struct Mapping {
@@ -188,7 +188,7 @@ fn codegen(
             }
         };
         let body = quote! {
-            use ::infra::component_template::ComponentTemplate as Component;
+            use ::infra::util::component_template::ComponentTemplate as Component;
             use ::twilight_model::channel::message::component::{ButtonStyle, SeparatorSpacingSize};
             #text
             let _ = &text;
@@ -196,7 +196,9 @@ fn codegen(
             components.into_iter()
         };
         (
-            quote!(impl ExactSizeIterator<Item = ::infra::component_template::ComponentTemplate>),
+            quote!(
+                impl ExactSizeIterator<Item = ::infra::util::component_template::ComponentTemplate>
+            ),
             body
         )
     }

@@ -1,6 +1,6 @@
 use derive_more::From;
-use infra::ClientError;
-use infra::cache::VoiceChannelCacheUpdate;
+use infra::util::ClientError;
+use infra::util::cache::VoiceChannelCacheUpdate;
 use itertools::Itertools;
 use macros::require;
 

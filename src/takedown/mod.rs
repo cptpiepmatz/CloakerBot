@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use derive_more::From;
-use infra::ClientError;
+use infra::util::ClientError;
 use macros::require;
 use rand::prelude::*;
 use songbird::Call;
@@ -395,7 +395,7 @@ async fn preliminary_checks(
     require!(target_id != BOT_USER_ID else Err(TakedownFail::SelfTarget));
 
     if !config.target_bots {
-        let is_bot = infra::cache_or_fetch(
+        let is_bot = infra::util::cache_or_fetch(
             STATE.cache.user(target_id),
             |user| user.bot,
             STATE.client.user(target_id),

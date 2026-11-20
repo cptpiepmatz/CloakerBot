@@ -9,7 +9,7 @@ use std::{io, iter};
 
 use derive_more::From;
 use futures::stream::{self, StreamExt, select};
-use infra::cache::{CacheUpdateEvent, ObservableCache};
+use infra::util::cache::{CacheUpdateEvent, ObservableCache};
 use interaction::COMMANDS_REGISTER;
 use macros::{lazy_env, trim};
 use miette::IntoDiagnostic;

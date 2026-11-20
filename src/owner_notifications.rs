@@ -1,6 +1,6 @@
 use std::collections::hash_map::Entry;
 
-use infra::ClientError;
+use infra::util::ClientError;
 use macros::require;
 use twilight_http::api_error::{ApiError, GeneralApiError};
 use twilight_http::error::ErrorType;

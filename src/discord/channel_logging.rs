@@ -1,4 +1,4 @@
-use infra::ClientError;
+use infra::util::ClientError;
 use macros::require;
 use twilight_mention::Mention;
 use twilight_model::channel::ChannelType;

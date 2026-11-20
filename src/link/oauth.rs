@@ -11,7 +11,7 @@ use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use cookie::Key;
 use http::{StatusCode, header};
-use infra::ClientError;
+use infra::util::ClientError;
 use macros::{map, require};
 use rand::distr::{Alphanumeric, SampleString};
 use serde::Deserialize;
